@@ -58,7 +58,7 @@ O backend responde todo erro como `{ "error": { "code": ErrorCode, "message": st
 class ApiError extends Error {
     readonly status: number; // 0 para falha de rede
     readonly code: ErrorCode | 'NETWORK_ERROR' | 'UNEXPECTED_RESPONSE';
-    readonly details?: unknown; // ex.: ValidationIssue[] de VALIDATION_FAILED
+    readonly details?: unknown; // ex.: ValidationIssue[] de VALIDATION_ERROR
     readonly userMessage: string; // do catálogo, em pt-BR
 }
 ```
@@ -81,7 +81,7 @@ export const CLIENT_ERROR_MESSAGES = {
 
 - Uma entrada para cada um dos 55 valores do `ErrorCode` da tag fixada — o `Record` faz o `types` reprovar código faltando, e o `contract` reprova sobra (INV-0000-06).
 - Mensagens no tom da interface: frase curta, o que aconteceu e o que fazer, sem jargão de HTTP nem o nome do código.
-- Erros de validação (`VALIDATION_FAILED`) trazem `details` com `path`: os formulários mapeiam cada `path` para o campo; o catálogo dá só a mensagem geral.
+- Erros de validação (`VALIDATION_ERROR`) trazem `details` com `path`: os formulários mapeiam cada `path` para o campo; o catálogo dá só a mensagem geral.
 
 ### TanStack Query
 
@@ -128,7 +128,7 @@ As rotas de destino são as da spec 0006. O `api` não navega: ele lança; quem 
 - **AC-0005-04:** respostas com cada um dos casos ERR-0005-01 e ERR-0005-02 viram o `ApiError` descrito, com `userMessage` do catálogo de cliente.
 - **AC-0005-05:** o catálogo cobre os 55 códigos da `v1.1.0`, e o gate `contract` falha com uma chave removida e com uma chave inventada (prova da AC-0002-07 para o catálogo).
 - **AC-0005-06:** o `QueryClient` não repete `4xx`, repete `503` até 2 vezes, e aplica os efeitos globais da tabela para `UNAUTHENTICATED`, `PROFILE_PENDING` e `EMAIL_NOT_VERIFIED`.
-- **AC-0005-07:** um componente que mostra um `ApiError` de `VALIDATION_FAILED` exibe a mensagem do catálogo, e não o `message` do corpo.
+- **AC-0005-07:** um componente que mostra um `ApiError` de `VALIDATION_ERROR` exibe a mensagem do catálogo, e não o `message` do corpo.
 
 ## Test mapping
 
