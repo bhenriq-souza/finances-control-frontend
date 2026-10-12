@@ -51,5 +51,38 @@ export default tseslint.config(
         files: ['src/**/*.{ts,tsx}'],
         extends: [reactHooks.configs.flat.recommended],
     },
+    {
+        // Dinheiro só passa pelo parser/formatador da plataforma (spec 0008).
+        files: ['src/**/*.{ts,tsx}'],
+        ignores: ['src/shared/money/**'],
+        rules: {
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector: "CallExpression[callee.name='parseFloat']",
+                    message:
+                        'parseFloat é proibido em src/ fora de src/shared/money/: use parseBRL (spec 0008).',
+                },
+                {
+                    selector:
+                        "CallExpression[callee.type='MemberExpression'][callee.object.name='Number'][callee.property.name='parseFloat']",
+                    message:
+                        'Number.parseFloat é proibido em src/ fora de src/shared/money/: use parseBRL (spec 0008).',
+                },
+                {
+                    selector:
+                        "CallExpression[callee.type='MemberExpression'][callee.property.name='toFixed']",
+                    message:
+                        '.toFixed() é proibido em src/ fora de src/shared/money/: use formatBRL (spec 0008).',
+                },
+                {
+                    selector:
+                        "CallExpression[callee.type='MemberExpression'][callee.object.name='Math'][callee.property.name='round']",
+                    message:
+                        'Math.round() é proibido em src/ fora de src/shared/money/: dinheiro é inteiro de centavos (spec 0008).',
+                },
+            ],
+        },
+    },
     prettierConfig,
 );
