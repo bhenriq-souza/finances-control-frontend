@@ -126,7 +126,7 @@ Tarefas da [spec 0009](../specs/0009-lists-and-reference-data.md), da issue de e
     - What: `src/api/queries/` (chaves, consultas de referência, lookups, usuário atual movido de `identity`, `invalidateAfter`), `src/api/permissions.ts`, os usuários `lancador` e `leitor` no fake e o `stubApi` do e2e
     - Where: `src/api/queries/`, `src/api/permissions.ts`, `src/features/identity/current-user.ts`, `src/features/identity/index.ts`, `src/features/identity/auth-client/fake-auth-client.ts`, `e2e/fixtures/`
     - Done when: `AC-0009-01`, `AC-0009-02` e `AC-0009-10` cobertos; `INV-0009-01`, `INV-0009-02` e `INV-0009-03` verificados
-- [ ] **T-0009-02 — Datas e `StatusBadge`** · #60
+- [x] **T-0009-02 — Datas e `StatusBadge`** · #60
     - What: `src/shared/dates/` e o selo com as tabelas de status e os selos derivados
     - Where: `src/shared/dates/`, `src/ui/status-badge.tsx`, `src/ui/status-labels.ts`
     - Done when: `AC-0009-03` e `AC-0009-04` cobertos; `INV-0009-04` e `INV-0009-05` verificados
