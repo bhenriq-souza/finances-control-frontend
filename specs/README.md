@@ -15,7 +15,7 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0006](0006-auth-and-shell.md)           | Autenticação, estados da conta e app shell                         | implemented |
 | [0007](0007-publication.md)              | Publicação — imagem nginx, configuração em runtime e deploy em dev | implemented |
 | [0008](0008-money.md)                    | Dinheiro no cliente — parser e formatação BRL em centavos          | implemented |
-| [0009](0009-lists-and-reference-data.md) | Listas, formulários e dados de referência compartilhados           | approved    |
+| [0009](0009-lists-and-reference-data.md) | Listas, formulários e dados de referência compartilhados           | implemented |
 | [0010](0010-users-admin.md)              | Administração de usuários e perfis                                 | approved    |
 | [0011](0011-accounts.md)                 | Bancos, contas bancárias e cartões de crédito                      | approved    |
 | [0012](0012-expenses.md)                 | Despesas e tipos de despesa                                        | approved    |
