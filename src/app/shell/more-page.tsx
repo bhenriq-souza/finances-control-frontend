@@ -2,6 +2,7 @@ import { Link, Navigate } from '@tanstack/react-router';
 import { useSyncExternalStore } from 'react';
 
 import { useCurrentUser } from '@/features/identity';
+import { EmptyState } from '@/ui/empty-state';
 
 import { moreItems, NAV_ITEMS, navItemsFor, type NavItem } from './navigation';
 
@@ -37,8 +38,7 @@ export function MorePage({ items = NAV_ITEMS }: { items?: readonly NavItem[] }) 
         <div className="flex flex-col gap-4">
             <h1 className="text-titulo-1">Mais</h1>
             {entries.length === 0 ? (
-                // Provisório: trocar pelo `EmptyState` de `src/ui/` (T-0009-03) quando existir.
-                <p className="text-corpo text-texto-apoio">Não há outras seções para mostrar.</p>
+                <EmptyState variant="vazio" title="Não há outras seções para mostrar." />
             ) : (
                 <nav aria-label="Mais">
                     <ul className="flex flex-col gap-2">
