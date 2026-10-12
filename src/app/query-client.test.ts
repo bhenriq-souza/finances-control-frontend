@@ -98,6 +98,51 @@ describe('global effects', () => {
         expect(effects.onAuthUnavailable).toHaveBeenCalledWith(ERROR_MESSAGES.AUTH_UNAVAILABLE);
     });
 
+    // ERR-0009-03: escrita com 403 FORBIDDEN invalida `['users', 'me']`; consulta, não.
+    it('a FORBIDDEN mutation invalidates the current user, a FORBIDDEN query does not', async () => {
+        const client = createQueryClient(effects);
+        const fetchMe = vi.fn().mockResolvedValue({ profile: 'BILLER' });
+        await client.fetchQuery({ queryKey: ['users', 'me'], queryFn: fetchMe });
+        const other = { queryKey: ['banks'], queryFn: vi.fn().mockResolvedValue([]) };
+        await client.fetchQuery(other);
+        const isStale = (key: readonly string[]) =>
+            client.getQueryCache().find({ queryKey: key })?.state.isInvalidated;
+
+        await client
+            .fetchQuery({
+                queryKey: ['q'],
+                queryFn: () => Promise.reject(apiError(403, 'FORBIDDEN')),
+                retry: false,
+            })
+            .catch(() => undefined);
+        expect(isStale(['users', 'me'])).toBe(false);
+
+        await client
+            .getMutationCache()
+            .build(client, { mutationFn: () => Promise.reject(apiError(403, 'FORBIDDEN')) })
+            .execute(undefined)
+            .catch(() => undefined);
+
+        expect(isStale(['users', 'me'])).toBe(true);
+        expect(isStale(['banks'])).toBe(false);
+        for (const effect of Object.values(effects)) expect(effect).not.toHaveBeenCalled();
+    });
+
+    it('other mutation errors do not invalidate the current user', async () => {
+        const client = createQueryClient(effects);
+        await client.fetchQuery({ queryKey: ['users', 'me'], queryFn: () => Promise.resolve(1) });
+        for (const error of [apiError(409, 'BANK_ALREADY_EXISTS'), new Error('x')]) {
+            await client
+                .getMutationCache()
+                .build(client, { mutationFn: () => Promise.reject(error) })
+                .execute(undefined)
+                .catch(() => undefined);
+        }
+        expect(
+            client.getQueryCache().find({ queryKey: ['users', 'me'] })?.state.isInvalidated,
+        ).toBe(false);
+    });
+
     it('other codes and non-ApiErrors trigger nothing global', async () => {
         await failQuery(apiError(404, 'EXPENSE_NOT_FOUND'));
         await failQuery(new Error('x'));

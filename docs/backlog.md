@@ -134,7 +134,7 @@ Tarefas da [spec 0009](../specs/0009-lists-and-reference-data.md), da issue de e
     - What: lista que vira tabela, `EmptyState`, `Skeleton`, `EntryListSkeleton`, `BarList` e a página de prova `/_e2e/lista`
     - Where: `src/ui/entry-list.tsx`, `src/ui/empty-state.tsx`, `src/ui/skeleton.tsx`, `src/ui/charts/bar-list.tsx`, `src/routes/_e2e/lista.tsx`, `e2e/entry-list.spec.ts`
     - Done when: `AC-0009-05` coberto
-- [ ] **T-0009-04 — Formulários, erros da API nos campos e aviso global** · #62
+- [x] **T-0009-04 — Formulários, erros da API nos campos e aviso global** · #62
     - What: `@radix-ui/react-dialog`, `FormDialog`, `ConfirmDialog`, `SelectField`, `DateField`, `applyApiError`, `Notice` e o provider, `onAuthUnavailable` ligado ao aviso, página de prova `/_e2e/formulario`
     - Where: `src/ui/`, `src/api/errors/form-errors.ts`, `src/app/app.tsx`, `src/app/notices.tsx`, `src/routes/_e2e/formulario.tsx`, `e2e/form-dialog.spec.ts`, `package.json`
     - Done when: `AC-0009-06`, `AC-0009-07` e `AC-0009-09` cobertos; `INV-0009-06` verificado

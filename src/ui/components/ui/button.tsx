@@ -11,6 +11,9 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 default: 'bg-acento text-sobre-acento hover:bg-acento-hover',
+                // Ação destrutiva cheia (spec 0009, decisão de 2026-10-12): `negativo` com o texto
+                // `sobre-acento`.
+                negativo: 'bg-negativo text-sobre-acento hover:bg-negativo/90',
                 outline:
                     'border border-linha-forte bg-superficie text-texto hover:bg-superficie-elevada',
                 ghost: 'text-texto hover:bg-superficie-elevada',

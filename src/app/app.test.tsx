@@ -94,7 +94,7 @@ describe('App global effects (spec 0005 wired to the spec 0006 routes)', () => {
         await vi.waitFor(() => expect(pathname(context)).toBe('/verificar-email'));
     });
 
-    it('does nothing on AUTH_UNAVAILABLE, nor for queries that opt out of the global effects', async () => {
+    it('neither navigates nor signs out on AUTH_UNAVAILABLE, nor for queries that opt out of the global effects', async () => {
         const context = createAppContext();
         const navigate = vi.spyOn(context.router, 'navigate');
 

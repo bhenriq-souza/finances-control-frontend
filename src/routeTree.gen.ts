@@ -18,6 +18,7 @@ import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as VerificarEmailRouteImport } from './routes/verificar-email'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppMaisRouteImport } from './routes/_app/mais'
+import { Route as E2eFormularioRouteImport } from './routes/[_]e2e/formulario'
 import { Route as E2eListaRouteImport } from './routes/[_]e2e/lista'
 
 const AppRoute = AppRouteImport.update({
@@ -64,6 +65,11 @@ const AppMaisRoute = AppMaisRouteImport.update({
   path: '/mais',
   getParentRoute: () => AppRoute,
 } as any)
+const E2eFormularioRoute = E2eFormularioRouteImport.update({
+  id: '/formulario',
+  path: '/formulario',
+  getParentRoute: () => E2eRoute,
+} as any)
 const E2eListaRoute = E2eListaRouteImport.update({
   id: '/lista',
   path: '/lista',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/mais': typeof AppMaisRoute
+  '/_e2e/formulario': typeof E2eFormularioRoute
   '/_e2e/lista': typeof E2eListaRoute
 }
 export interface FileRoutesByTo {
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/mais': typeof AppMaisRoute
+  '/_e2e/formulario': typeof E2eFormularioRoute
   '/_e2e/lista': typeof E2eListaRoute
   '/': typeof AppIndexRoute
 }
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/_app/mais': typeof AppMaisRoute
+  '/_e2e/formulario': typeof E2eFormularioRoute
   '/_e2e/lista': typeof E2eListaRoute
   '/_app/': typeof AppIndexRoute
 }
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-email'
     | '/mais'
+    | '/_e2e/formulario'
     | '/_e2e/lista'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-email'
     | '/mais'
+    | '/_e2e/formulario'
     | '/_e2e/lista'
     | '/'
   id:
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-email'
     | '/_app/mais'
+    | '/_e2e/formulario'
     | '/_e2e/lista'
     | '/_app/'
   fileRoutesById: FileRoutesById
@@ -217,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_e2e/formulario': {
+      id: '/_e2e/formulario'
+      path: '/formulario'
+      fullPath: '/_e2e/formulario'
+      preLoaderRoute: typeof E2eFormularioRouteImport
+      parentRoute: typeof E2eRoute
+    }
     '/_e2e/lista': {
       id: '/_e2e/lista'
       path: '/lista'
@@ -240,10 +259,12 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface E2eRouteChildren {
+  E2eFormularioRoute: typeof E2eFormularioRoute
   E2eListaRoute: typeof E2eListaRoute
 }
 
 const E2eRouteChildren: E2eRouteChildren = {
+  E2eFormularioRoute: E2eFormularioRoute,
   E2eListaRoute: E2eListaRoute,
 }
 
