@@ -1,7 +1,7 @@
 ---
 id: '0005'
 title: Cliente da API gerado do contrato e erros por code
-status: approved
+status: implemented
 depends_on: ['0002', '0003']
 ---
 

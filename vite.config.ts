@@ -50,6 +50,13 @@ export default defineConfig({
     server: {
         port: 5173,
         strictPort: true,
+        // Espelha o `stripPrefix` do ingress: `/api/x` chega ao backend como `/x`.
+        proxy: {
+            '/api': {
+                target: 'http://localhost:3000',
+                rewrite: (path) => path.replace(/^\/api/, ''),
+            },
+        },
     },
     build: {
         // O gate `build` identifica o JavaScript inicial pelo manifesto (spec 0003).

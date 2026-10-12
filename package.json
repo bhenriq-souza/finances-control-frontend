@@ -69,6 +69,7 @@
         "clsx": "^2.1.1",
         "firebase": "^13.0.0",
         "lucide-react": "^1.55.0",
+        "openapi-fetch": "^0.17.0",
         "react": "^19.3.0",
         "react-dom": "^19.3.0",
         "react-hook-form": "^7.90.0",

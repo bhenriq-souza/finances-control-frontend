@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
+import { setTokenProvider } from '@/api/auth';
+import { getAuthClient } from '@/features/identity';
 import { getRuntimeConfig, RuntimeConfigError } from '@/shared/config';
 
 import { App } from './app';
@@ -25,6 +27,8 @@ export function bootstrap(container: HTMLElement): Root {
         return root;
     }
 
+    // Antes de o roteador montar: nenhuma chamada à API sai sem o provider.
+    setTokenProvider((forceRefresh) => getAuthClient().getIdToken(forceRefresh));
     root.render(
         <StrictMode>
             <App />

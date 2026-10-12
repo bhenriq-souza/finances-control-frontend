@@ -51,7 +51,7 @@ Tarefas da [spec 0005](../specs/0005-api-client.md), da issue de entrega [FCF-00
     - What: `scripts/api-generate.mjs` com `predev`/`prebuild`, os passos 2 e 4 de `scripts/contract.mjs`, sobre o esqueleto da T-0003-01 (que já traz a entrada `openapi` e o passo 1), e o catálogo com os 55 códigos
     - Where: `sources.json`, `scripts/`, `src/api/errors/catalog.ts`
     - Done when: `AC-0005-01` e `AC-0005-05` cobertos; `INV-0005-01` e `INV-0005-04` verificados
-- [ ] **T-0005-02 — Cliente, token, `ApiError` e `QueryClient`** · #16
+- [x] **T-0005-02 — Cliente, token, `ApiError` e `QueryClient`** · #16
     - What: `api` com `openapi-fetch`, `setTokenProvider` e a repetição de `TOKEN_EXPIRED`, `ApiError` e `unwrap`, proxy de `/api` no `vite dev`, retry e efeitos globais por `code`
     - Where: `src/api/`, `src/app/query-client.ts`, `vite.config.ts`
     - Done when: `AC-0005-02`, `AC-0005-03`, `AC-0005-04`, `AC-0005-06` e `AC-0005-07` cobertos; `INV-0005-02`, `INV-0005-03` e `INV-0005-05` verificados
