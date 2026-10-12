@@ -106,3 +106,151 @@ Tarefas da [spec 0008](../specs/0008-money.md), da issue de entrega [FCF-007](ht
     - What: componente de exibição com sinal e tom, campo de entrada que entrega centavos e o schema zod com as mensagens pt-BR
     - Where: `src/ui/money.tsx`, `src/ui/money-input.tsx`, `src/shared/money/schema.ts`
     - Done when: `AC-0008-05` coberto; `INV-0008-03` verificado
+
+## Telas de domínio — ordem de execução
+
+As tarefas das specs 0009 a 0018 rodam em quatro rodadas de subagentes, com arquivos disjuntos dentro de cada rodada. O conflito esperado fica só em `package-lock.json`, nesta lista de checkboxes e em `src/app/shell/navigation.ts`, onde cada spec acrescenta o seu item na ordem da spec 0009.
+
+| Rodada | Tarefas (spec: números das tarefas)                          |
+| ------ | ------------------------------------------------------------ |
+| R1     | 0009: 01 a 05                                                |
+| R2     | 0010: 01 · 0011: 01 · 0012: 01, 04 · 0014: 01, 04 · 0018: 01 |
+| R3     | 0011: 02 · 0012: 02, 03 · 0014: 02, 03 · 0013: 01            |
+| R4     | 0013: 02, 03 · 0015: 01, 02 · 0017: 01                       |
+
+## Listas, formulários e dados de referência
+
+Tarefas da [spec 0009](../specs/0009-lists-and-reference-data.md), da issue de entrega [FCF-008](https://github.com/bhenriq-souza/finances-control-frontend/issues/49).
+
+- [ ] **T-0009-01 — Consultas, chaves, invalidação e permissões** · #59
+    - What: `src/api/queries/` (chaves, consultas de referência, lookups, usuário atual movido de `identity`, `invalidateAfter`), `src/api/permissions.ts`, os usuários `lancador` e `leitor` no fake e o `stubApi` do e2e
+    - Where: `src/api/queries/`, `src/api/permissions.ts`, `src/features/identity/current-user.ts`, `src/features/identity/index.ts`, `src/features/identity/auth-client/fake-auth-client.ts`, `e2e/fixtures/`
+    - Done when: `AC-0009-01`, `AC-0009-02` e `AC-0009-10` cobertos; `INV-0009-01`, `INV-0009-02` e `INV-0009-03` verificados
+- [ ] **T-0009-02 — Datas e `StatusBadge`** · #60
+    - What: `src/shared/dates/` e o selo com as tabelas de status e os selos derivados
+    - Where: `src/shared/dates/`, `src/ui/status-badge.tsx`, `src/ui/status-labels.ts`
+    - Done when: `AC-0009-03` e `AC-0009-04` cobertos; `INV-0009-04` e `INV-0009-05` verificados
+- [ ] **T-0009-03 — `EntryList`, estados e `BarList`** · #61
+    - What: lista que vira tabela, `EmptyState`, `Skeleton`, `EntryListSkeleton`, `BarList` e a página de prova `/_e2e/lista`
+    - Where: `src/ui/entry-list.tsx`, `src/ui/empty-state.tsx`, `src/ui/skeleton.tsx`, `src/ui/charts/bar-list.tsx`, `src/routes/_e2e/lista.tsx`, `e2e/entry-list.spec.ts`
+    - Done when: `AC-0009-05` coberto
+- [ ] **T-0009-04 — Formulários, erros da API nos campos e aviso global** · #62
+    - What: `@radix-ui/react-dialog`, `FormDialog`, `ConfirmDialog`, `SelectField`, `DateField`, `applyApiError`, `Notice` e o provider, `onAuthUnavailable` ligado ao aviso, página de prova `/_e2e/formulario`
+    - Where: `src/ui/`, `src/api/errors/form-errors.ts`, `src/app/app.tsx`, `src/app/notices.tsx`, `src/routes/_e2e/formulario.tsx`, `e2e/form-dialog.spec.ts`, `package.json`
+    - Done when: `AC-0009-06`, `AC-0009-07` e `AC-0009-09` cobertos; `INV-0009-06` verificado
+- [ ] **T-0009-05 — Campo `slot` da navegação e a página Mais** · #63
+    - What: `slot` nos itens, barra inferior com no máximo quatro itens e **Mais**, rota `/mais` e o redirecionamento no desktop
+    - Where: `src/app/shell/`, `src/routes/_app/mais.tsx`, `e2e/more.spec.ts`
+    - Done when: `AC-0009-08` coberto
+
+## Administração de usuários
+
+Tarefas da [spec 0010](../specs/0010-users-admin.md), da issue de entrega [FCF-009](https://github.com/bhenriq-souza/finances-control-frontend/issues/50).
+
+- [ ] **T-0010-01 — Tela de usuários e perfis** · #64
+    - What: `/usuarios`, item **Usuários**, lista com o filtro de aguardando, diálogo de perfil e revogação
+    - Where: `src/features/identity/users-admin/`, `src/routes/_app/usuarios.tsx`, `src/app/shell/navigation.ts`, `e2e/users-admin.spec.ts`, `e2e/fixtures/data/users.ts`
+    - Done when: `AC-0010-01` a `AC-0010-07` cobertos; `INV-0010-01` a `INV-0010-03` verificados
+
+## Bancos, contas e cartões
+
+Tarefas da [spec 0011](../specs/0011-accounts.md), da issue de entrega [FCF-010](https://github.com/bhenriq-souza/finances-control-frontend/issues/51).
+
+- [ ] **T-0011-01 — Listas de contas, bancos e cartões** · #65
+    - What: `/contas`, `/contas/bancos`, `/cartoes`, `/cartoes/$cartaoId` (resumo), itens **Cartões** e **Contas**, só leitura
+    - Where: `src/features/accounts/` (exceto `forms/` e `transfers/`), `src/routes/_app/contas*`, `src/routes/_app/cartoes*`, `src/app/shell/navigation.ts`, `e2e/accounts.spec.ts`, `e2e/fixtures/data/accounts.ts`
+    - Done when: `AC-0011-01`, `AC-0011-02` e `AC-0011-08` cobertos; `INV-0011-03` verificado
+- [ ] **T-0011-02 — Cadastro de bancos, contas e cartões** · #66
+    - What: formulários de criar e alterar, arquivar e desarquivar, só com `accounts.write`; depende de T-0011-01
+    - Where: `src/features/accounts/forms/`, as páginas de lista da T-0011-01 (botões e `?novo`/`?editar`), `e2e/accounts-admin.spec.ts`
+    - Done when: `AC-0011-03` a `AC-0011-07` cobertos; `INV-0011-01`, `INV-0011-02` e `INV-0011-04` verificados
+
+## Despesas
+
+Tarefas da [spec 0012](../specs/0012-expenses.md), da issue de entrega [FCF-011](https://github.com/bhenriq-souza/finances-control-frontend/issues/52).
+
+- [ ] **T-0012-01 — Lista e detalhe de despesas** · #67
+    - What: `/despesas` com filtros e resumo, `/despesas/$despesaId` só leitura, item **Despesas**
+    - Where: `src/features/expenses/list/`, `src/features/expenses/detail/expense-detail.tsx`, `src/routes/_app/despesas*`, `src/app/shell/navigation.ts`, `e2e/expenses-list.spec.ts`, `e2e/fixtures/data/expenses.ts`
+    - Done when: `AC-0012-01`, `AC-0012-02` e `AC-0012-12` cobertos; `INV-0012-01` verificado
+- [ ] **T-0012-02 — Formulário de despesa** · #68
+    - What: criar (variável, parcelada, fixa) e alterar com escopo de série; depende de T-0012-01
+    - Where: `src/features/expenses/form/`, `e2e/expenses-form.spec.ts`
+    - Done when: `AC-0012-03`, `AC-0012-04` e `AC-0012-05` cobertos; `INV-0012-05` verificado
+- [ ] **T-0012-03 — Ações de status, exclusão e forma de pagamento** · #69
+    - What: ações do detalhe por status, pagar, excluir com cascata, trocar forma de pagamento, parâmetros `?pagar`, `?excluir`, `?meio`; depende de T-0012-01
+    - Where: `src/features/expenses/detail/actions/`, `e2e/expenses-detail.spec.ts`
+    - Done when: `AC-0012-06` a `AC-0012-10` cobertos; `INV-0012-02`, `INV-0012-03` e `INV-0012-04` verificados
+- [ ] **T-0012-04 — Tipos de despesa** · #70
+    - What: `/despesas/tipos` com criar, renomear, arquivar e desarquivar
+    - Where: `src/features/expenses/types/`, `src/routes/_app/despesas.tipos.tsx`, `e2e/expense-types.spec.ts`
+    - Done when: `AC-0012-11` coberto
+
+## Faturas e estornos
+
+Tarefas da [spec 0013](../specs/0013-statements.md), da issue de entrega [FCF-012](https://github.com/bhenriq-souza/finances-control-frontend/issues/53).
+
+- [ ] **T-0013-01 — Painel e detalhe de faturas** · #71
+    - What: fatura atual, anteriores e próximas em `/cartoes/$cartaoId`, e `/cartoes/$cartaoId/faturas/$faturaId`, só leitura
+    - Where: `src/features/statements/panel/`, `src/features/statements/detail/`, `src/routes/_app/cartoes.$cartaoId*`, `e2e/statements.spec.ts`, `e2e/fixtures/data/statements.ts`
+    - Done when: `AC-0013-01`, `AC-0013-02` e `AC-0013-10` cobertos; `INV-0013-01` e `INV-0013-03` verificados
+- [ ] **T-0013-02 — Pagamentos e mínimo** · #72
+    - What: pagar (total, mínimo, outro valor; aberta e fechada), desfazer o último, informar mínimo; depende de T-0013-01
+    - Where: `src/features/statements/payment/`, `e2e/statement-payments.spec.ts`
+    - Done when: `AC-0013-03` a `AC-0013-07` e `AC-0013-09` cobertos; `INV-0013-02` e `INV-0013-04` verificados
+- [ ] **T-0013-03 — Estornos** · #73
+    - What: novo estorno (com despesa de origem por `?despesa`), alterar descrição e observações, excluir; depende de T-0013-01
+    - Where: `src/features/statements/refunds/`, `e2e/refunds.spec.ts`
+    - Done when: `AC-0013-08` coberto
+
+## Receitas
+
+Tarefas da [spec 0014](../specs/0014-earnings.md), da issue de entrega [FCF-013](https://github.com/bhenriq-souza/finances-control-frontend/issues/54).
+
+- [ ] **T-0014-01 — Lista e detalhe de receitas** · #74
+    - What: `/receitas` com filtros e resumo, `/receitas/$receitaId` só leitura, item **Receitas**
+    - Where: `src/features/earnings/list/`, `src/features/earnings/detail/earning-detail.tsx`, `src/routes/_app/receitas*`, `src/app/shell/navigation.ts`, `e2e/earnings-list.spec.ts`, `e2e/fixtures/data/earnings.ts`
+    - Done when: `AC-0014-01`, `AC-0014-02` e `AC-0014-09` cobertos; `INV-0014-01` verificado
+- [ ] **T-0014-02 — Formulário de receita** · #75
+    - What: criar (variável, parcelada, fixa) e alterar com escopo de série e troca de conta; depende de T-0014-01
+    - Where: `src/features/earnings/form/`, `e2e/earnings-form.spec.ts`
+    - Done when: `AC-0014-03` e `AC-0014-04` cobertos; `INV-0014-04` verificado
+- [ ] **T-0014-03 — Ações de status e exclusão** · #76
+    - What: receber, verificar, desfazer recebimento, excluir com cascata, `?receber` e `?excluir`; depende de T-0014-01
+    - Where: `src/features/earnings/detail/actions/`, `e2e/earnings-detail.spec.ts`
+    - Done when: `AC-0014-05`, `AC-0014-06` e `AC-0014-07` cobertos; `INV-0014-02` e `INV-0014-03` verificados
+- [ ] **T-0014-04 — Tipos de receita** · #77
+    - What: `/receitas/tipos` com criar, renomear, arquivar e desarquivar
+    - Where: `src/features/earnings/types/`, `src/routes/_app/receitas.tipos.tsx`, `e2e/earning-types.spec.ts`
+    - Done when: `AC-0014-08` coberto
+
+## Dashboard e relatórios
+
+Tarefas da [spec 0015](../specs/0015-dashboard-and-reports.md), da issue de entrega [FCF-014](https://github.com/bhenriq-souza/finances-control-frontend/issues/55).
+
+- [ ] **T-0015-01 — Dashboard de saldo** · #78
+    - What: o dashboard em `/` pelos artboards aprovados e a remoção da `HomePage` provisória
+    - Where: `src/features/reporting/dashboard/`, `src/routes/_app/index.tsx`, `src/features/identity/pages/home-page.tsx` (remoção), `e2e/dashboard.spec.ts`, `e2e/fixtures/data/reports.ts`
+    - Done when: `AC-0015-01` a `AC-0015-05` e `AC-0015-10` cobertos; `INV-0015-01`, `INV-0015-02` e `INV-0015-04` verificados
+- [ ] **T-0015-02 — Relatórios** · #79
+    - What: `/relatorios` com as abas de saldo, por tipo e fluxo de caixa, `MonthColumns` e o item **Relatórios**
+    - Where: `src/features/reporting/reports/`, `src/ui/charts/month-columns.tsx`, `src/routes/_app/relatorios.tsx`, `src/app/shell/navigation.ts`, `e2e/reports.spec.ts`
+    - Done when: `AC-0015-06` a `AC-0015-09` cobertos; `INV-0015-03` verificado
+
+## Séries fixas
+
+Tarefas da [spec 0017](../specs/0017-recurrences.md), da issue de entrega [FCF-015](https://github.com/bhenriq-souza/finances-control-frontend/issues/56).
+
+- [ ] **T-0017-01 — Séries de despesas e receitas** · #80
+    - What: `/series` com as duas abas, os detalhes com as ocorrências, encerrar série, **Ver série** nos detalhes de despesa e de receita, item **Séries fixas**
+    - Where: `src/features/expenses/recurrences/`, `src/features/earnings/recurrences/`, os detalhes de despesa e de receita (link), `src/routes/_app/series*`, `src/app/shell/navigation.ts`, `e2e/recurrences.spec.ts`
+    - Done when: `AC-0017-01` a `AC-0017-05` cobertos; `INV-0017-01` a `INV-0017-03` verificados
+
+## Transferências
+
+Tarefas da [spec 0018](../specs/0018-transfers.md), da issue de entrega [FCF-016](https://github.com/bhenriq-souza/finances-control-frontend/issues/57).
+
+- [ ] **T-0018-01 — Transferências** · #81
+    - What: `/transferencias` e o detalhe, formulário, concluir, desfazer, excluir, item **Transferências**
+    - Where: `src/features/accounts/transfers/`, `src/routes/_app/transferencias*`, `src/app/shell/navigation.ts`, `e2e/transfers.spec.ts`, `e2e/fixtures/data/transfers.ts`
+    - Done when: `AC-0018-01` a `AC-0018-07` cobertos; `INV-0018-01` a `INV-0018-03` verificados
