@@ -22,6 +22,18 @@ describe('auth client selection', () => {
         expect(users.at(-1)).toMatchObject({ uid: 'e2e-ativo' });
     });
 
+    it('forwards the spec 0006 port methods to the implementation', async () => {
+        vi.stubEnv('MODE', 'e2e');
+        const client = getAuthClient();
+
+        await client.signUpWithEmail('Nova', 'nova@example.com', '12345678');
+        await client.sendEmailVerification();
+        await client.sendPasswordReset('nova@example.com');
+
+        await expect(client.reloadUser()).resolves.toMatchObject({ email: 'nova@example.com' });
+        await client.signInWithGoogle().catch(() => undefined);
+    });
+
     it('does not notify a listener removed before the implementation loads', async () => {
         vi.stubEnv('MODE', 'e2e');
         const client = getAuthClient();

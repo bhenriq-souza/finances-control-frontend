@@ -1,54 +1,116 @@
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { act, render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setTokenProvider } from '@/api/auth';
-import { ApiError } from '@/api/errors/api-error';
+import { ApiError, type ApiErrorCode } from '@/api/errors/api-error';
+import type { AuthClient, AuthUser } from '@/features/identity';
 
-const mocks = vi.hoisted(() => ({
-    client: {
+const mocks = vi.hoisted(() => ({ client: undefined as unknown as AuthClient }));
+
+vi.mock('@/features/identity', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/features/identity')>()),
+    getAuthClient: () => mocks.client,
+}));
+vi.mock('@/api/auth', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/api/auth')>()),
+    setTokenProvider: vi.fn(),
+}));
+
+import { App, createAppContext } from './app';
+import { bootstrap } from './bootstrap';
+
+const USER: AuthUser = { uid: 'u1', email: 'a@b.c', emailVerified: true };
+
+function fakeClient(user: AuthUser | null): AuthClient {
+    return {
+        onAuthStateChanged: (listener) => {
+            listener(user);
+            return () => undefined;
+        },
+        signInWithEmail: vi.fn(),
+        signInWithGoogle: vi.fn(),
         signOut: vi.fn().mockResolvedValue(undefined),
         getIdToken: vi.fn().mockResolvedValue('tok'),
-    },
-    captured: {} as { queryClient?: QueryClient },
-}));
-vi.mock('@/features/identity', () => ({ getAuthClient: () => mocks.client }));
-vi.mock('./router', () => ({ createAppRouter: () => ({}) }));
-vi.mock('@tanstack/react-router', () => ({
-    RouterProvider: () => {
-        mocks.captured.queryClient = useQueryClient();
-        return null;
-    },
-}));
-vi.mock('@/api/auth', () => ({ setTokenProvider: vi.fn() }));
-
-import { App } from './app';
-import { bootstrap } from './bootstrap';
+        signUpWithEmail: vi.fn(),
+        sendEmailVerification: vi.fn(),
+        sendPasswordReset: vi.fn(),
+        reloadUser: vi.fn(),
+    };
+}
 
 beforeEach(() => {
     vi.clearAllMocks();
+    mocks.client = fakeClient(USER);
+    window.history.replaceState({}, '', '/');
 });
 
-async function failQuery(code: ConstructorParameters<typeof ApiError>[0]['code']) {
-    await mocks.captured
-        .queryClient!.fetchQuery({
-            queryKey: [code],
-            queryFn: () => Promise.reject(new ApiError({ status: 401, code })),
+async function failQuery(
+    context: ReturnType<typeof createAppContext>,
+    code: ApiErrorCode,
+    meta?: Record<string, unknown>,
+) {
+    await context.queryClient
+        .fetchQuery({
+            queryKey: ['x', code],
+            queryFn: () => Promise.reject(new ApiError({ status: 403, code })),
             retry: false,
+            meta,
         })
         .catch(() => undefined);
 }
 
-describe('App global effects', () => {
-    it('signs out on UNAUTHENTICATED; the spec 0006 effects are still no-ops', async () => {
-        render(<App />);
-        await failQuery('UNAUTHENTICATED');
-        expect(mocks.client.signOut).toHaveBeenCalledTimes(1);
+const pathname = (context: ReturnType<typeof createAppContext>) =>
+    context.router.state.location.pathname;
 
-        await failQuery('PROFILE_PENDING');
-        await failQuery('EMAIL_NOT_VERIFIED');
-        await failQuery('AUTH_UNAVAILABLE');
+describe('App global effects (spec 0005 wired to the spec 0006 routes)', () => {
+    it('signs out, clears the cache and goes to /entrar with the origin on UNAUTHENTICATED', async () => {
+        const context = createAppContext();
+        context.queryClient.setQueryData(['users', 'me'], { name: 'x' });
+        await context.router.load();
+
+        await failQuery(context, 'UNAUTHENTICATED');
+
+        await vi.waitFor(() => expect(pathname(context)).toBe('/entrar'));
         expect(mocks.client.signOut).toHaveBeenCalledTimes(1);
+        expect(context.router.state.location.search).toEqual({ redirect: '/' });
+        expect(context.queryClient.getQueryData(['users', 'me'])).toBeUndefined();
+    });
+
+    it('goes to /aguardando-aprovacao on PROFILE_PENDING, dropping the cached /users/me', async () => {
+        const context = createAppContext();
+        context.queryClient.setQueryData(['users', 'me'], { name: 'x' });
+
+        await failQuery(context, 'PROFILE_PENDING');
+
+        await vi.waitFor(() => expect(pathname(context)).toBe('/aguardando-aprovacao'));
+        expect(context.queryClient.getQueryData(['users', 'me'])).toBeUndefined();
+    });
+
+    it('goes to /verificar-email on EMAIL_NOT_VERIFIED', async () => {
+        const context = createAppContext();
+
+        await failQuery(context, 'EMAIL_NOT_VERIFIED');
+
+        await vi.waitFor(() => expect(pathname(context)).toBe('/verificar-email'));
+    });
+
+    it('does nothing on AUTH_UNAVAILABLE, nor for queries that opt out of the global effects', async () => {
+        const context = createAppContext();
+        const navigate = vi.spyOn(context.router, 'navigate');
+
+        await failQuery(context, 'AUTH_UNAVAILABLE');
+        await failQuery(context, 'UNAUTHENTICATED', { globalEffects: false });
+
+        expect(navigate).not.toHaveBeenCalled();
+        expect(mocks.client.signOut).not.toHaveBeenCalled();
+    });
+
+    it('renders the router inside the providers', async () => {
+        mocks.client = fakeClient(null);
+        render(<App />);
+        expect(
+            await screen.findByRole('heading', { name: 'Entrar no FTech Finance' }),
+        ).toBeInTheDocument();
     });
 });
 

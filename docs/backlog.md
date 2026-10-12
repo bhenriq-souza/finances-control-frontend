@@ -64,7 +64,7 @@ Tarefas da [spec 0006](../specs/0006-auth-and-shell.md), da issue de entrega [FC
     - What: primeira tarefa depois das specs de fundação; roteiro da spec no desktop e no celular, contra a página do spike publicada em `http://finances.dev.homelab.local/`; sucesso = login Google concluído e `GET /api/users/me` com `200` pelo token obtido; plano B = TLS no ingress de `dev` com CA local
     - Where: evidência no PR; só `docs/backlog.md` e, se falhar, a revisão da spec 0006
     - Done when: `AC-0006-01` — resultado registrado; depende de T-0003-02 e T-0007-04
-- [ ] **T-0006-02 — Rotas de autenticação, estados da conta e guarda** · #18
+- [x] **T-0006-02 — Rotas de autenticação, estados da conta e guarda** · #18
     - What: porta `AuthClient` completa, `/entrar`, `/criar-conta`, `/redefinir-senha`, `/verificar-email`, `/aguardando-aprovacao`, layout `_app` com a guarda por `GET /users/me`, `setTokenProvider` e a remoção da página do spike
     - Where: `src/features/identity/`, `src/routes/`, `src/app/`, `e2e/`
     - Done when: `AC-0006-02` a `AC-0006-05`, `AC-0006-09` e `AC-0006-10` cobertos; `INV-0006-01`, `INV-0006-02`, `INV-0006-05` e `INV-0006-06` verificados

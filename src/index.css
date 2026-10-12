@@ -9,3 +9,10 @@
 @import '@fontsource/jetbrains-mono/400.css';
 @import '@fontsource/jetbrains-mono/500.css';
 @import '@fontsource/jetbrains-mono/600.css';
+
+/* Fundo e texto da página pelo tema, antes de qualquer tela (spec 0006). */
+@layer base {
+    body {
+        @apply bg-fundo font-sans text-texto;
+    }
+}
