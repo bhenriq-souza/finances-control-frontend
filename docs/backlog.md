@@ -250,7 +250,7 @@ Tarefas da [spec 0017](../specs/0017-recurrences.md), da issue de entrega [FCF-0
 
 Tarefas da [spec 0018](../specs/0018-transfers.md), da issue de entrega [FCF-016](https://github.com/bhenriq-souza/finances-control-frontend/issues/57).
 
-- [ ] **T-0018-01 — Transferências** · #81
+- [x] **T-0018-01 — Transferências** · #81
     - What: `/transferencias` e o detalhe, formulário, concluir, desfazer, excluir, item **Transferências**
     - Where: `src/features/accounts/transfers/`, `src/routes/_app/transferencias*`, `src/app/shell/navigation.ts`, `e2e/transfers.spec.ts`, `e2e/fixtures/data/transfers.ts`
     - Done when: `AC-0018-01` a `AC-0018-07` cobertos; `INV-0018-01` a `INV-0018-03` verificados

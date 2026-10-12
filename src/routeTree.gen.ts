@@ -29,6 +29,8 @@ import { Route as AppDespesasIndexRouteImport } from './routes/_app/despesas.ind
 import { Route as AppDespesasDespesaIdRouteImport } from './routes/_app/despesas.$despesaId'
 import { Route as AppDespesasTiposRouteImport } from './routes/_app/despesas.tipos'
 import { Route as AppReceitasTiposRouteImport } from './routes/_app/receitas.tipos'
+import { Route as AppTransferenciasIndexRouteImport } from './routes/_app/transferencias.index'
+import { Route as AppTransferenciasTransferenciaIdRouteImport } from './routes/_app/transferencias.$transferenciaId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -129,6 +131,17 @@ const AppReceitasTiposRoute = AppReceitasTiposRouteImport.update({
   path: '/receitas/tipos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTransferenciasIndexRoute = AppTransferenciasIndexRouteImport.update({
+  id: '/transferencias/',
+  path: '/transferencias/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTransferenciasTransferenciaIdRoute =
+  AppTransferenciasTransferenciaIdRouteImport.update({
+    id: '/transferencias/$transferenciaId',
+    path: '/transferencias/$transferenciaId',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -147,9 +160,11 @@ export interface FileRoutesByFullPath {
   '/despesas/$despesaId': typeof AppDespesasDespesaIdRoute
   '/despesas/tipos': typeof AppDespesasTiposRoute
   '/receitas/tipos': typeof AppReceitasTiposRoute
+  '/transferencias/$transferenciaId': typeof AppTransferenciasTransferenciaIdRoute
   '/cartoes/': typeof AppCartoesIndexRoute
   '/contas/': typeof AppContasIndexRoute
   '/despesas/': typeof AppDespesasIndexRoute
+  '/transferencias/': typeof AppTransferenciasIndexRoute
 }
 export interface FileRoutesByTo {
   '/_e2e': typeof E2eRouteWithChildren
@@ -168,9 +183,11 @@ export interface FileRoutesByTo {
   '/despesas/$despesaId': typeof AppDespesasDespesaIdRoute
   '/despesas/tipos': typeof AppDespesasTiposRoute
   '/receitas/tipos': typeof AppReceitasTiposRoute
+  '/transferencias/$transferenciaId': typeof AppTransferenciasTransferenciaIdRoute
   '/cartoes': typeof AppCartoesIndexRoute
   '/contas': typeof AppContasIndexRoute
   '/despesas': typeof AppDespesasIndexRoute
+  '/transferencias': typeof AppTransferenciasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -191,9 +208,11 @@ export interface FileRoutesById {
   '/_app/despesas/$despesaId': typeof AppDespesasDespesaIdRoute
   '/_app/despesas/tipos': typeof AppDespesasTiposRoute
   '/_app/receitas/tipos': typeof AppReceitasTiposRoute
+  '/_app/transferencias/$transferenciaId': typeof AppTransferenciasTransferenciaIdRoute
   '/_app/cartoes/': typeof AppCartoesIndexRoute
   '/_app/contas/': typeof AppContasIndexRoute
   '/_app/despesas/': typeof AppDespesasIndexRoute
+  '/_app/transferencias/': typeof AppTransferenciasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -214,9 +233,11 @@ export interface FileRouteTypes {
     | '/despesas/$despesaId'
     | '/despesas/tipos'
     | '/receitas/tipos'
+    | '/transferencias/$transferenciaId'
     | '/cartoes/'
     | '/contas/'
     | '/despesas/'
+    | '/transferencias/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/_e2e'
@@ -235,9 +256,11 @@ export interface FileRouteTypes {
     | '/despesas/$despesaId'
     | '/despesas/tipos'
     | '/receitas/tipos'
+    | '/transferencias/$transferenciaId'
     | '/cartoes'
     | '/contas'
     | '/despesas'
+    | '/transferencias'
   id:
     | '__root__'
     | '/_app'
@@ -257,9 +280,11 @@ export interface FileRouteTypes {
     | '/_app/despesas/$despesaId'
     | '/_app/despesas/tipos'
     | '/_app/receitas/tipos'
+    | '/_app/transferencias/$transferenciaId'
     | '/_app/cartoes/'
     | '/_app/contas/'
     | '/_app/despesas/'
+    | '/_app/transferencias/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -414,6 +439,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReceitasTiposRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/transferencias/': {
+      id: '/_app/transferencias/'
+      path: '/transferencias'
+      fullPath: '/transferencias/'
+      preLoaderRoute: typeof AppTransferenciasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/transferencias/$transferenciaId': {
+      id: '/_app/transferencias/$transferenciaId'
+      path: '/transferencias/$transferenciaId'
+      fullPath: '/transferencias/$transferenciaId'
+      preLoaderRoute: typeof AppTransferenciasTransferenciaIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -426,9 +465,11 @@ interface AppRouteChildren {
   AppDespesasDespesaIdRoute: typeof AppDespesasDespesaIdRoute
   AppDespesasTiposRoute: typeof AppDespesasTiposRoute
   AppReceitasTiposRoute: typeof AppReceitasTiposRoute
+  AppTransferenciasTransferenciaIdRoute: typeof AppTransferenciasTransferenciaIdRoute
   AppCartoesIndexRoute: typeof AppCartoesIndexRoute
   AppContasIndexRoute: typeof AppContasIndexRoute
   AppDespesasIndexRoute: typeof AppDespesasIndexRoute
+  AppTransferenciasIndexRoute: typeof AppTransferenciasIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -440,9 +481,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppDespesasDespesaIdRoute: AppDespesasDespesaIdRoute,
   AppDespesasTiposRoute: AppDespesasTiposRoute,
   AppReceitasTiposRoute: AppReceitasTiposRoute,
+  AppTransferenciasTransferenciaIdRoute: AppTransferenciasTransferenciaIdRoute,
   AppCartoesIndexRoute: AppCartoesIndexRoute,
   AppContasIndexRoute: AppContasIndexRoute,
   AppDespesasIndexRoute: AppDespesasIndexRoute,
+  AppTransferenciasIndexRoute: AppTransferenciasIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
