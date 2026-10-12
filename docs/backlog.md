@@ -8,7 +8,7 @@ Este arquivo é a camada de **execução**. A camada de **entrega** são as issu
 
 Tarefas das specs [0001](../specs/0001-development-workflow.md) e [0002](../specs/0002-quality-gates.md), da issue de entrega [FCF-001](https://github.com/bhenriq-souza/finances-control-frontend/issues/1) (seed do kit). O seed já instalou o hook `commit-msg` com commitlint e o orquestrador com os onze gates.
 
-- [ ] **T-0001-01 — Tornar o status check `check` obrigatório em `develop`** · #8
+- [x] **T-0001-01 — Tornar o status check `check` obrigatório em `develop`** · #8
     - What: depois do merge do seed e da primeira execução do workflow `ci`, exigir o check verde para merge (regra 3 da proteção de branch)
     - Where: configurações do repositório no GitHub
     - Done when: `AC-0001-03` verificado — a proteção lista `check` como obrigatório e um PR vermelho fica bloqueado
