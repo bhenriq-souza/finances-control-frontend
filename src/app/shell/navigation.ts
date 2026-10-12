@@ -1,5 +1,13 @@
 import type { LinkProps } from '@tanstack/react-router';
-import { CreditCard, Ellipsis, House, Landmark, type LucideIcon, Users } from 'lucide-react';
+import {
+    ArrowDown,
+    CreditCard,
+    Ellipsis,
+    House,
+    Landmark,
+    type LucideIcon,
+    Users,
+} from 'lucide-react';
 
 import type { Profile } from '@/features/identity';
 
@@ -27,6 +35,7 @@ const ALL_PROFILES: readonly Profile[] = ['ADMIN', 'BILLER', 'VIEWER'];
 /** Itens da navegação, na ordem de exibição; cada spec de tela acrescenta os seus. */
 export const NAV_ITEMS: readonly NavItem[] = [
     { to: '/', label: 'Início', icon: House, profiles: ALL_PROFILES, slot: 'barra' },
+    { to: '/despesas', label: 'Despesas', icon: ArrowDown, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/cartoes', label: 'Cartões', icon: CreditCard, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/contas', label: 'Contas', icon: Landmark, profiles: ALL_PROFILES, slot: 'mais' },
     { to: '/usuarios', label: 'Usuários', icon: Users, profiles: ['ADMIN'], slot: 'mais' },

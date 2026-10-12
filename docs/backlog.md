@@ -169,7 +169,7 @@ Tarefas da [spec 0011](../specs/0011-accounts.md), da issue de entrega [FCF-010]
 
 Tarefas da [spec 0012](../specs/0012-expenses.md), da issue de entrega [FCF-011](https://github.com/bhenriq-souza/finances-control-frontend/issues/52).
 
-- [ ] **T-0012-01 — Lista e detalhe de despesas** · #67
+- [x] **T-0012-01 — Lista e detalhe de despesas** · #67
     - What: `/despesas` com filtros e resumo, `/despesas/$despesaId` só leitura, item **Despesas**
     - Where: `src/features/expenses/list/`, `src/features/expenses/detail/expense-detail.tsx`, `src/routes/_app/despesas*`, `src/app/shell/navigation.ts`, `e2e/expenses-list.spec.ts`, `e2e/fixtures/data/expenses.ts`
     - Done when: `AC-0012-01`, `AC-0012-02` e `AC-0012-12` cobertos; `INV-0012-01` verificado
