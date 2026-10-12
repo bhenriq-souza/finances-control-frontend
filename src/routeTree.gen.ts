@@ -16,6 +16,7 @@ import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as VerificarEmailRouteImport } from './routes/verificar-email'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppMaisRouteImport } from './routes/_app/mais'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -51,6 +52,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMaisRoute = AppMaisRouteImport.update({
+  id: '/mais',
+  path: '/mais',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/entrar': typeof EntrarRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
+  '/mais': typeof AppMaisRoute
 }
 export interface FileRoutesByTo {
   '/aguardando-aprovacao': typeof AguardandoAprovacaoRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/entrar': typeof EntrarRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
+  '/mais': typeof AppMaisRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/entrar': typeof EntrarRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
+  '/_app/mais': typeof AppMaisRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/redefinir-senha'
     | '/verificar-email'
+    | '/mais'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/aguardando-aprovacao'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/redefinir-senha'
     | '/verificar-email'
+    | '/mais'
     | '/'
   id:
     | '__root__'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/entrar'
     | '/redefinir-senha'
     | '/verificar-email'
+    | '/_app/mais'
     | '/_app/'
   fileRoutesById: FileRoutesById
 }
@@ -166,14 +178,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/mais': {
+      id: '/_app/mais'
+      path: '/mais'
+      fullPath: '/mais'
+      preLoaderRoute: typeof AppMaisRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppMaisRoute: typeof AppMaisRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppMaisRoute: AppMaisRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
