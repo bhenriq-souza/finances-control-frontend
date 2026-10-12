@@ -20,7 +20,7 @@ Definir os portões de qualidade do repositório e o **orquestrador único** que
 
 ### Gates
 
-Executados nesta ordem: `contract` vem primeiro porque gera os tipos da API que `lint`, `types`, `test`, `build` e `e2e` consomem.
+Executados nesta ordem: `contract` vem primeiro porque gera os tipos da API e a árvore de rotas que `lint`, `types`, `test`, `build` e `e2e` consomem.
 
 | Gate         | Comando                                   | Verifica                                                             |
 | ------------ | ----------------------------------------- | -------------------------------------------------------------------- |
@@ -72,6 +72,7 @@ O frontend não escreve à mão o que vem de outro repositório: os tipos da API
 2. **Gera os tipos da API** com `openapi-typescript` em `src/api/generated/schema.d.ts`. O arquivo é ignorado pelo Git: ele é refeito por este gate e pelos scripts `predev`/`prebuild` (spec 0005), nunca commitado — o contrato não é vendorizado.
 3. **Confere o tema:** regenera o tema a partir dos tokens, em memória, e compara com `src/ui/theme/tokens.css`, que é commitado (spec 0004). Qualquer diferença é FAIL — significa que o CSS foi editado à mão ou que o `ref` mudou sem regenerar. Correção: `npm run theme`.
 4. **Confere o catálogo de erros:** as chaves do catálogo pt-BR (spec 0005) são exatamente os valores do enum `ErrorCode` do contrato. Código sem mensagem, ou mensagem de código que não existe, é FAIL, citando os códigos (INV-0000-06).
+5. **Gera a árvore de rotas** `src/routeTree.gen.ts` a partir de `src/routes/`, com a configuração de `tsr.config.json` (spec 0003). Não deriva de outro repositório, mas é gerada aqui porque os gates seguintes a consomem e ela não é commitada. Falha do gerador (rota inválida ou duplicada) é FAIL, com a mensagem dele.
 
 - **Rede:** sem rede o gate falha; ele não vira SKIP, como o `sast`.
 - **Disponibilidade:** sem `scripts/contract.mjs` ou sem `sources.json`, o gate é SKIP (contexto). Os passos 3 e 4 são SKIP (contexto), dentro do gate, enquanto o tema ou o catálogo ainda não existirem (antes das tarefas das specs 0004 e 0005), com o motivo impresso.

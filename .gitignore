@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 dist/
 coverage/
 *.log
@@ -12,6 +12,10 @@ coverage/
 
 # Tipos gerados do contrato da API pelo gate contract (spec 0002): nunca commitados
 src/api/generated/
+
+# Árvore de rotas gerada de src/routes/ (spec 0003) e a pasta temporária do gerador: nunca commitadas
+src/routeTree.gen.ts
+.tanstack/
 
 # Playwright
 playwright-report/

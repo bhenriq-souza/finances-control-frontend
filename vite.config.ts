@@ -31,13 +31,9 @@ function excludeRuntimeConfig(): Plugin {
 
 export default defineConfig({
     plugins: [
-        // Antes do plugin do React (exigência do plugin do roteador).
-        tanstackRouter({
-            target: 'react',
-            autoCodeSplitting: true,
-            routesDirectory: './src/routes',
-            generatedRouteTree: './src/routeTree.gen.ts',
-        }),
+        // Antes do plugin do React (exigência do plugin do roteador). A configuração fica em
+        // tsr.config.json, a mesma que scripts/routes-generate.mjs usa (spec 0003).
+        tanstackRouter(),
         react(),
         tailwindcss(),
         excludeRuntimeConfig(),

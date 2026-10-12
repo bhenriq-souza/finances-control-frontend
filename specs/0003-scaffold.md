@@ -20,21 +20,21 @@ Pôr de pé a SPA do [ADR-0001](https://github.com/bhenriq-souza/finances-contro
 
 ### Kit e versões-base
 
-| Peça               | Pacote(s)                                                                              |
-| ------------------ | -------------------------------------------------------------------------------------- |
-| UI                 | `react@19`, `react-dom@19`                                                             |
-| Build              | `vite@7`, `@vitejs/plugin-react`                                                       |
-| Tipos              | `typescript@~5.8`, `strict: true`, `noUncheckedIndexedAccess: true`                    |
-| Rotas              | `@tanstack/react-router`, `@tanstack/router-plugin` (rotas por arquivo)                |
-| Estado de servidor | `@tanstack/react-query`                                                                |
-| Formulários        | `react-hook-form`, `zod@4`, `@hookform/resolvers`                                      |
-| Estilo             | `tailwindcss@4`, `@tailwindcss/vite`, shadcn/ui (CLI, componentes copiados)            |
-| Ícones             | `lucide-react`                                                                         |
-| Auth               | `firebase` (só o módulo `firebase/auth`)                                               |
-| Testes             | `vitest`, `@vitest/coverage-v8`, `@testing-library/react`, `jsdom`                     |
-| E2E                | `@playwright/test` (Chromium)                                                          |
-| Fronteiras         | `dependency-cruiser`                                                                   |
-| Lint               | `eslint@9`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-config-prettier` |
+| Peça               | Pacote(s)                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| UI                 | `react@19`, `react-dom@19`                                                                            |
+| Build              | `vite@7`, `@vitejs/plugin-react`                                                                      |
+| Tipos              | `typescript@~5.8`, `strict: true`, `noUncheckedIndexedAccess: true`                                   |
+| Rotas              | `@tanstack/react-router`, `@tanstack/router-plugin` (rotas por arquivo), `@tanstack/router-generator` |
+| Estado de servidor | `@tanstack/react-query`                                                                               |
+| Formulários        | `react-hook-form`, `zod@4`, `@hookform/resolvers`                                                     |
+| Estilo             | `tailwindcss@4`, `@tailwindcss/vite`, shadcn/ui (CLI, componentes copiados)                           |
+| Ícones             | `lucide-react`                                                                                        |
+| Auth               | `firebase` (só o módulo `firebase/auth`)                                                              |
+| Testes             | `vitest`, `@vitest/coverage-v8`, `@testing-library/react`, `jsdom`                                    |
+| E2E                | `@playwright/test` (Chromium)                                                                         |
+| Fronteiras         | `dependency-cruiser`                                                                                  |
+| Lint               | `eslint@9`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-config-prettier`                |
 
 As versões exatas ficam no `package-lock.json`. Trocar uma peça do kit exige ADR local em `specs/adr/` (ADR-0001, _Consequences_).
 
@@ -52,6 +52,16 @@ As versões exatas ficam no `package-lock.json`. Trocar uma peça do kit exige A
 
 Os scripts `predev`/`prebuild` que geram os tipos da API e `theme` entram pelas specs 0005 e 0004.
 
+### Árvore de rotas gerada
+
+`src/routeTree.gen.ts` é derivado de `src/routes/` e **não é commitado** (`.gitignore`, como `src/api/generated/`), para que duas tarefas que acrescentam rotas não conflitem nesse arquivo. A configuração do gerador fica em `tsr.config.json`, na raiz, e três caminhos a usam, com saída idêntica:
+
+- o plugin `tanstackRouter()` do Vite, em `dev`, `build` e no servidor do `e2e`;
+- `scripts/routes-generate.mjs` (`npm run routes:generate`, também no `predev`), que chama o `Generator` de `@tanstack/router-generator`;
+- o passo 5 do gate `contract` (spec 0002), que gera o arquivo antes de `lint`, `types`, `test` e `build`.
+
+`@tanstack/router-generator` fica na **mesma versão exata** que `@tanstack/router-plugin` declara para ele (sem `^`), para que o script e o plugin gerem o mesmo arquivo; atualizar o plugin é atualizar os dois juntos. A pasta temporária do gerador, `.tanstack/`, também é ignorada. Num worktree novo, rode `node scripts/contract.mjs` (ou `npm run routes:generate`) antes de `tsc` ou `eslint`.
+
 ### Estrutura de pastas
 
 ```
@@ -59,7 +69,7 @@ src/
   main.tsx                ponto de entrada: lê a configuração, monta os providers e o roteador
   app/                    providers (QueryClient, roteador), app shell, telas de erro fatal
   routes/                 rotas do TanStack Router por arquivo — finas, só compõem features
-  routeTree.gen.ts        gerado pelo plugin do roteador, commitado
+  routeTree.gen.ts        gerado de routes/, ignorado pelo Git (abaixo)
   features/
     identity/             autenticação e usuário (F001); único lugar que importa `firebase`
     accounts/ expenses/ statements/ earnings/ reporting/   vazios até as specs 0011+

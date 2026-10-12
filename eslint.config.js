@@ -15,8 +15,10 @@ export default tseslint.config(
             'test-results/**',
             'blob-report/**',
             '.claude/worktrees/**',
-            // Gerados: pelo plugin do roteador e pelo gate contract (spec 0002).
+            // Gerados pelo gate contract (spec 0002), pelo plugin do roteador e pela pasta temporária
+            // do gerador de rotas.
             'src/routeTree.gen.ts',
+            '.tanstack/**',
             'src/api/generated/**',
         ],
     },

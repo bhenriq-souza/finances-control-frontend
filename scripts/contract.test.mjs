@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -12,6 +12,7 @@ import {
     extractCatalogKeys,
     extractErrorCodes,
     generateApiTypes,
+    generateRouteTree,
     pendingStep,
     runContract,
     sha256,
@@ -19,6 +20,7 @@ import {
     STEPS,
     verifySource,
 } from './contract.mjs';
+import { generateRoutes } from './routes-generate.mjs';
 import { generateTheme } from './theme.mjs';
 
 const CONTENT = 'openapi: 3.1.0\n';
@@ -319,6 +321,55 @@ describe('checkTheme (step 3, AC-0004-02)', () => {
     });
 });
 
+describe('generateRouteTree (step 5)', () => {
+    it('passes after generating the route tree', async () => {
+        let calls = 0;
+        const result = await generateRouteTree({ generateRoutes: async () => calls++ });
+        expect(result.status).toBe('PASS');
+        expect(calls).toBe(1);
+    });
+
+    it('fails with the generator message', async () => {
+        const result = await generateRouteTree({
+            generateRoutes: async () => {
+                throw new Error('rota duplicada');
+            },
+        });
+        expect(result).toEqual({
+            status: 'FAIL',
+            lines: ['falha ao gerar a árvore de rotas: rota duplicada'],
+        });
+    });
+
+    it('writes the tree of a routes directory, using tsr.config.json', async () => {
+        const root = await mkdtemp(join(tmpdir(), 'routes-'));
+        await writeFile(
+            join(root, 'tsr.config.json'),
+            JSON.stringify({
+                target: 'react',
+                routesDirectory: './src/routes',
+                generatedRouteTree: './src/routeTree.gen.ts',
+                // Na mesma pasta temporária: o gerador renomeia do tmpDir para o destino.
+                tmpDir: join(root, '.tanstack-tmp'),
+            }),
+        );
+        await mkdir(join(root, 'src/routes'), { recursive: true });
+        await writeFile(
+            join(root, 'src/routes/__root.tsx'),
+            "import { createRootRoute } from '@tanstack/react-router';\nexport const Route = createRootRoute();\n",
+        );
+        await writeFile(
+            join(root, 'src/routes/sobre.tsx'),
+            "import { createFileRoute } from '@tanstack/react-router';\nexport const Route = createFileRoute('/sobre')();\n",
+        );
+
+        const path = await generateRoutes(root);
+
+        expect(path).toBe(join(root, 'src/routeTree.gen.ts'));
+        expect(await readFile(path, 'utf8')).toContain("path: '/sobre'");
+    });
+});
+
 describe('runContract', () => {
     it('skips step 3 (contexto) only when sources.json has no tokens entry', async () => {
         const log = [];
@@ -331,8 +382,8 @@ describe('runContract', () => {
         expect(log[0]).toMatch(/^SKIP \(contexto\)/);
     });
 
-    it('declares the four steps in order', () => {
-        expect(STEPS.map((step) => step.title.charAt(0))).toEqual(['1', '2', '3', '4']);
+    it('declares the five steps in order', () => {
+        expect(STEPS.map((step) => step.title.charAt(0))).toEqual(['1', '2', '3', '4', '5']);
     });
 
     it('runs every step after a failure and exits with 1', async () => {
