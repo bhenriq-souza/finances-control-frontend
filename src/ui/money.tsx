@@ -14,11 +14,11 @@ type MoneyBaseProps = {
 };
 
 /**
- * `tone="auto"` colore pelo sinal e por isso exige um sinal visível (INV-0008-03):
- * `sign="never"` só combina com `tone="neutral"`.
+ * `tone="auto"` colore pelo sinal e por isso exige o sinal sempre visível (INV-0008-03): só
+ * combina com `sign="always"`, para que um positivo verde venha com o `+`.
  */
 export type MoneyProps = MoneyBaseProps &
-    ({ sign?: 'auto' | 'always'; tone?: 'auto' | 'neutral' } | { sign: 'never'; tone?: 'neutral' });
+    ({ sign?: 'auto' | 'always' | 'never'; tone?: 'neutral' } | { sign: 'always'; tone: 'auto' });
 
 const SIZE_CLASS: Record<MoneySize, string> = {
     valor: 'text-valor',
@@ -40,8 +40,8 @@ export function Money({
     size = 'valor',
     className,
 }: MoneyProps) {
-    // Guarda de execução de INV-0008-03: sem sinal, nunca há cor.
-    const colored = tone === 'auto' && sign !== 'never';
+    // Guarda de execução de INV-0008-03: cor só com o sinal sempre visível.
+    const colored = tone === 'auto' && sign === 'always';
 
     return (
         <span

@@ -20,20 +20,17 @@ describe('Money', () => {
     });
 
     it.each([
-        ['auto', 1230, '+R$ 12,30'] as const,
-        ['auto', -1230, '−R$ 12,30'] as const,
-        ['always', 1230, '+R$ 12,30'] as const,
-        ['always', -1230, '−R$ 12,30'] as const,
-        ['always', 0, 'R$ 0,00'] as const,
-    ])('colours by sign with sign=%s and cents=%i', (sign, cents, text) => {
-        const el = renderMoney({ cents: c(cents), sign, tone: 'auto' });
-        expect(el.textContent).toBe(sign === 'auto' && cents > 0 ? 'R$ 12,30' : text);
-        const expected = cents > 0 ? 'text-positivo' : cents < 0 ? 'text-negativo' : 'text-texto';
-        expect(el).toHaveClass(expected);
+        [1230, '+R$ 12,30', 'text-positivo'] as const,
+        [-1230, '−R$ 12,30', 'text-negativo'] as const,
+        [0, 'R$ 0,00', 'text-texto'] as const,
+    ])('colours by sign with sign=always, cents=%i', (cents, text, colour) => {
+        const el = renderMoney({ cents: c(cents), sign: 'always', tone: 'auto' });
+        expect(el.textContent).toBe(text);
+        expect(el).toHaveClass(colour);
     });
 
     it('uses the neutral colour for zero with tone auto', () => {
-        const el = renderMoney({ cents: c(0), tone: 'auto' });
+        const el = renderMoney({ cents: c(0), sign: 'always', tone: 'auto' });
         expect(el).toHaveClass('text-texto');
         expect(el).not.toHaveClass('text-positivo', 'text-negativo');
     });
@@ -51,14 +48,17 @@ describe('Money', () => {
         expect(el).toHaveClass('text-texto');
     });
 
-    it('INV-0008-03: tone auto with sign never is a type error and never colours at runtime', () => {
-        // @ts-expect-error tone="auto" requires a visible sign
-        const props: MoneyProps = { cents: c(-500), sign: 'never', tone: 'auto' };
-        const el = renderMoney(props);
-        expect(el).toHaveTextContent('R$ 5,00');
-        expect(el).toHaveClass('text-texto');
-        expect(el).not.toHaveClass('text-positivo', 'text-negativo');
-    });
+    it.each([['never', -500, 'R$ 5,00'] as const, ['auto', 500, 'R$ 5,00'] as const])(
+        'INV-0008-03: tone auto with sign=%s is a type error and never colours at runtime',
+        (sign, cents, text) => {
+            // @ts-expect-error tone="auto" requires sign="always"
+            const props: MoneyProps = { cents: c(cents), sign, tone: 'auto' };
+            const el = renderMoney(props);
+            expect(el).toHaveTextContent(text);
+            expect(el).toHaveClass('text-texto');
+            expect(el).not.toHaveClass('text-positivo', 'text-negativo');
+        },
+    );
 
     it.each(['valor', 'valor-pequeno', 'valor-destaque'] as const)(
         'applies the %s money style',
