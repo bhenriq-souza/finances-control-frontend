@@ -37,7 +37,7 @@ Igual à de despesas (spec 0012), com estas diferenças:
 
 - consulta `GET /earnings` com `from`/`to` = `monthRange(mes)` e `status`, `kind`, `earningTypeId`, `bankAccountId`, `installmentGroupId`;
 - o filtro de meio é só de conta;
-- resumo: total do mês e "n recebidas · n pendentes · n atrasadas";
+- resumo: total do mês e "n recebidas · n pendentes · n atrasadas", com **pendentes** = `OPEN`, `FORECAST` e `VERIFYING`, como na spec 0012;
 - coluna Conta (rótulo por `useAccountLookup`); valor com `sign="always"` positivo (`+R$`) e `tone="auto"`;
 - **Nova receita** e **Tipos de receita** com `entries.write`.
 

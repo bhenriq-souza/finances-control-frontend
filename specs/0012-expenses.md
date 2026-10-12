@@ -38,7 +38,7 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 - **Consulta:** `GET /expenses` com `from`/`to` = `monthRange(mes)` e, quando presentes, `status`, `kind` (de `natureza`), `expenseTypeId` (de `tipo`), `bankAccountId` (de `conta`), `creditCardId` (de `cartao`), `installmentGroupId` (de `grupo`; com `grupo`, o mês é ignorado e a lista mostra o grupo inteiro). Chave `queryKeys.expenses.list(filtros)`.
 - **Filtros:** navegação de mês (‹ outubro de 2026 ›), e um painel **Filtros** (folha no celular, linha de selects no tablet e no desktop) com status (um só, como a API), tipo, conta ou cartão (um `SelectField` com os grupos "Contas" e "Cartões"), natureza (Variável, Parcelada, Fixa). Filtro ativo aparece como etiqueta removível. Tudo na URL.
 - **Ordem:** `occurredOn` crescente, depois `description` (no cliente).
-- **Resumo** acima da lista: total do mês (soma de `amountCents` da lista) e as contagens "n pagas · n pendentes · n vencidas".
+- **Resumo** acima da lista: total do mês (soma de `amountCents` da lista) e as contagens "n pagas · n pendentes · n vencidas". **Pendentes** são as de status `OPEN`, `FORECAST` e `VERIFYING`, então as três contagens somam o número de itens (decisão do responsável em 2026-10-12).
 - **`EntryList`:**
 
 | Coluna         | Conteúdo                                                                             |
