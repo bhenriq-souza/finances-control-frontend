@@ -1,7 +1,7 @@
 ---
 id: '0010'
 title: Administração de usuários e perfis
-status: approved
+status: implemented
 depends_on: ['0006', '0009']
 ---
 
