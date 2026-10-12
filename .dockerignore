@@ -1,0 +1,23 @@
+# Contexto do build da imagem (spec 0007): só o que o build precisa.
+# Configuração de runtime local nunca entra na imagem (vem do ConfigMap).
+public/config.js
+
+node_modules
+dist
+coverage
+playwright-report
+test-results
+blob-report
+e2e
+specs
+docs
+.git
+.github
+.claude
+.husky
+.env
+.env.*
+*.log
+
+# Gerado no build pelo prebuild, nunca copiado do host
+src/api/generated

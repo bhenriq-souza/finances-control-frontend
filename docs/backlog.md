@@ -77,7 +77,7 @@ Tarefas da [spec 0006](../specs/0006-auth-and-shell.md), da issue de entrega [FC
 
 Tarefas da [spec 0007](../specs/0007-publication.md), da issue de entrega [FCF-006](https://github.com/bhenriq-souza/finances-control-frontend/issues/6), na ordem de publicação da spec. Habilitam o spike (T-0006-01).
 
-- [ ] **T-0007-01 — Imagem nginx** · #20
+- [x] **T-0007-01 — Imagem nginx** · #20
     - What: `Dockerfile` multi-stage, `nginx/default.conf` com cache, fallback da SPA, `/healthz` e cabeçalhos, e `.dockerignore`
     - Where: `Dockerfile`, `nginx/`, `.dockerignore`
     - Done when: `AC-0007-01` e `AC-0007-02` verificados localmente; `INV-0007-02` e `INV-0007-03`
