@@ -1,6 +1,7 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 
 import { ApiError } from '@/api/errors/api-error';
+import { CURRENT_USER_QUERY_KEY } from '@/features/identity';
 
 /**
  * Efeitos globais por `code` (spec 0005). Injetados: o `api` só lança, e quem navega ou sai da
@@ -51,7 +52,7 @@ export function createQueryClient(effects: QueryClientEffects): QueryClient {
         }
     }
 
-    return new QueryClient({
+    const client: QueryClient = new QueryClient({
         queryCache: new QueryCache({
             // Consulta com `meta.globalEffects: false` trata os códigos por conta própria (ex.:
             // `GET /users/me`, decidido pela guarda de `_app`, spec 0006).
@@ -59,9 +60,20 @@ export function createQueryClient(effects: QueryClientEffects): QueryClient {
                 if (query.meta?.globalEffects !== false) handleError(error);
             },
         }),
-        mutationCache: new MutationCache({ onError: handleError }),
+        mutationCache: new MutationCache({
+            onError: (error) => {
+                handleError(error);
+                // Escrita com `403 FORBIDDEN` (ERR-0009-03): o perfil pode ter mudado durante a
+                // sessão. O formulário mostra a mensagem (`applyApiError`); aqui o `/users/me` é
+                // invalidado, e a tela se redesenha com o perfil novo.
+                if (error instanceof ApiError && error.code === 'FORBIDDEN') {
+                    void client.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY });
+                }
+            },
+        }),
         defaultOptions: {
             queries: { retry: shouldRetry, retryDelay },
         },
     });
+    return client;
 }

@@ -8,16 +8,20 @@ import {
     CURRENT_USER_QUERY_KEY,
     getAuthClient,
 } from '@/features/identity';
+import { createNoticeStore } from '@/ui/notice';
 import { ThemeProvider } from '@/ui/theme/theme-provider';
 
+import { AppNotices, authUnavailableNotice } from './notices';
 import { createQueryClient } from './query-client';
 import { createAppRouter, type AppRouter } from './router';
 
 /**
- * Cache de consultas, sessão e roteador, ligados entre si: os efeitos globais por `code`
- * (spec 0005) navegam pelo roteador para as telas de estado da conta (spec 0006).
+ * Cache de consultas, sessão, roteador e avisos, ligados entre si: os efeitos globais por `code`
+ * (spec 0005) navegam pelo roteador para as telas de estado da conta (spec 0006) ou mostram um
+ * aviso global (spec 0009).
  */
 export function createAppContext() {
+    const notices = createNoticeStore();
     // Os efeitos só disparam depois de uma consulta, quando `auth` e `router` (abaixo) já existem.
     const queryClient = createQueryClient({
         onUnauthenticated: () => {
@@ -35,24 +39,25 @@ export function createAppContext() {
             queryClient.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY });
             void router.navigate({ to: '/verificar-email' });
         },
-        // Sem aviso global ainda: cada tela mostra o erro da sua consulta pelo catálogo.
-        onAuthUnavailable: () => undefined,
+        onAuthUnavailable: authUnavailableNotice(notices),
     });
     const auth = createAuthSession(getAuthClient(), queryClient);
     const router: AppRouter = createAppRouter({ queryClient, auth });
-    return { queryClient, auth, router };
+    return { queryClient, auth, router, notices };
 }
 
-/** Providers da aplicação: tema, estado de servidor, sessão e roteador. */
+/** Providers da aplicação: tema, avisos, estado de servidor, sessão e roteador. */
 export function App() {
-    const [{ queryClient, auth, router }] = useState(createAppContext);
+    const [{ queryClient, auth, router, notices }] = useState(createAppContext);
     return (
         <ThemeProvider>
-            <QueryClientProvider client={queryClient}>
-                <AuthSessionProvider session={auth}>
-                    <RouterProvider router={router} />
-                </AuthSessionProvider>
-            </QueryClientProvider>
+            <AppNotices store={notices}>
+                <QueryClientProvider client={queryClient}>
+                    <AuthSessionProvider session={auth}>
+                        <RouterProvider router={router} />
+                    </AuthSessionProvider>
+                </QueryClientProvider>
+            </AppNotices>
         </ThemeProvider>
     );
 }
