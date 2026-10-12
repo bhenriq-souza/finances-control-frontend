@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { ProvisionalHome } from '@/app/provisional-home';
+import { SpikePage } from '@/features/identity';
 
 export const Route = createFileRoute('/')({
-    component: ProvisionalHome,
+    component: SpikePage,
 });

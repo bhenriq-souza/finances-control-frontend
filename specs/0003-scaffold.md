@@ -1,7 +1,7 @@
 ---
 id: '0003'
 title: Scaffold, estrutura de pastas e configuração de runtime
-status: approved
+status: implemented
 depends_on: ['0000', '0001', '0002']
 ---
 

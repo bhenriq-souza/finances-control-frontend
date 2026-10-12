@@ -69,8 +69,7 @@ describe('bootstrap — fatal configuration errors', () => {
 
         await mount();
 
-        expect(await screen.findByRole('heading', { name: 'FTech Finance' })).toBeInTheDocument();
-        expect(screen.getByTestId('environment')).toHaveTextContent('local');
+        expect(await screen.findByRole('heading', { name: /FTech Finance/ })).toBeInTheDocument();
         expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 });

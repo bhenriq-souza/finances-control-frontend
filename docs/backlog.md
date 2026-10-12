@@ -25,7 +25,7 @@ Tarefas da [spec 0003](../specs/0003-scaffold.md), da issue de entrega [FCF-002]
     - What: kit do ADR-0001, estrutura de pastas, regras do `dependency-cruiser`, configuração de runtime, Vitest, Playwright com o teste de fumaça da página provisória, `scripts/build.mjs`, o esqueleto do gate `contract` (passo 1 e a entrada `openapi`) e o CI com Chromium e `--require-tools`
     - Where: raiz, `src/`, `e2e/`, `scripts/build.mjs`, `scripts/contract.mjs`, `sources.json`, `.dependency-cruiser.cjs`, `.github/workflows/ci.yml`
     - Done when: `AC-0003-01`, `AC-0003-03`, `AC-0003-04`, `AC-0003-06` e `AC-0003-07` cobertos; `INV-0003-02` a `INV-0003-04` verificados
-- [ ] **T-0003-02 — Porta de autenticação e página do spike** · #12
+- [x] **T-0003-02 — Porta de autenticação e página do spike** · #12
     - What: `AuthClient` com as implementações do Firebase e falsa, e a página mínima de login em `/` que mostra o resultado de `GET /api/users/me`
     - Where: `src/features/identity/`, `src/routes/`, `e2e/smoke.spec.ts`
     - Done when: `AC-0003-02` e `AC-0003-05` cobertos; `INV-0003-01` verificado
