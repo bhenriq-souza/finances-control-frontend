@@ -79,7 +79,9 @@ test('a click anywhere on a table row follows its link', async ({ page }, testIn
 
     await table.getByRole('cell', { name: 'R$ 1.800,00' }).click();
 
-    await expect(page).toHaveURL(/\/despesas\/d2$/);
+    // `/despesas/$despesaId` existe desde a spec 0012 e fica atrás da guarda de autenticação; a
+    // página de prova não entra, então o clique chega ao login com o destino da linha.
+    await expect(page).toHaveURL(/\/entrar\?redirect=%2Fdespesas%2Fd2$/);
 });
 
 // AC-0009-05: sem itens, o `empty` no lugar da lista.
