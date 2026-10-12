@@ -6,6 +6,13 @@
         <title>FTech Finance</title>
         <!-- Configuração de runtime (spec 0003): script clássico, antes do módulo da aplicação. -->
         <script src="/config.js"></script>
+        <!-- Aplica o tema guardado antes da primeira pintura (spec 0004). -->
+        <script>
+            try {
+                var t = localStorage.getItem('ftech.tema');
+                if (t === 'escuro' || t === 'claro') document.documentElement.dataset.tema = t;
+            } catch (e) {}
+        </script>
     </head>
     <body>
         <div id="root"></div>

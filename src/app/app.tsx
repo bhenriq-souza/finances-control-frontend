@@ -3,6 +3,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { getAuthClient } from '@/features/identity';
+import { ThemeProvider } from '@/ui/theme/theme-provider';
 
 import { createQueryClient } from './query-client';
 import { createAppRouter } from './router';
@@ -25,8 +26,10 @@ export function App() {
     );
     const [router] = useState(createAppRouter);
     return (
-        <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
-        </QueryClientProvider>
+        <ThemeProvider>
+            <QueryClientProvider client={queryClient}>
+                <RouterProvider router={router} />
+            </QueryClientProvider>
+        </ThemeProvider>
     );
 }

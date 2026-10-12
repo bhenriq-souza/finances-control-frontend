@@ -1,7 +1,7 @@
 ---
 id: '0004'
 title: Tema gerado do tokens.json do hub
-status: approved
+status: implemented
 depends_on: ['0002', '0003']
 ---
 
