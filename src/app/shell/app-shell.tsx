@@ -3,7 +3,14 @@ import { Link, Outlet } from '@tanstack/react-router';
 import { useCurrentUser } from '@/features/identity';
 import { BrandSymbol } from '@/ui/brand/brand';
 
-import { navItemsFor } from './navigation';
+import {
+    bottomBarEntries,
+    MORE_ENTRY,
+    NAV_ITEMS,
+    navItemsFor,
+    type BottomBarEntry,
+    type NavItem,
+} from './navigation';
 import { UserMenu } from './user-menu';
 
 const PRODUCT_NAME = 'FTech Finance';
@@ -18,15 +25,34 @@ function BrandRow({ className }: { className: string }) {
     );
 }
 
+const LINK_CLASS =
+    'flex flex-1 flex-col items-center justify-center gap-1 text-rotulo text-texto-apoio outline-none hover:text-texto focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-inset aria-[current=page]:text-acento lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-md lg:px-3 lg:text-corpo-forte lg:text-texto lg:hover:bg-superficie-elevada lg:aria-[current=page]:bg-superficie-elevada lg:aria-[current=page]:text-acento';
+
+function NavEntry({ entry, className }: { entry: BottomBarEntry; className: string }) {
+    const { to, label, icon: Icon } = entry;
+    return (
+        <li className={className}>
+            <Link to={to} activeOptions={{ exact: to === '/' }} className={LINK_CLASS}>
+                <Icon aria-hidden="true" strokeWidth={1.75} className="size-6 lg:size-5" />
+                {label}
+            </Link>
+        </li>
+    );
+}
+
 /**
  * App shell das rotas de `_app` (spec 0006): no celular e no tablet, cabeçalho com a marca e o
  * menu do usuário e barra inferior fixa; no desktop (≥ 1024px), barra lateral fixa à esquerda com
  * a marca e o menu do usuário no topo do conteúdo. A navegação é uma só, reposicionada por
- * tamanho, e mostra só os itens do perfil (INV-0006-03).
+ * tamanho, e mostra só os itens do perfil (INV-0006-03): a barra inferior, os itens de
+ * `slot: 'barra'` (até quatro) e o **Mais**; a lateral, todos os itens e nunca o **Mais** (spec
+ * 0009). `items` existe para os testes; a rota usa `NAV_ITEMS`.
  */
-export function AppShell() {
+export function AppShell({ items = NAV_ITEMS }: { items?: readonly NavItem[] }) {
     const user = useCurrentUser();
-    const items = navItemsFor(user.profile);
+    const visible = navItemsFor(user.profile, items);
+    const bottomBar = bottomBarEntries(visible);
+    const hasMore = bottomBar.includes(MORE_ENTRY);
 
     return (
         <div className="min-h-dvh bg-fundo text-texto lg:pl-60">
@@ -34,22 +60,20 @@ export function AppShell() {
                 <BrandRow className="mb-4 hidden items-center gap-2 px-3 lg:flex" />
                 <nav aria-label="Principal">
                     <ul className="flex h-16 lg:h-auto lg:flex-col lg:gap-1">
-                        {items.map(({ to, label, icon: Icon }) => (
-                            <li key={to} className="flex flex-1 lg:flex-none">
-                                <Link
-                                    to={to}
-                                    activeOptions={{ exact: to === '/' }}
-                                    className="flex flex-1 flex-col items-center justify-center gap-1 text-rotulo text-texto-apoio outline-none hover:text-texto focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-inset aria-[current=page]:text-acento lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-md lg:px-3 lg:text-corpo-forte lg:text-texto lg:hover:bg-superficie-elevada lg:aria-[current=page]:bg-superficie-elevada lg:aria-[current=page]:text-acento"
-                                >
-                                    <Icon
-                                        aria-hidden="true"
-                                        strokeWidth={1.75}
-                                        className="size-6 lg:size-5"
-                                    />
-                                    {label}
-                                </Link>
-                            </li>
+                        {visible.map((item) => (
+                            <NavEntry
+                                key={item.to}
+                                entry={item}
+                                className={
+                                    bottomBar.includes(item)
+                                        ? 'flex flex-1 lg:flex-none'
+                                        : 'hidden lg:flex lg:flex-none'
+                                }
+                            />
                         ))}
+                        {hasMore && (
+                            <NavEntry entry={MORE_ENTRY} className="flex flex-1 lg:hidden" />
+                        )}
                     </ul>
                 </nav>
             </aside>

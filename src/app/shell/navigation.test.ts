@@ -1,14 +1,30 @@
 import { House } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
-import { NAV_ITEMS, navItemsFor, type NavItem } from './navigation';
+import {
+    BOTTOM_BAR_LIMIT,
+    bottomBarEntries,
+    MORE_ENTRY,
+    moreItems,
+    NAV_ITEMS,
+    navItemsFor,
+    type NavItem,
+} from './navigation';
 
-const item = (label: string, profiles: NavItem['profiles']): NavItem => ({
+const item = (
+    label: string,
+    profiles: NavItem['profiles'],
+    slot: NavItem['slot'] = 'barra',
+): NavItem => ({
     to: '/',
     label,
     icon: House,
     profiles,
+    slot,
 });
+
+const ALL = ['ADMIN', 'BILLER', 'VIEWER'] as const;
+const labels = (entries: readonly { label: string }[]) => entries.map(({ label }) => label);
 
 // INV-0006-03: a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
 describe('navItemsFor', () => {
@@ -39,5 +55,45 @@ describe('navItemsFor', () => {
 
     it('shows nothing without a profile', () => {
         expect(navItemsFor(null)).toEqual([]);
+    });
+});
+
+// AC-0009-08: barra inferior com até quatro itens de `slot: 'barra'` e o Mais quando houver itens
+// visíveis de `slot: 'mais'`; a página Mais lista esses itens.
+describe('navigation slots', () => {
+    it('declares Início in the bottom bar and no Mais item today', () => {
+        expect(NAV_ITEMS.find(({ to }) => to === '/')?.slot).toBe('barra');
+        expect(bottomBarEntries(navItemsFor('ADMIN'))).not.toContain(MORE_ENTRY);
+        expect(MORE_ENTRY.to).toBe('/mais');
+        expect(MORE_ENTRY.label).toBe('Mais');
+    });
+
+    it('shows Mais after the bar items when a mais item is visible, and lists it', () => {
+        const visible = navItemsFor('VIEWER', [item('Início', ALL), item('Contas', ALL, 'mais')]);
+        expect(labels(bottomBarEntries(visible))).toEqual(['Início', 'Mais']);
+        expect(labels(moreItems(visible))).toEqual(['Contas']);
+    });
+
+    it('hides Mais when no mais item is visible to the profile', () => {
+        const items = [item('Início', ALL), item('Usuários', ['ADMIN'], 'mais')];
+        expect(labels(bottomBarEntries(navItemsFor('ADMIN', items)))).toEqual(['Início', 'Mais']);
+        expect(labels(bottomBarEntries(navItemsFor('BILLER', items)))).toEqual(['Início']);
+        expect(moreItems(navItemsFor('BILLER', items))).toEqual([]);
+    });
+
+    it('keeps at most four bar items, in list order, plus Mais', () => {
+        const items = [
+            item('A', ALL),
+            item('M1', ALL, 'mais'),
+            item('B', ALL),
+            item('C', ALL),
+            item('D', ALL),
+            item('E', ALL),
+            item('M2', ALL, 'mais'),
+        ];
+        const bar = bottomBarEntries(navItemsFor('ADMIN', items));
+        expect(BOTTOM_BAR_LIMIT).toBe(4);
+        expect(labels(bar)).toEqual(['A', 'B', 'C', 'D', 'Mais']);
+        expect(labels(moreItems(navItemsFor('ADMIN', items)))).toEqual(['M1', 'M2']);
     });
 });

@@ -7,6 +7,7 @@ import {
     RouterProvider,
 } from '@tanstack/react-router';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { House, Wallet } from 'lucide-react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -18,6 +19,7 @@ import {
 import { THEME_STORAGE_KEY, ThemeProvider } from '@/ui/theme/theme-provider';
 
 import { AppShell } from './app-shell';
+import type { NavItem } from './navigation';
 
 function me(profile: CurrentUser['profile'], name = 'Ana Souza'): CurrentUser {
     return {
@@ -50,13 +52,17 @@ function session(queryClient: QueryClient) {
     } satisfies AuthSession;
 }
 
-async function renderShell(user: CurrentUser) {
+async function renderShell(user: CurrentUser, items?: readonly NavItem[]) {
     const queryClient = new QueryClient();
     queryClient.setQueryData(CURRENT_USER_QUERY_KEY, user);
     const auth = session(queryClient);
 
     const root = createRootRoute();
-    const app = createRoute({ getParentRoute: () => root, id: '_app', component: AppShell });
+    const app = createRoute({
+        getParentRoute: () => root,
+        id: '_app',
+        component: () => <AppShell items={items} />,
+    });
     const home = createRoute({
         getParentRoute: () => app,
         path: '/',
@@ -168,5 +174,66 @@ describe('AppShell (spec 0006)', () => {
         expect(router.state.location.pathname).toBe('/entrar');
         expect(queryClient.getQueryData(CURRENT_USER_QUERY_KEY)).toBeUndefined();
         expect(screen.queryByText('Ana Souza')).not.toBeInTheDocument();
+    });
+});
+
+const ALL = ['ADMIN', 'BILLER', 'VIEWER'] as const;
+const navItem = (
+    to: NavItem['to'],
+    label: string,
+    slot: NavItem['slot'],
+    profiles: NavItem['profiles'] = ALL,
+): NavItem => ({ to, label, icon: slot === 'barra' ? House : Wallet, profiles, slot });
+
+// AC-0009-08: a barra inferior (abaixo de `lg`) mostra até quatro itens de `slot: 'barra'` e o
+// Mais; a lateral (`lg`) mostra todos e esconde o Mais. A visibilidade por tamanho é CSS, provada
+// no e2e; aqui se confere a marcação.
+describe('AppShell navigation slots (spec 0009)', () => {
+    const items = [
+        navItem('/', 'Início', 'barra'),
+        navItem('/entrar', 'Despesas', 'barra'),
+        navItem('/criar-conta', 'Receitas', 'barra'),
+        navItem('/redefinir-senha', 'Cartões', 'barra'),
+        navItem('/verificar-email', 'Quinto', 'barra'),
+        navItem('/aguardando-aprovacao', 'Contas', 'mais'),
+    ];
+    const entry = (name: string) =>
+        within(screen.getByRole('navigation', { name: 'Principal' }))
+            .getByRole('link', { name })
+            .closest('li');
+
+    it('puts four bar items and Mais in the bottom bar and every item in the sidebar', async () => {
+        await renderShell(me('VIEWER'), items);
+
+        for (const name of ['Início', 'Despesas', 'Receitas', 'Cartões']) {
+            expect(entry(name)).toHaveClass('flex', 'flex-1');
+            expect(entry(name)).not.toHaveClass('hidden');
+        }
+        for (const name of ['Quinto', 'Contas']) {
+            expect(entry(name)).toHaveClass('hidden', 'lg:flex');
+        }
+        expect(entry('Mais')).toHaveClass('flex', 'lg:hidden');
+        const more = within(screen.getByRole('navigation', { name: 'Principal' })).getByRole(
+            'link',
+            { name: 'Mais' },
+        );
+        expect(more).toHaveAttribute('href', '/mais');
+        expect(
+            within(screen.getByRole('navigation', { name: 'Principal' }))
+                .getAllByRole('link')
+                .map((link) => link.textContent),
+        ).toEqual(['Início', 'Despesas', 'Receitas', 'Cartões', 'Quinto', 'Contas', 'Mais']);
+    });
+
+    it('has no Mais when no mais item is visible to the profile', async () => {
+        await renderShell(me('BILLER'), [
+            navItem('/', 'Início', 'barra'),
+            navItem('/aguardando-aprovacao', 'Usuários', 'mais', ['ADMIN']),
+        ]);
+
+        const nav = screen.getByRole('navigation', { name: 'Principal' });
+        expect(within(nav).queryByRole('link', { name: 'Mais' })).not.toBeInTheDocument();
+        expect(within(nav).queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument();
+        expect(within(nav).getAllByRole('link')).toHaveLength(1);
     });
 });
