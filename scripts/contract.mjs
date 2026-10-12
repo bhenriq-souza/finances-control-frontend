@@ -13,6 +13,7 @@ import { parse as parseYaml } from 'yaml';
 // Import circular com api-generate.mjs (que usa `verifySource` daqui): seguro, só há declarações
 // no topo dos dois módulos e os usos acontecem em tempo de chamada.
 import { SCHEMA_PATH, writeTypes } from './api-generate.mjs';
+import { generateRoutes } from './routes-generate.mjs';
 import { generateTheme, THEME_PATH } from './theme.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -196,11 +197,22 @@ export async function checkTheme(context) {
     };
 }
 
+/** Gera a árvore de rotas de `src/routes/`, que `lint`, `types`, `test` e `build` consomem. */
+export async function generateRouteTree(context) {
+    try {
+        await (context.generateRoutes ?? generateRoutes)();
+    } catch (error) {
+        return { status: 'FAIL', lines: [`falha ao gerar a árvore de rotas: ${error.message}`] };
+    }
+    return { status: 'PASS', lines: ['src/routeTree.gen.ts gerado de src/routes/'] };
+}
+
 export const STEPS = [
     { title: '1. Baixar as fontes e conferir o sha256', run: downloadSources },
     { title: '2. Gerar os tipos da API', run: generateApiTypes },
     { title: '3. Conferir o tema', run: checkTheme },
     { title: '4. Conferir o catálogo de erros', run: checkCatalog },
+    { title: '5. Gerar a árvore de rotas', run: generateRouteTree },
 ];
 
 /** Executa todos os passos, mesmo depois de uma falha. Devolve o código de saída. */
