@@ -98,7 +98,7 @@ Tarefas da [spec 0007](../specs/0007-publication.md), da issue de entrega [FCF-0
 
 Tarefas da [spec 0008](../specs/0008-money.md), da issue de entrega [FCF-007](https://github.com/bhenriq-souza/finances-control-frontend/issues/7). Não bloqueiam o spike; precisam estar prontas antes das telas de F003.
 
-- [ ] **T-0008-01 — Parser, formatação e lint de dinheiro** · #24
+- [x] **T-0008-01 — Parser, formatação e lint de dinheiro** · #24
     - What: `Cents`, `isCents`, `parseBRL`, `formatBRL` e a regra de lint contra `parseFloat`, `toFixed` e `Math.round`
     - Where: `src/shared/money/`, `eslint.config.js`
     - Done when: `AC-0008-01` a `AC-0008-04` e `AC-0008-06` cobertos; `INV-0008-01`, `INV-0008-02` e `INV-0008-04` verificados
