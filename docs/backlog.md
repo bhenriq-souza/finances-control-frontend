@@ -85,7 +85,7 @@ Tarefas da [spec 0007](../specs/0007-publication.md), da issue de entrega [FCF-0
     - What: repositório em `github_allowed_repositories` do `homelab-infra` (o responsável aplica o Terraform), deploy key no `homelab-gitops` e os secrets `GCP_WIF_PROVIDER`, `GCP_SERVICE_ACCOUNT` e `GITOPS_DEPLOY_KEY`; executada pelo líder com o ok do responsável
     - Where: `homelab-infra`, `homelab-gitops` (deploy keys) e secrets deste repositório
     - Done when: pré-requisitos cumpridos, provados pela autenticação no GCP da `AC-0007-03` na T-0007-03
-- [ ] **T-0007-03 — Workflow de deploy** · #22
+- [x] **T-0007-03 — Workflow de deploy** · #22
     - What: `.github/workflows/deploy.yml` chamando o workflow reutilizável com `app-name: finances-frontend`; o primeiro run publica a imagem e falha no passo de GitOps, como previsto
     - Where: `.github/workflows/deploy.yml`
     - Done when: `AC-0007-03` verificado; `INV-0007-01`
