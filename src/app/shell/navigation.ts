@@ -1,6 +1,7 @@
 import type { LinkProps } from '@tanstack/react-router';
 import {
     ArrowDown,
+    ArrowLeftRight,
     CreditCard,
     Ellipsis,
     House,
@@ -38,6 +39,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     { to: '/despesas', label: 'Despesas', icon: ArrowDown, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/cartoes', label: 'Cartões', icon: CreditCard, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/contas', label: 'Contas', icon: Landmark, profiles: ALL_PROFILES, slot: 'mais' },
+    {
+        to: '/transferencias',
+        label: 'Transferências',
+        icon: ArrowLeftRight,
+        profiles: ALL_PROFILES,
+        slot: 'mais',
+    },
     { to: '/usuarios', label: 'Usuários', icon: Users, profiles: ['ADMIN'], slot: 'mais' },
 ];
 

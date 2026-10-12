@@ -28,8 +28,8 @@ const labels = (entries: readonly { label: string }[]) => entries.map(({ label }
 
 // INV-0006-03: a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
 describe('navItemsFor', () => {
-    it('shows Início, Despesas, Cartões and Contas to every profile, in the spec order', () => {
-        const common = ['Início', 'Despesas', 'Cartões', 'Contas'];
+    it('shows Início, Despesas, Cartões, Contas and Transferências to every profile, in order', () => {
+        const common = ['Início', 'Despesas', 'Cartões', 'Contas', 'Transferências'];
         for (const profile of ['BILLER', 'VIEWER'] as const) {
             expect(labels(navItemsFor(profile))).toEqual(common);
         }
@@ -39,6 +39,7 @@ describe('navItemsFor', () => {
             '/despesas',
             '/cartoes',
             '/contas',
+            '/transferencias',
             '/usuarios',
         ]);
     });
@@ -93,8 +94,14 @@ describe('navigation slots', () => {
                 'Mais',
             ]);
         }
-        expect(labels(moreItems(navItemsFor('ADMIN')))).toEqual(['Contas', 'Usuários']);
-        expect(labels(moreItems(navItemsFor('BILLER')))).toEqual(['Contas']);
+        // AC-0018-07: Transferências em Mais.
+        expect(NAV_ITEMS.find(({ to }) => to === '/transferencias')?.slot).toBe('mais');
+        expect(labels(moreItems(navItemsFor('ADMIN')))).toEqual([
+            'Contas',
+            'Transferências',
+            'Usuários',
+        ]);
+        expect(labels(moreItems(navItemsFor('BILLER')))).toEqual(['Contas', 'Transferências']);
         expect(MORE_ENTRY.to).toBe('/mais');
         expect(MORE_ENTRY.label).toBe('Mais');
     });

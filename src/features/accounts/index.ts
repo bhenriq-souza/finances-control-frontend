@@ -3,3 +3,11 @@ export { BankAccountsPage } from './bank-accounts-page';
 export { BanksPage } from './banks-page';
 export { CreditCardPage } from './credit-card-page';
 export { CreditCardsPage } from './credit-cards-page';
+
+// Transferências entre contas próprias (spec 0018).
+export {
+    TransferDetailPage,
+    TransfersPage,
+    transferDetailSearchSchema,
+    transfersSearchSchema,
+} from './transfers';
