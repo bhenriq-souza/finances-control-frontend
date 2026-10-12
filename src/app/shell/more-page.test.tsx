@@ -110,8 +110,8 @@ describe('MorePage (spec 0009)', () => {
         ).toEqual(['Contas']);
     });
 
-    it('shows a short message when there is no mais item (the real list today)', async () => {
-        await renderMore(me('ADMIN'));
+    it('shows a short message when there is no mais item', async () => {
+        await renderMore(me('ADMIN'), ITEMS.slice(0, 1));
 
         expect(screen.getByRole('heading', { name: 'Mais' })).toBeInTheDocument();
         expect(screen.getByText('Não há outras seções para mostrar.')).toBeInTheDocument();

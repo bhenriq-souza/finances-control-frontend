@@ -156,7 +156,7 @@ Tarefas da [spec 0010](../specs/0010-users-admin.md), da issue de entrega [FCF-0
 
 Tarefas da [spec 0011](../specs/0011-accounts.md), da issue de entrega [FCF-010](https://github.com/bhenriq-souza/finances-control-frontend/issues/51).
 
-- [ ] **T-0011-01 — Listas de contas, bancos e cartões** · #65
+- [x] **T-0011-01 — Listas de contas, bancos e cartões** · #65
     - What: `/contas`, `/contas/bancos`, `/cartoes`, `/cartoes/$cartaoId` (resumo), itens **Cartões** e **Contas**, só leitura
     - Where: `src/features/accounts/` (exceto `forms/` e `transfers/`), `src/routes/_app/contas*`, `src/routes/_app/cartoes*`, `src/app/shell/navigation.ts`, `e2e/accounts.spec.ts`, `e2e/fixtures/data/accounts.ts`
     - Done when: `AC-0011-01`, `AC-0011-02` e `AC-0011-08` cobertos; `INV-0011-03` verificado

@@ -28,11 +28,15 @@ const labels = (entries: readonly { label: string }[]) => entries.map(({ label }
 
 // INV-0006-03: a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
 describe('navItemsFor', () => {
-    it('shows Início to every profile', () => {
+    it('shows Início, Cartões and Contas to every profile, in the spec order', () => {
         for (const profile of ['ADMIN', 'BILLER', 'VIEWER'] as const) {
-            expect(navItemsFor(profile).map(({ label }) => label)).toEqual(['Início']);
+            expect(navItemsFor(profile).map(({ label }) => label)).toEqual([
+                'Início',
+                'Cartões',
+                'Contas',
+            ]);
         }
-        expect(NAV_ITEMS[0]?.to).toBe('/');
+        expect(NAV_ITEMS.map(({ to }) => to)).toEqual(['/', '/cartoes', '/contas']);
     });
 
     it('keeps only the items whose profiles include the user profile, in order', () => {
@@ -61,9 +65,19 @@ describe('navItemsFor', () => {
 // AC-0009-08: barra inferior com até quatro itens de `slot: 'barra'` e o Mais quando houver itens
 // visíveis de `slot: 'mais'`; a página Mais lista esses itens.
 describe('navigation slots', () => {
-    it('declares Início in the bottom bar and no Mais item today', () => {
+    // AC-0011-08: Cartões na barra inferior; Contas em Mais.
+    it('declares Início and Cartões in the bottom bar and Contas in Mais', () => {
         expect(NAV_ITEMS.find(({ to }) => to === '/')?.slot).toBe('barra');
-        expect(bottomBarEntries(navItemsFor('ADMIN'))).not.toContain(MORE_ENTRY);
+        expect(NAV_ITEMS.find(({ to }) => to === '/cartoes')?.slot).toBe('barra');
+        expect(NAV_ITEMS.find(({ to }) => to === '/contas')?.slot).toBe('mais');
+        for (const profile of ['ADMIN', 'BILLER', 'VIEWER'] as const) {
+            expect(labels(bottomBarEntries(navItemsFor(profile)))).toEqual([
+                'Início',
+                'Cartões',
+                'Mais',
+            ]);
+            expect(labels(moreItems(navItemsFor(profile)))).toEqual(['Contas']);
+        }
         expect(MORE_ENTRY.to).toBe('/mais');
         expect(MORE_ENTRY.label).toBe('Mais');
     });
