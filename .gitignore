@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Worktrees de subagentes (docs/parallel-execution.md)
+.claude/worktrees/
+
+# Tipos gerados do contrato da API pelo gate contract (spec 0002): nunca commitados
+src/api/generated/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/

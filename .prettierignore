@@ -1,0 +1,9 @@
+dist
+coverage
+node_modules
+package-lock.json
+.claude/worktrees
+src/api/generated
+playwright-report
+test-results
+blob-report

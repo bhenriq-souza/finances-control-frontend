@@ -1,0 +1,32 @@
+name: ci
+
+# O CI apenas invoca o orquestrador único de gates (spec 0002, INV-0002-03).
+# Nunca adicione aqui um comando de verificação que não esteja em scripts/check.mjs.
+
+on:
+    pull_request:
+        branches: [develop, main]
+    push:
+        branches: [develop]
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            # Até o scaffold (T-0003-01) os gates sem ferramenta aparecem como SKIP
+            # (contexto) e não bloqueiam. O scaffold acrescenta aqui a instalação do
+            # Chromium do Playwright e passa a usar --require-tools, que converte
+            # SKIP em falha (spec 0001, INV-0002-05).
+            - name: Quality gates
+              run: npm run check
