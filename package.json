@@ -10,6 +10,7 @@
     },
     "scripts": {
         "api:generate": "node scripts/api-generate.mjs",
+        "theme": "node scripts/theme.mjs",
         "predev": "npm run api:generate",
         "dev": "vite",
         "prebuild": "npm run api:generate",
