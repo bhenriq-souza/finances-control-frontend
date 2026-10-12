@@ -68,7 +68,7 @@ Tarefas da [spec 0006](../specs/0006-auth-and-shell.md), da issue de entrega [FC
     - What: porta `AuthClient` completa, `/entrar`, `/criar-conta`, `/redefinir-senha`, `/verificar-email`, `/aguardando-aprovacao`, layout `_app` com a guarda por `GET /users/me`, `setTokenProvider` e a remoção da página do spike
     - Where: `src/features/identity/`, `src/routes/`, `src/app/`, `e2e/`
     - Done when: `AC-0006-02` a `AC-0006-05`, `AC-0006-09` e `AC-0006-10` cobertos; `INV-0006-01`, `INV-0006-02`, `INV-0006-05` e `INV-0006-06` verificados
-- [ ] **T-0006-03 — App shell responsivo** · #19
+- [x] **T-0006-03 — App shell responsivo** · #19
     - What: cabeçalho, barra inferior e lateral, lista de navegação por perfil, menu do usuário com o seletor de tema, marca da FarmTech e a tela inicial provisória
     - Where: `src/app/shell/`, `src/ui/brand/`, `e2e/shell.spec.ts`
     - Done when: `AC-0006-06`, `AC-0006-07` e `AC-0006-08` cobertos; `INV-0006-03` e `INV-0006-04` verificados
