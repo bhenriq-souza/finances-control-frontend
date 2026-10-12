@@ -1,7 +1,7 @@
 ---
 id: '0017'
 title: Séries fixas de despesas e receitas
-status: draft
+status: approved
 depends_on: ['0009', '0012', '0014']
 ---
 
@@ -16,6 +16,7 @@ Dar um lugar às séries que as despesas e receitas fixas criam: ver quais estã
 - **Em escopo:** `/series`, `/series/despesas/$serieId`, `/series/receitas/$serieId`, o diálogo de encerrar, o link da ocorrência para a série no detalhe de despesa e de receita, e o item **Séries fixas** da navegação.
 - **Fora de escopo:** alterar o modelo da série (é pelo `?scope=following` de uma ocorrência, specs 0012 e 0014); criar série (é lançar uma despesa ou receita fixa); séries não mensais; transferências recorrentes (a API não tem).
 - **Depende do backend:** [spec 0017](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0017-jobs-and-recurrence.md) na tag `v1.1.0` — `GET`/`PATCH /expense-recurrences`, `GET`/`PATCH /earning-recurrences`. Encerrar: `ADMIN` e `BILLER`.
+- **Limite aceito:** `GET /expenses` e `GET /earnings` não filtram por `recurrenceId`; o detalhe busca o período da série e filtra no cliente.
 - **Forma visual:** padrão de **lançamento** da spec 0009 e o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC).
 
 ## Contracts
@@ -85,4 +86,4 @@ O detalhe de despesa (spec 0012) e o de receita (spec 0014) ganham, quando há `
 
 ## Open questions
 
-- `GET /expenses` e `GET /earnings` não filtram por `recurrenceId`: o detalhe busca o período da série e filtra no cliente. Funciona sem paginação; um filtro no backend deixaria a consulta exata.
+Nenhuma.

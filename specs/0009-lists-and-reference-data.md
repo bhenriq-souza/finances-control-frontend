@@ -1,7 +1,7 @@
 ---
 id: '0009'
 title: Listas, formulários e dados de referência compartilhados
-status: draft
+status: approved
 depends_on: ['0003', '0004', '0005', '0006', '0008']
 ---
 
@@ -16,6 +16,7 @@ Dar às telas de domínio (specs 0010+) tudo o que elas têm em comum, para que 
 - **Em escopo:** `src/api/queries/` (chaves, consultas de referência, usuário atual, invalidação), `src/api/permissions.ts`, `src/api/errors/form-errors.ts`; `src/shared/dates/`; em `src/ui/`: `StatusBadge` e as tabelas de status, `EntryList`, `EmptyState`, `Skeleton`, `BarList`, `FormDialog`, `ConfirmDialog`, `SelectField`, `DateField`, `Notice`; o campo `slot` da navegação e a rota `/mais`; o aviso global de `AUTH_UNAVAILABLE`; os usuários `lancador` e `leitor` no fake de autenticação do e2e e o utilitário de stubs da API; a revisão da spec 0003 (pasta `api/`).
 - **Fora de escopo:** qualquer tela de domínio (specs 0010–0018); gráficos de série temporal (spec 0015); tabela com ordenação, paginação ou busca (a API não oferece nenhuma delas: as listas são sempre de um período).
 - **Depende do backend:** contrato na tag `v1.1.0` — rotas de leitura de [0011](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0011-accounts.md), [0012](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0012-expenses.md) e [0014](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0014-earnings.md) e a matriz de perfis de [0010](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0010-identity.md) e do hub ([perfis](https://github.com/bhenriq-souza/finances-control/blob/main/docs/user-profiles.md)). Toda resposta de sucesso vem envelopada em `{ data }`.
+- **Decisões de 2026-10-12 (aprovação):** páginas de prova `/_e2e/lista` e `/_e2e/formulario` só no build `--mode e2e`, eliminadas no de produção como o fake de autenticação; selo **Previsto** e **Em aberto** na família `info`, **Verificando** na neutra e **Aguardando** em `atencao`; as peças que o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) (versão `1791836639-e596`) desenha e o Design System ainda não define (diálogo, folha, select, controle segmentado, etiquetas de filtro, abas, menu da linha, campo de data, estado vazio, interruptor, barra de limite, erro de validação, véu, botão destrutivo, cores de gráfico) são construídas só com os tokens existentes e voltam ao Design System do hub numa revisão futura; cores de gráfico: realizado em `acento`, previsto em `info-fundo` com contorno `info`.
 - **Forma visual:** componentes do [Design System](https://claude.ai/artifact/DxDnUbE9sSQdJbxTPh6WPQ) e o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) (lista, formulário em diálogo, confirmação, estados).
 
 ## Contracts
@@ -171,7 +172,8 @@ interface EntryColumn<T> {
 ### Formulários
 
 - **`FormDialog`** (`src/ui/form-dialog.tsx`), sobre `@radix-ui/react-dialog` (dependência nova; foco preso, `Esc`, `aria-modal`, retorno do foco): abaixo de `md` é uma folha de tela cheia com o título fixo no topo e as ações fixas embaixo; a partir de `md`, um diálogo central de até 560px. Props: `open`, `onOpenChange`, `title`, `description?`, `children` (o formulário), `footer`.
-- **`ConfirmDialog`** (`src/ui/confirm-dialog.tsx`), sobre o mesmo pacote, com `role="alertdialog"`: título, texto que diz **o que vai acontecer** (inclusive cascatas), botão de confirmar com o verbo da ação ("Excluir", "Revogar") e **Cancelar** com o foco inicial. Ação destrutiva usa a variante de botão `negativo`.
+- **Véu dos diálogos e folhas:** `color-mix(in oklab, var(--ft-fundo) 72%, transparent)` no tema escuro e `48%` no claro — derivado do token `fundo`, sem token novo nem cor literal.
+- **`ConfirmDialog`** (`src/ui/confirm-dialog.tsx`), sobre o mesmo pacote, com `role="alertdialog"`: título, texto que diz **o que vai acontecer** (inclusive cascatas), botão de confirmar com o verbo da ação ("Excluir", "Revogar") e **Cancelar** com o foco inicial. Ação destrutiva usa a variante de botão `negativo` (fundo `negativo`, texto `sobre-acento`).
 - **`SelectField`** (`src/ui/select-field.tsx`): `<select>` nativo estilizado (melhor no celular que um menu próprio), com `<optgroup>` opcional (ex.: "Contas" e "Cartões"), rótulo, ajuda e erro.
 - **`DateField`** (`src/ui/date-field.tsx`): `<input type="date">` nativo; o valor já é `YYYY-MM-DD`, o formato da API.
 - **Campos e erros:** todo campo tem `<label>` visível, mensagem de erro ligada por `aria-describedby` e `aria-invalid`. Os formulários usam `react-hook-form` com `zodResolver`; valores monetários usam `MoneyInput` e `moneySchema` (spec 0008).
@@ -270,6 +272,4 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 
 ## Open questions
 
-- A página de prova do `EntryList` e do `FormDialog` no e2e: aceitar rotas de prova `/_e2e/lista` e `/_e2e/formulario` que só existem no build `--mode e2e` (eliminada no de produção, como o fake de autenticação) ou testar os componentes só no Vitest com `jsdom`? A proposta é a rota de prova, porque o comportamento responsivo só se prova no navegador.
-- **Selo de Previsto:** o Design System é ambíguo — o README põe "previsto" na família neutra, e o token `info` diz servir a "previsto". Esta spec e o canvas de padrões usam `info` para **Previsto** e **Em aberto**, neutra para **Verificando** e `atencao` para **Aguardando**; confirmar com o responsável.
-- **Lacunas do Design System** que o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) (aprovado em 2026-10-12, versão `1791836639-e596`, temas escuro e claro) preenche e que voltam ao DS do hub depois de aprovadas: diálogo e diálogo de alerta, folha inferior, select, controle segmentado, etiquetas de filtro, abas, menu de ações da linha, campo de data, estado vazio, interruptor, barra de uso do limite do cartão, padrão de erro de validação, token de véu (scrim) do diálogo, botão destrutivo cheio e as cores de gráfico (realizado em `acento`; previsto em `info-fundo` com contorno `info`). Tokens novos (véu, cores de gráfico) exigem nova versão do `tokens.json` no hub (spec 0004, _Atualizar o tema_) antes da tarefa que os usa.
+Nenhuma.

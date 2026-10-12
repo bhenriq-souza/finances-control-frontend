@@ -1,7 +1,7 @@
 ---
 id: '0018'
 title: Transferências entre contas próprias
-status: draft
+status: approved
 depends_on: ['0008', '0009', '0011']
 ---
 
