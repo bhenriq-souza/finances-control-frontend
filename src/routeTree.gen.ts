@@ -18,6 +18,7 @@ import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as VerificarEmailRouteImport } from './routes/verificar-email'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppMaisRouteImport } from './routes/_app/mais'
+import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
 import { Route as E2eFormularioRouteImport } from './routes/[_]e2e/formulario'
 import { Route as E2eListaRouteImport } from './routes/[_]e2e/lista'
 import { Route as AppCartoesIndexRouteImport } from './routes/_app/cartoes.index'
@@ -69,6 +70,11 @@ const AppMaisRoute = AppMaisRouteImport.update({
   path: '/mais',
   getParentRoute: () => AppRoute,
 } as any)
+const AppUsuariosRoute = AppUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AppRoute,
+} as any)
 const E2eFormularioRoute = E2eFormularioRouteImport.update({
   id: '/formulario',
   path: '/formulario',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/mais': typeof AppMaisRoute
+  '/usuarios': typeof AppUsuariosRoute
   '/_e2e/formulario': typeof E2eFormularioRoute
   '/_e2e/lista': typeof E2eListaRoute
   '/cartoes/$cartaoId': typeof AppCartoesCartaoIdRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/mais': typeof AppMaisRoute
+  '/usuarios': typeof AppUsuariosRoute
   '/_e2e/formulario': typeof E2eFormularioRoute
   '/_e2e/lista': typeof E2eListaRoute
   '/': typeof AppIndexRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/_app/mais': typeof AppMaisRoute
+  '/_app/usuarios': typeof AppUsuariosRoute
   '/_e2e/formulario': typeof E2eFormularioRoute
   '/_e2e/lista': typeof E2eListaRoute
   '/_app/': typeof AppIndexRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-email'
     | '/mais'
+    | '/usuarios'
     | '/_e2e/formulario'
     | '/_e2e/lista'
     | '/cartoes/$cartaoId'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-email'
     | '/mais'
+    | '/usuarios'
     | '/_e2e/formulario'
     | '/_e2e/lista'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-email'
     | '/_app/mais'
+    | '/_app/usuarios'
     | '/_e2e/formulario'
     | '/_e2e/lista'
     | '/_app/'
@@ -277,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/usuarios': {
+      id: '/_app/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AppUsuariosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_e2e/formulario': {
       id: '/_e2e/formulario'
       path: '/formulario'
@@ -324,6 +343,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppMaisRoute: typeof AppMaisRoute
+  AppUsuariosRoute: typeof AppUsuariosRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCartoesCartaoIdRoute: typeof AppCartoesCartaoIdRoute
   AppContasBancosRoute: typeof AppContasBancosRoute
@@ -333,6 +353,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppMaisRoute: AppMaisRoute,
+  AppUsuariosRoute: AppUsuariosRoute,
   AppIndexRoute: AppIndexRoute,
   AppCartoesCartaoIdRoute: AppCartoesCartaoIdRoute,
   AppContasBancosRoute: AppContasBancosRoute,

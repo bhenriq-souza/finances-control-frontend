@@ -21,3 +21,4 @@ export { PendingApprovalPage } from './pages/pending-approval-page';
 export { SignInPage } from './pages/sign-in-page';
 export { SignUpPage } from './pages/sign-up-page';
 export { VerifyEmailPage } from './pages/verify-email-page';
+export { canManageUsers, UsersPage, type UsersFilter } from './users-admin';

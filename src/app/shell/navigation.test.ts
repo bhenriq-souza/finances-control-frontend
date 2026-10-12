@@ -29,14 +29,21 @@ const labels = (entries: readonly { label: string }[]) => entries.map(({ label }
 // INV-0006-03: a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
 describe('navItemsFor', () => {
     it('shows Início, Cartões and Contas to every profile, in the spec order', () => {
-        for (const profile of ['ADMIN', 'BILLER', 'VIEWER'] as const) {
-            expect(navItemsFor(profile).map(({ label }) => label)).toEqual([
-                'Início',
-                'Cartões',
-                'Contas',
-            ]);
+        for (const profile of ['BILLER', 'VIEWER'] as const) {
+            expect(labels(navItemsFor(profile))).toEqual(['Início', 'Cartões', 'Contas']);
         }
-        expect(NAV_ITEMS.map(({ to }) => to)).toEqual(['/', '/cartoes', '/contas']);
+        expect(labels(navItemsFor('ADMIN'))).toEqual(['Início', 'Cartões', 'Contas', 'Usuários']);
+        expect(NAV_ITEMS.map(({ to }) => to)).toEqual(['/', '/cartoes', '/contas', '/usuarios']);
+    });
+
+    // INV-0010-01: só `ADMIN` vê **Usuários**, na página Mais (spec 0010).
+    it('shows Usuários only to ADMIN, in the mais slot', () => {
+        const users = NAV_ITEMS.find(({ to }) => to === '/usuarios');
+        expect(users).toMatchObject({ label: 'Usuários', profiles: ['ADMIN'], slot: 'mais' });
+        expect(labels(moreItems(navItemsFor('ADMIN')))).toContain('Usuários');
+        for (const profile of ['BILLER', 'VIEWER'] as const) {
+            expect(labels(navItemsFor(profile))).not.toContain('Usuários');
+        }
     });
 
     it('keeps only the items whose profiles include the user profile, in order', () => {
@@ -76,8 +83,9 @@ describe('navigation slots', () => {
                 'Cartões',
                 'Mais',
             ]);
-            expect(labels(moreItems(navItemsFor(profile)))).toEqual(['Contas']);
         }
+        expect(labels(moreItems(navItemsFor('ADMIN')))).toEqual(['Contas', 'Usuários']);
+        expect(labels(moreItems(navItemsFor('BILLER')))).toEqual(['Contas']);
         expect(MORE_ENTRY.to).toBe('/mais');
         expect(MORE_ENTRY.label).toBe('Mais');
     });

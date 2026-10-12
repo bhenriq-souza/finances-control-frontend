@@ -147,7 +147,7 @@ Tarefas da [spec 0009](../specs/0009-lists-and-reference-data.md), da issue de e
 
 Tarefas da [spec 0010](../specs/0010-users-admin.md), da issue de entrega [FCF-009](https://github.com/bhenriq-souza/finances-control-frontend/issues/50).
 
-- [ ] **T-0010-01 — Tela de usuários e perfis** · #64
+- [x] **T-0010-01 — Tela de usuários e perfis** · #64
     - What: `/usuarios`, item **Usuários**, lista com o filtro de aguardando, diálogo de perfil e revogação
     - Where: `src/features/identity/users-admin/`, `src/routes/_app/usuarios.tsx`, `src/app/shell/navigation.ts`, `e2e/users-admin.spec.ts`, `e2e/fixtures/data/users.ts`
     - Done when: `AC-0010-01` a `AC-0010-07` cobertos; `INV-0010-01` a `INV-0010-03` verificados

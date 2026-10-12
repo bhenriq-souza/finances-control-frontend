@@ -54,7 +54,7 @@ test('the active item is marked with aria-current="page"', async ({ page }) => {
     const home = nav.getByRole('link', { name: 'Início' });
     await expect(home).toBeVisible();
     await expect(home).toHaveAttribute('aria-current', 'page');
-    await expect(nav.getByRole('link')).toHaveCount(3);
+    await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
 });
 
 // Alvos de toque de pelo menos 44×44px (spec 0006, "Acessibilidade").

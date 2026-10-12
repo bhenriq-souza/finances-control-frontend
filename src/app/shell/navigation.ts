@@ -1,5 +1,5 @@
 import type { LinkProps } from '@tanstack/react-router';
-import { CreditCard, Ellipsis, House, Landmark, type LucideIcon } from 'lucide-react';
+import { CreditCard, Ellipsis, House, Landmark, type LucideIcon, Users } from 'lucide-react';
 
 import type { Profile } from '@/features/identity';
 
@@ -29,6 +29,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     { to: '/', label: 'Início', icon: House, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/cartoes', label: 'Cartões', icon: CreditCard, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/contas', label: 'Contas', icon: Landmark, profiles: ALL_PROFILES, slot: 'mais' },
+    { to: '/usuarios', label: 'Usuários', icon: Users, profiles: ['ADMIN'], slot: 'mais' },
 ];
 
 /** Máximo de itens de `slot: 'barra'` na barra inferior, sem contar o **Mais**. */
