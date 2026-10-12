@@ -59,13 +59,13 @@ Mostrar a todo perfil onde o dinheiro está — saldo de cada conta, limite e ci
 
 - `EntryList` por `name`:
 
-| Coluna         | Conteúdo                                                                                                 |
-| -------------- | -------------------------------------------------------------------------------------------------------- |
-| Cartão         | `name` e, no apoio, `bank.name`                                                                          |
-| Usado          | `creditLimitCents − availableLimitCents` (`Money`, sem sinal), com a barra de uso (`BarList` de um item) |
-| Disponível     | `availableLimitCents`; negativo com `−` e tom `negativo` (o backend permite limite estourado)            |
-| Ciclo          | "Fecha em `currentCycle.closesOn` · vence em `currentCycle.dueOn`" (`formatDate` curta)                  |
-| Conta pagadora | rótulo de `paymentBankAccountId` por `useAccountLookup`, ou "—"; só no desktop                           |
+| Coluna         | Conteúdo                                                                                                                                                                                                                                                                                                          |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cartão         | `name` e, no apoio, `bank.name`                                                                                                                                                                                                                                                                                   |
+| Usado          | `creditLimitCents − availableLimitCents` (`Money`, sem sinal), com a barra de uso proporcional ao limite (desenho da `BarList`: 6px, `acento` sobre `superficie-elevada`, limitada a 100%; decisão do responsável em 2026-10-12, porque a `BarList` escala pelo maior item e com um item só ficaria sempre cheia) |
+| Disponível     | `availableLimitCents`; negativo com `−` e tom `negativo` (o backend permite limite estourado)                                                                                                                                                                                                                     |
+| Ciclo          | "Fecha em `currentCycle.closesOn` · vence em `currentCycle.dueOn`" (`formatDate` curta)                                                                                                                                                                                                                           |
+| Conta pagadora | rótulo de `paymentBankAccountId` por `useAccountLookup`, ou "—"; só no desktop                                                                                                                                                                                                                                    |
 
 - Cada linha leva a `/cartoes/$cartaoId`, que mostra os mesmos dados em `Card`, o limite total e as ações (**Editar**, **Arquivar**/**Desarquivar**) para `accounts.write`.
 
