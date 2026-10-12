@@ -261,10 +261,11 @@ test('the Aguardando aprovação filter shows only pending users and survives a 
     await expect(entries(page, testInfo)).toHaveCount(2);
     await expect(entry(page, testInfo, 'Lucas Martins')).toHaveCount(0);
 
-    // A sessão do fake de autenticação é só em memória: recarregar pede o login de novo, que volta
-    // à mesma URL.
+    // A sessão do fake de autenticação é só em memória: recarregar sempre pede o login de novo, que
+    // volta à mesma URL.
     await page.reload();
-    if (await page.getByLabel('Email').isVisible()) await signInWithEmail(page);
+    await expect(page).toHaveURL(/\/entrar/);
+    await signInWithEmail(page);
     await expect(page).toHaveURL(/\/usuarios\?filtro=aguardando/);
     await expect(page.getByRole('button', { name: 'Aguardando aprovação (2)' })).toHaveAttribute(
         'aria-pressed',
