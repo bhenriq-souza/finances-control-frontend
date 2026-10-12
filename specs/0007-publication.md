@@ -1,7 +1,7 @@
 ---
 id: '0007'
 title: Publicação — imagem nginx, configuração em runtime e deploy em dev
-status: approved
+status: implemented
 depends_on: ['0001', '0003']
 ---
 

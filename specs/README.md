@@ -13,7 +13,7 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0004](0004-theme.md)                | Tema gerado do tokens.json do hub                                  | approved    |
 | [0005](0005-api-client.md)           | Cliente da API gerado do contrato e erros por code                 | approved    |
 | [0006](0006-auth-and-shell.md)       | Autenticação, estados da conta e app shell                         | approved    |
-| [0007](0007-publication.md)          | Publicação — imagem nginx, configuração em runtime e deploy em dev | approved    |
+| [0007](0007-publication.md)          | Publicação — imagem nginx, configuração em runtime e deploy em dev | implemented |
 | [0008](0008-money.md)                | Dinheiro no cliente — parser e formatação BRL em centavos          | approved    |
 
 Specs de tela planejadas: `0010`+, depois das de fundação, com o número da spec de domínio do backend correspondente.

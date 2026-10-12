@@ -89,7 +89,7 @@ Tarefas da [spec 0007](../specs/0007-publication.md), da issue de entrega [FCF-0
     - What: `.github/workflows/deploy.yml` chamando o workflow reutilizável com `app-name: finances-frontend`; o primeiro run publica a imagem e falha no passo de GitOps, como previsto
     - Where: `.github/workflows/deploy.yml`
     - Done when: `AC-0007-03` verificado; `INV-0007-01`
-- [ ] **T-0007-04 — Manifests de `dev` e troca da raiz do host** · #23
+- [x] **T-0007-04 — Manifests de `dev` e troca da raiz do host** · #23
     - What: `finances-frontend` no `homelab-gitops` (deployment, ConfigMap com a web config, service, ingress `/`), registro no kustomization de `dev` e a retirada do ingress `/` do backend; executada pelo líder, com a evidência colada aqui
     - Where: `homelab-gitops` (`clusters/homelab/workloads/dev/manifests/`); evidência no PR deste repositório
     - Done when: `AC-0007-04`, `AC-0007-05` e `AC-0007-06` verificados no cluster; `INV-0007-04`
