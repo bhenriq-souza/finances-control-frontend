@@ -56,12 +56,12 @@ Trabalha só sobre a string, com dígitos e aritmética inteira — nunca `parse
 
 ### Exibição — `Money` (`src/ui/money.tsx`)
 
-`<Money cents={…} sign="auto|always|never" tone="auto|neutral" />`: renderiza `formatBRL` com algarismos tabulares (`font-variant-numeric: tabular-nums`) e o estilo de dinheiro do tema (spec 0004). Com `tone="auto"`, positivo em `positivo` e negativo em `negativo`; a cor nunca vai sem o sinal (identidade visual), então `tone="auto"` exige `sign` diferente de `never`.
+`<Money cents={…} sign="auto|always|never" tone="auto|neutral" />`: renderiza `formatBRL` com algarismos tabulares (`font-variant-numeric: tabular-nums`) e o estilo de dinheiro do tema (spec 0004). Com `tone="auto"`, positivo em `positivo` e negativo em `negativo`; a cor nunca vai sem o sinal (identidade visual), então `tone="auto"` exige `sign="always"` — com `sign="auto"` um positivo sairia verde sem o `+`. Tamanho opcional `size="valor|valor-pequeno|valor-destaque"` (padrão `valor`), os estilos de dinheiro do tema.
 
 ### Entrada — `MoneyInput` e `moneySchema`
 
 - `MoneyInput` é um campo de texto com `inputMode="decimal"`, prefixo visual `R$`, que guarda o texto digitado e entrega centavos ao formulário. Ao perder o foco, reformata o texto válido (`1234,5` → `1.234,50`).
-- `moneySchema` (zod) transforma a string do campo em `Cents` por `parseBRL`, com as mensagens pt-BR: `vazio` → "Informe o valor."; `formato` → "Use o formato 1.234,56."; `limite` → "Valor acima do permitido.". Variantes `.positive()` (padrão para lançamentos: zero → "O valor precisa ser maior que zero.") e `.nonnegative()`.
+- `moneySchema` (zod) transforma a string do campo em `Cents` por `parseBRL`, com as mensagens pt-BR: `vazio` → "Informe o valor."; `formato` → "Use o formato 1.234,56."; `limite` → "Valor acima do permitido.". É uma função: `moneySchema()` ou `moneySchema({ min: 'positive' })` rejeita zero com "O valor precisa ser maior que zero." (padrão, para lançamentos), e `moneySchema({ min: 'nonnegative' })` aceita zero.
 
 ### Regra de lint
 
@@ -90,7 +90,7 @@ No gate `lint`, para `src/**` exceto `src/shared/money/**`: proibir `parseFloat`
 - **AC-0008-02:** `parseBRL('999.999.999.999,99')` aceita e `parseBRL('1.000.000.000.000,00')` devolve `limite`.
 - **AC-0008-03:** `formatBRL(123456)` é `R$ 1.234,56`; `formatBRL(-1230)` é `−R$ 12,30`; `formatBRL(1230, { sign: 'always' })` é `+R$ 12,30`; `formatBRL(0, { sign: 'always' })` é `R$ 0,00`; `formatBRL(99_999_999_999_999)` é `R$ 999.999.999.999,99`.
 - **AC-0008-04:** o teste de propriedade de INV-0008-02 passa em 10.000 valores aleatórios e nos limites.
-- **AC-0008-05:** `MoneyInput` com `moneySchema.positive()` entrega `123450` ao submeter `1234,5`, reformata para `1.234,50` ao perder o foco e mostra as mensagens de ERR-0008-01, 02 e 04.
+- **AC-0008-05:** `MoneyInput` com `moneySchema()` (mínimo `positive`) entrega `123450` ao submeter `1234,5`, reformata para `1.234,50` ao perder o foco e mostra as mensagens de ERR-0008-01, 02 e 04.
 - **AC-0008-06:** um `parseFloat` ou `toFixed` em `src/features/` faz o gate `lint` falhar citando esta spec.
 
 ## Test mapping
