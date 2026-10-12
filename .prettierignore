@@ -7,3 +7,5 @@ src/api/generated
 playwright-report
 test-results
 blob-report
+# Gerado pelo plugin do TanStack Router (spec 0003)
+src/routeTree.gen.ts

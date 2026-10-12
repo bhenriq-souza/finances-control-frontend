@@ -17,3 +17,9 @@ src/api/generated/
 playwright-report/
 test-results/
 blob-report/
+
+# Configuração de runtime local, copiada de public/config.example.js (spec 0003)
+public/config.js
+
+# TypeScript
+*.tsbuildinfo
