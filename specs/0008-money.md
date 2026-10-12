@@ -1,7 +1,7 @@
 ---
 id: '0008'
 title: Dinheiro no cliente — parser e formatação BRL em centavos
-status: approved
+status: implemented
 depends_on: ['0000', '0003']
 ---
 

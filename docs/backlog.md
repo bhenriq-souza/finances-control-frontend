@@ -102,7 +102,7 @@ Tarefas da [spec 0008](../specs/0008-money.md), da issue de entrega [FCF-007](ht
     - What: `Cents`, `isCents`, `parseBRL`, `formatBRL` e a regra de lint contra `parseFloat`, `toFixed` e `Math.round`
     - Where: `src/shared/money/`, `eslint.config.js`
     - Done when: `AC-0008-01` a `AC-0008-04` e `AC-0008-06` cobertos; `INV-0008-01`, `INV-0008-02` e `INV-0008-04` verificados
-- [ ] **T-0008-02 — `Money`, `MoneyInput` e `moneySchema`** · #25
+- [x] **T-0008-02 — `Money`, `MoneyInput` e `moneySchema`** · #25
     - What: componente de exibição com sinal e tom, campo de entrada que entrega centavos e o schema zod com as mensagens pt-BR
     - Where: `src/ui/money.tsx`, `src/ui/money-input.tsx`, `src/shared/money/schema.ts`
     - Done when: `AC-0008-05` coberto; `INV-0008-03` verificado

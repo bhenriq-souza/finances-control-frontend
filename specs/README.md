@@ -14,7 +14,7 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0005](0005-api-client.md)           | Cliente da API gerado do contrato e erros por code                 | implemented |
 | [0006](0006-auth-and-shell.md)       | Autenticação, estados da conta e app shell                         | approved    |
 | [0007](0007-publication.md)          | Publicação — imagem nginx, configuração em runtime e deploy em dev | implemented |
-| [0008](0008-money.md)                | Dinheiro no cliente — parser e formatação BRL em centavos          | approved    |
+| [0008](0008-money.md)                | Dinheiro no cliente — parser e formatação BRL em centavos          | implemented |
 
 Specs de tela planejadas: `0010`+, depois das de fundação, com o número da spec de domínio do backend correspondente.
 
