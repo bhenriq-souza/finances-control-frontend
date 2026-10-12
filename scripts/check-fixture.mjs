@@ -128,9 +128,11 @@ export function runCheck(options = {}, args = []) {
         // Playwright falso: só informa onde estaria o Chromium.
         const chromiumPath = join(root, 'chromium-bin');
         if (chromium) write('chromium-bin', '');
+        // O caminho vai como dado (JSON lido pelo módulo), nunca interpolado no código-fonte.
+        write('node_modules/@playwright/test/chromium-path.json', JSON.stringify(chromiumPath));
         write(
             'node_modules/@playwright/test/index.js',
-            `exports.chromium = { executablePath: () => ${JSON.stringify(chromiumPath)} };\n`,
+            "const path = require('./chromium-path.json');\nexports.chromium = { executablePath: () => path };\n",
         );
 
         // PATH isolado: node real, `npx`/`npm` falsos e as ferramentas externas pedidas.
