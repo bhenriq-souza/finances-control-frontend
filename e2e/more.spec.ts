@@ -3,9 +3,9 @@ import { expect, test } from '@playwright/test';
 import { chooseUser, signInWithEmail, stubUsersMe } from './fixtures/auth';
 import { stubRuntime } from './fixtures/runtime-config';
 
-// AC-0009-08. Hoje a lista da navegação (spec 0009) não tem nenhum item de `slot: 'mais'` — eles
-// chegam com as specs 0010+ —, então aqui se prova o caso "sem nenhum" e o redirecionamento; o
-// caso "com um item" é provado em `src/app/shell/{navigation,app-shell,more-page}.test.*`.
+// AC-0009-08. Com **Contas** (spec 0011, `slot: 'mais'`) visível a todo perfil, aqui se prova o caso
+// "com um item" e o redirecionamento; o caso "sem nenhum" é provado em
+// `src/app/shell/{navigation,app-shell,more-page}.test.*`.
 
 test.beforeEach(async ({ page }) => {
     await stubRuntime(page);
@@ -13,15 +13,22 @@ test.beforeEach(async ({ page }) => {
     await stubUsersMe(page, 'ativo');
 });
 
-test('without a visible mais item, the navigation has no Mais', async ({ page }) => {
+test('with a visible mais item, the bottom bar shows Mais and the sidebar does not', async ({
+    page,
+}, testInfo) => {
     await page.goto('/entrar');
     await signInWithEmail(page);
     await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
 
     const nav = page.getByRole('navigation', { name: 'Principal' });
     await expect(nav.getByRole('link', { name: 'Início' })).toBeVisible();
-    await expect(nav.getByRole('link', { name: 'Mais' })).toHaveCount(0);
-    await expect(nav.getByRole('link')).toHaveCount(1);
+    if (testInfo.project.name === 'desktop') {
+        await expect(nav.getByRole('link', { name: 'Mais' })).toBeHidden();
+        await expect(nav.getByRole('link', { name: 'Contas' })).toBeVisible();
+    } else {
+        await expect(nav.getByRole('link', { name: 'Mais' })).toBeVisible();
+        await expect(nav.getByRole('link', { name: 'Contas' })).toBeHidden();
+    }
 });
 
 test('/mais redirects to / on desktop and shows the Mais page on phone and tablet', async ({
@@ -37,7 +44,8 @@ test('/mais redirects to / on desktop and shows the Mais page on phone and table
     } else {
         await expect(page.getByRole('heading', { name: 'Mais' })).toBeVisible();
         await expect(page).toHaveURL(/\/mais$/);
-        await expect(page.getByText('Não há outras seções para mostrar.')).toBeVisible();
+        const more = page.getByRole('navigation', { name: 'Mais' });
+        await expect(more.getByRole('link', { name: 'Contas' })).toHaveAttribute('href', '/contas');
         // A página fica dentro do shell, com a navegação principal.
         await expect(
             page
