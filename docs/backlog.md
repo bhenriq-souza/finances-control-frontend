@@ -38,7 +38,7 @@ Tarefas da [spec 0004](../specs/0004-theme.md), da issue de entrega [FCF-003](ht
     - What: entrada `tokens` em `sources.json`, `scripts/theme.mjs`, `npm run theme`, `tokens.css` gerado e o passo 3 de `scripts/contract.mjs`, sobre o esqueleto da T-0003-01
     - Where: `sources.json`, `scripts/theme.mjs`, `scripts/contract.mjs`, `src/ui/theme/tokens.css`, `src/index.css`
     - Done when: `AC-0004-01` e `AC-0004-02` cobertos; `INV-0004-01` verificado
-- [ ] **T-0004-02 — Fontes, escolha de tema, contraste e lint de cor** · #14
+- [x] **T-0004-02 — Fontes, escolha de tema, contraste e lint de cor** · #14
     - What: `@fontsource`, `ThemeProvider` com o script anti-piscada, teste dos 60 pares de contraste e a regra de lint contra cor literal
     - Where: `src/ui/theme/`, `index.html`, `eslint.config.js`
     - Done when: `AC-0004-03`, `AC-0004-04` e `AC-0004-05` cobertos; `INV-0004-02` a `INV-0004-04` verificados
