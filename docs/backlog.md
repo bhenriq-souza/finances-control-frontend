@@ -22,8 +22,8 @@ Tarefas das specs [0001](../specs/0001-development-workflow.md) e [0002](../spec
 Tarefas da [spec 0003](../specs/0003-scaffold.md), da issue de entrega [FCF-002](https://github.com/bhenriq-souza/finances-control-frontend/issues/2). Habilitam o spike (T-0006-01), junto com a publicação.
 
 - [ ] **T-0003-01 — Scaffold e gates em execução** · #11
-    - What: kit do ADR-0001, estrutura de pastas, regras do `dependency-cruiser`, configuração de runtime, Vitest, Playwright, `scripts/build.mjs` e o CI com Chromium e `--require-tools`
-    - Where: raiz, `src/`, `e2e/`, `scripts/build.mjs`, `.dependency-cruiser.cjs`, `.github/workflows/ci.yml`
+    - What: kit do ADR-0001, estrutura de pastas, regras do `dependency-cruiser`, configuração de runtime, Vitest, Playwright com o teste de fumaça da página provisória, `scripts/build.mjs`, o esqueleto do gate `contract` (passo 1 e a entrada `openapi`) e o CI com Chromium e `--require-tools`
+    - Where: raiz, `src/`, `e2e/`, `scripts/build.mjs`, `scripts/contract.mjs`, `sources.json`, `.dependency-cruiser.cjs`, `.github/workflows/ci.yml`
     - Done when: `AC-0003-01`, `AC-0003-03`, `AC-0003-04`, `AC-0003-06` e `AC-0003-07` cobertos; `INV-0003-02` a `INV-0003-04` verificados
 - [ ] **T-0003-02 — Porta de autenticação e página do spike** · #12
     - What: `AuthClient` com as implementações do Firebase e falsa, e a página mínima de login em `/` que mostra o resultado de `GET /api/users/me`
@@ -35,7 +35,7 @@ Tarefas da [spec 0003](../specs/0003-scaffold.md), da issue de entrega [FCF-002]
 Tarefas da [spec 0004](../specs/0004-theme.md), da issue de entrega [FCF-003](https://github.com/bhenriq-souza/finances-control-frontend/issues/3).
 
 - [ ] **T-0004-01 — Gerador do tema e sincronia no gate `contract`** · #13
-    - What: entrada `tokens` em `sources.json`, `scripts/theme.mjs`, `npm run theme`, `tokens.css` gerado e os passos 1 e 3 de `scripts/contract.mjs` (criando o script, se a T-0005-01 ainda não o criou)
+    - What: entrada `tokens` em `sources.json`, `scripts/theme.mjs`, `npm run theme`, `tokens.css` gerado e o passo 3 de `scripts/contract.mjs`, sobre o esqueleto da T-0003-01
     - Where: `sources.json`, `scripts/theme.mjs`, `scripts/contract.mjs`, `src/ui/theme/tokens.css`, `src/index.css`
     - Done when: `AC-0004-01` e `AC-0004-02` cobertos; `INV-0004-01` verificado
 - [ ] **T-0004-02 — Fontes, escolha de tema, contraste e lint de cor** · #14
@@ -48,7 +48,7 @@ Tarefas da [spec 0004](../specs/0004-theme.md), da issue de entrega [FCF-003](ht
 Tarefas da [spec 0005](../specs/0005-api-client.md), da issue de entrega [FCF-004](https://github.com/bhenriq-souza/finances-control-frontend/issues/4). Contrato fixado na tag `v1.1.0` do backend.
 
 - [ ] **T-0005-01 — Tipos gerados, catálogo pt-BR e o gate `contract`** · #15
-    - What: entrada `openapi` em `sources.json`, `scripts/api-generate.mjs` com `predev`/`prebuild`, os passos 1, 2 e 4 de `scripts/contract.mjs` (criando o script, se a T-0004-01 ainda não o criou) e o catálogo com os 55 códigos
+    - What: `scripts/api-generate.mjs` com `predev`/`prebuild`, os passos 2 e 4 de `scripts/contract.mjs`, sobre o esqueleto da T-0003-01 (que já traz a entrada `openapi` e o passo 1), e o catálogo com os 55 códigos
     - Where: `sources.json`, `scripts/`, `src/api/errors/catalog.ts`
     - Done when: `AC-0005-01` e `AC-0005-05` cobertos; `INV-0005-01` e `INV-0005-04` verificados
 - [ ] **T-0005-02 — Cliente, token, `ApiError` e `QueryClient`** · #16
