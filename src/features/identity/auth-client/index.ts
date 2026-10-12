@@ -45,6 +45,11 @@ export function getAuthClient(): AuthClient {
         signInWithGoogle: async () => (await client()).signInWithGoogle(),
         signOut: async () => (await client()).signOut(),
         getIdToken: async (forceRefresh) => (await client()).getIdToken(forceRefresh),
+        signUpWithEmail: async (name, email, password) =>
+            (await client()).signUpWithEmail(name, email, password),
+        sendEmailVerification: async () => (await client()).sendEmailVerification(),
+        sendPasswordReset: async (email) => (await client()).sendPasswordReset(email),
+        reloadUser: async () => (await client()).reloadUser(),
     };
 }
 

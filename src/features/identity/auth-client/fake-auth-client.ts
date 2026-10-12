@@ -6,6 +6,12 @@ export const E2E_FAKE_AUTH_MARKER = '__E2E_FAKE_AUTH__';
 /** Chave do `localStorage` em que o e2e escolhe o usuário (spec 0006). */
 export const E2E_USER_STORAGE_KEY = 'ftech.e2e.usuario';
 
+/** Com um `code` do Firebase aqui, `signInWithGoogle` falha com ele (ex.: `auth/popup-blocked`). */
+export const E2E_GOOGLE_ERROR_STORAGE_KEY = 'ftech.e2e.erro-google';
+
+/** Com `sim` aqui, `reloadUser` devolve o usuário atual com o email já verificado. */
+export const E2E_EMAIL_VERIFIED_STORAGE_KEY = 'ftech.e2e.email-verificado';
+
 const FIXED_USERS: Record<string, AuthUser> = {
     ativo: { uid: 'e2e-ativo', email: 'ativo@example.com', emailVerified: true },
     'sem-perfil': { uid: 'e2e-sem-perfil', email: 'sem-perfil@example.com', emailVerified: true },
@@ -26,6 +32,10 @@ export class FakeAuthError extends Error {
     }
 }
 
+function fail(code: string): Promise<never> {
+    return Promise.reject(new FakeAuthError(code, `Firebase: Error (${code}).`));
+}
+
 function chosenUser(): AuthUser | null {
     const key = globalThis.localStorage.getItem(E2E_USER_STORAGE_KEY) ?? 'nenhum';
     return FIXED_USERS[key] ?? null;
@@ -44,14 +54,7 @@ export function createFakeAuthClient(): AuthClient {
     };
     const signIn = () => {
         const user = chosenUser();
-        if (!user) {
-            return Promise.reject(
-                new FakeAuthError(
-                    'auth/invalid-credential',
-                    'Firebase: Error (auth/invalid-credential).',
-                ),
-            );
-        }
+        if (!user) return fail('auth/invalid-credential');
         set(user);
         return Promise.resolve();
     };
@@ -65,11 +68,26 @@ export function createFakeAuthClient(): AuthClient {
             };
         },
         signInWithEmail: signIn,
-        signInWithGoogle: signIn,
+        signInWithGoogle() {
+            const code = globalThis.localStorage.getItem(E2E_GOOGLE_ERROR_STORAGE_KEY);
+            return code ? fail(code) : signIn();
+        },
         signOut() {
             set(null);
             return Promise.resolve();
         },
         getIdToken: () => Promise.resolve(current ? `fake-token-${current.uid}` : null),
+        signUpWithEmail(_name, email) {
+            set({ uid: 'e2e-novo', email, emailVerified: false });
+            return Promise.resolve();
+        },
+        sendEmailVerification: () => Promise.resolve(),
+        sendPasswordReset: () => Promise.resolve(),
+        reloadUser() {
+            const verified =
+                globalThis.localStorage.getItem(E2E_EMAIL_VERIFIED_STORAGE_KEY) === 'sim';
+            if (current && verified) current = { ...current, emailVerified: true };
+            return Promise.resolve(current);
+        },
     };
 }

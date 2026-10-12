@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const currentUser = vi.hoisted(() => ({
-    value: null as { getIdToken: (force: boolean) => Promise<string> } | null,
-}));
+interface FakeUser {
+    uid: string;
+    email: string;
+    emailVerified: boolean;
+    getIdToken: (force: boolean) => Promise<string>;
+}
+
+const currentUser = vi.hoisted(() => ({ value: null as FakeUser | null }));
+const authInstance = vi.hoisted(() => ({ languageCode: null as string | null }));
 
 vi.mock('firebase/app', () => ({ initializeApp: vi.fn(() => ({ name: 'app' })) }));
 vi.mock('firebase/auth', () => {
@@ -10,11 +16,18 @@ vi.mock('firebase/auth', () => {
     return {
         GoogleAuthProvider,
         browserLocalPersistence: 'local',
-        getAuth: vi.fn(() => ({
-            get currentUser() {
-                return currentUser.value;
-            },
-        })),
+        getAuth: vi.fn(() =>
+            Object.defineProperty(authInstance, 'currentUser', {
+                configurable: true,
+                get: () => currentUser.value,
+            }),
+        ),
+        reload: vi.fn((user: FakeUser) => {
+            user.emailVerified = true;
+            return Promise.resolve();
+        }),
+        sendEmailVerification: vi.fn(() => Promise.resolve()),
+        sendPasswordResetEmail: vi.fn(() => Promise.resolve()),
         setPersistence: vi.fn(() => Promise.resolve()),
         signInWithEmailAndPassword: vi.fn(() => Promise.resolve()),
         signInWithPopup: vi.fn(() => Promise.resolve()),
@@ -30,6 +43,9 @@ vi.mock('firebase/auth', () => {
 import { initializeApp } from 'firebase/app';
 import {
     GoogleAuthProvider,
+    reload,
+    sendEmailVerification,
+    sendPasswordResetEmail,
     setPersistence,
     signInWithEmailAndPassword,
     signInWithPopup,
@@ -52,10 +68,13 @@ describe('firebase auth client', () => {
         resetRuntimeConfigForTests();
         window.__FTECH_CONFIG__ = { environment: 'local', firebase };
         currentUser.value = null;
+        authInstance.languageCode = null;
+        vi.clearAllMocks();
     });
 
-    it('initializes Firebase with the runtime config and local persistence', async () => {
+    it('initializes Firebase with the runtime config, Portuguese emails and local persistence', async () => {
         const client = createFirebaseAuthClient();
+        expect(authInstance.languageCode).toBe('pt');
         await client.signInWithEmail('a@b.c', 'secret');
 
         expect(initializeApp).toHaveBeenCalledWith(firebase);
@@ -96,8 +115,36 @@ describe('firebase auth client', () => {
         await expect(client.getIdToken()).resolves.toBeNull();
 
         const getIdToken = vi.fn(() => Promise.resolve('tok'));
-        currentUser.value = { getIdToken };
+        currentUser.value = { uid: 'u1', email: 'a@b.c', emailVerified: true, getIdToken };
         await expect(client.getIdToken(true)).resolves.toBe('tok');
         expect(getIdToken).toHaveBeenCalledWith(true);
+    });
+
+    it('sends the verification email and reloads only with a current user', async () => {
+        const client = createFirebaseAuthClient();
+        await client.sendEmailVerification();
+        await expect(client.reloadUser()).resolves.toBeNull();
+        expect(sendEmailVerification).not.toHaveBeenCalled();
+        expect(reload).not.toHaveBeenCalled();
+
+        const user: FakeUser = {
+            uid: 'u2',
+            email: 'n@b.c',
+            emailVerified: false,
+            getIdToken: () => Promise.resolve('t'),
+        };
+        currentUser.value = user;
+        await client.sendEmailVerification();
+        expect(sendEmailVerification).toHaveBeenCalledWith(user);
+        await expect(client.reloadUser()).resolves.toEqual({
+            uid: 'u2',
+            email: 'n@b.c',
+            emailVerified: true,
+        });
+    });
+
+    it('sends the password reset email', async () => {
+        await createFirebaseAuthClient().sendPasswordReset('a@b.c');
+        expect(sendPasswordResetEmail).toHaveBeenCalledWith(expect.anything(), 'a@b.c');
     });
 });

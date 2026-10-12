@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AuthUser } from './auth-client';
-import { createFakeAuthClient, E2E_USER_STORAGE_KEY } from './fake-auth-client';
+import {
+    createFakeAuthClient,
+    E2E_EMAIL_VERIFIED_STORAGE_KEY,
+    E2E_GOOGLE_ERROR_STORAGE_KEY,
+    E2E_USER_STORAGE_KEY,
+} from './fake-auth-client';
 
 describe('fake auth client', () => {
     beforeEach(() => {
@@ -55,5 +60,42 @@ describe('fake auth client', () => {
         listener.mockClear();
         await client.signInWithEmail('a@b.c', 'x');
         expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('fails Google sign-in with the code chosen by the test', async () => {
+        localStorage.setItem(E2E_USER_STORAGE_KEY, 'ativo');
+        localStorage.setItem(E2E_GOOGLE_ERROR_STORAGE_KEY, 'auth/popup-blocked');
+
+        await expect(createFakeAuthClient().signInWithGoogle()).rejects.toMatchObject({
+            code: 'auth/popup-blocked',
+        });
+    });
+
+    it('signs up an unverified user and resolves the other new port methods', async () => {
+        const client = createFakeAuthClient();
+        const listener = vi.fn();
+        client.onAuthStateChanged(listener);
+
+        await client.signUpWithEmail('Nova', 'nova@example.com', '12345678');
+        await client.sendEmailVerification();
+        await client.sendPasswordReset('nova@example.com');
+
+        expect(listener).toHaveBeenLastCalledWith({
+            uid: 'e2e-novo',
+            email: 'nova@example.com',
+            emailVerified: false,
+        });
+        await expect(client.reloadUser()).resolves.toMatchObject({ emailVerified: false });
+    });
+
+    it('reloads the user as verified when the test says so', async () => {
+        const client = createFakeAuthClient();
+        await expect(client.reloadUser()).resolves.toBeNull();
+
+        localStorage.setItem(E2E_USER_STORAGE_KEY, 'email-nao-verificado');
+        await client.signInWithEmail('a@b.c', 'x');
+        localStorage.setItem(E2E_EMAIL_VERIFIED_STORAGE_KEY, 'sim');
+
+        await expect(client.reloadUser()).resolves.toMatchObject({ emailVerified: true });
     });
 });

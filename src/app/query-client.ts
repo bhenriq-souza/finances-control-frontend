@@ -52,7 +52,13 @@ export function createQueryClient(effects: QueryClientEffects): QueryClient {
     }
 
     return new QueryClient({
-        queryCache: new QueryCache({ onError: handleError }),
+        queryCache: new QueryCache({
+            // Consulta com `meta.globalEffects: false` trata os códigos por conta própria (ex.:
+            // `GET /users/me`, decidido pela guarda de `_app`, spec 0006).
+            onError: (error, query) => {
+                if (query.meta?.globalEffects !== false) handleError(error);
+            },
+        }),
         mutationCache: new MutationCache({ onError: handleError }),
         defaultOptions: {
             queries: { retry: shouldRetry, retryDelay },
