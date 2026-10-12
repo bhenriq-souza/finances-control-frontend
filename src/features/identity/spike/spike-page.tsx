@@ -7,6 +7,10 @@ interface MeResult {
     body: string;
 }
 
+/** Página sem tema (spec 0003): bordas mínimas para os controles ficarem visíveis no celular. */
+const FIELD = 'rounded border border-input px-3 py-2';
+const BUTTON = 'rounded border border-input px-3 py-2';
+
 function rawError(error: unknown): string {
     const code = (error as { code?: unknown } | null)?.code;
     const message = error instanceof Error ? error.message : String(error);
@@ -84,7 +88,11 @@ export function SpikePage() {
                     <pre data-testid="spike-me-body" className="overflow-auto">
                         {me?.body}
                     </pre>
-                    <button type="button" onClick={() => void run(() => client.signOut())}>
+                    <button
+                        type="button"
+                        className={BUTTON}
+                        onClick={() => void run(() => client.signOut())}
+                    >
                         Sair
                     </button>
                 </section>
@@ -92,19 +100,32 @@ export function SpikePage() {
                 <form onSubmit={onSubmit} className="flex flex-col gap-2">
                     <label className="flex flex-col">
                         Email
-                        <input name="email" type="email" required autoComplete="username" />
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                            autoComplete="username"
+                            className={FIELD}
+                        />
                     </label>
                     <label className="flex flex-col">
                         Senha
                         <input
+                            className={FIELD}
                             name="password"
                             type="password"
                             required
                             autoComplete="current-password"
                         />
                     </label>
-                    <button type="submit">Entrar</button>
-                    <button type="button" onClick={() => void run(() => client.signInWithGoogle())}>
+                    <button type="submit" className={BUTTON}>
+                        Entrar
+                    </button>
+                    <button
+                        type="button"
+                        className={BUTTON}
+                        onClick={() => void run(() => client.signInWithGoogle())}
+                    >
                         Entrar com Google
                     </button>
                 </form>
