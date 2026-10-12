@@ -207,7 +207,7 @@ Tarefas da [spec 0013](../specs/0013-statements.md), da issue de entrega [FCF-01
 
 Tarefas da [spec 0014](../specs/0014-earnings.md), da issue de entrega [FCF-013](https://github.com/bhenriq-souza/finances-control-frontend/issues/54).
 
-- [ ] **T-0014-01 — Lista e detalhe de receitas** · #74
+- [x] **T-0014-01 — Lista e detalhe de receitas** · #74
     - What: `/receitas` com filtros e resumo, `/receitas/$receitaId` só leitura, item **Receitas**
     - Where: `src/features/earnings/list/`, `src/features/earnings/detail/earning-detail.tsx`, `src/routes/_app/receitas*`, `src/app/shell/navigation.ts`, `e2e/earnings-list.spec.ts`, `e2e/fixtures/data/earnings.ts`
     - Done when: `AC-0014-01`, `AC-0014-02` e `AC-0014-09` cobertos; `INV-0014-01` verificado

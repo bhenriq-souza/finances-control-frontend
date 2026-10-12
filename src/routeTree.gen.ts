@@ -28,6 +28,8 @@ import { Route as AppContasBancosRouteImport } from './routes/_app/contas.bancos
 import { Route as AppDespesasIndexRouteImport } from './routes/_app/despesas.index'
 import { Route as AppDespesasDespesaIdRouteImport } from './routes/_app/despesas.$despesaId'
 import { Route as AppDespesasTiposRouteImport } from './routes/_app/despesas.tipos'
+import { Route as AppReceitasIndexRouteImport } from './routes/_app/receitas.index'
+import { Route as AppReceitasReceitaIdRouteImport } from './routes/_app/receitas.$receitaId'
 import { Route as AppReceitasTiposRouteImport } from './routes/_app/receitas.tipos'
 import { Route as AppTransferenciasIndexRouteImport } from './routes/_app/transferencias.index'
 import { Route as AppTransferenciasTransferenciaIdRouteImport } from './routes/_app/transferencias.$transferenciaId'
@@ -126,6 +128,16 @@ const AppDespesasTiposRoute = AppDespesasTiposRouteImport.update({
   path: '/despesas/tipos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReceitasIndexRoute = AppReceitasIndexRouteImport.update({
+  id: '/receitas/',
+  path: '/receitas/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReceitasReceitaIdRoute = AppReceitasReceitaIdRouteImport.update({
+  id: '/receitas/$receitaId',
+  path: '/receitas/$receitaId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppReceitasTiposRoute = AppReceitasTiposRouteImport.update({
   id: '/receitas/tipos',
   path: '/receitas/tipos',
@@ -159,11 +171,13 @@ export interface FileRoutesByFullPath {
   '/contas/bancos': typeof AppContasBancosRoute
   '/despesas/$despesaId': typeof AppDespesasDespesaIdRoute
   '/despesas/tipos': typeof AppDespesasTiposRoute
+  '/receitas/$receitaId': typeof AppReceitasReceitaIdRoute
   '/receitas/tipos': typeof AppReceitasTiposRoute
   '/transferencias/$transferenciaId': typeof AppTransferenciasTransferenciaIdRoute
   '/cartoes/': typeof AppCartoesIndexRoute
   '/contas/': typeof AppContasIndexRoute
   '/despesas/': typeof AppDespesasIndexRoute
+  '/receitas/': typeof AppReceitasIndexRoute
   '/transferencias/': typeof AppTransferenciasIndexRoute
 }
 export interface FileRoutesByTo {
@@ -182,11 +196,13 @@ export interface FileRoutesByTo {
   '/contas/bancos': typeof AppContasBancosRoute
   '/despesas/$despesaId': typeof AppDespesasDespesaIdRoute
   '/despesas/tipos': typeof AppDespesasTiposRoute
+  '/receitas/$receitaId': typeof AppReceitasReceitaIdRoute
   '/receitas/tipos': typeof AppReceitasTiposRoute
   '/transferencias/$transferenciaId': typeof AppTransferenciasTransferenciaIdRoute
   '/cartoes': typeof AppCartoesIndexRoute
   '/contas': typeof AppContasIndexRoute
   '/despesas': typeof AppDespesasIndexRoute
+  '/receitas': typeof AppReceitasIndexRoute
   '/transferencias': typeof AppTransferenciasIndexRoute
 }
 export interface FileRoutesById {
@@ -207,11 +223,13 @@ export interface FileRoutesById {
   '/_app/contas/bancos': typeof AppContasBancosRoute
   '/_app/despesas/$despesaId': typeof AppDespesasDespesaIdRoute
   '/_app/despesas/tipos': typeof AppDespesasTiposRoute
+  '/_app/receitas/$receitaId': typeof AppReceitasReceitaIdRoute
   '/_app/receitas/tipos': typeof AppReceitasTiposRoute
   '/_app/transferencias/$transferenciaId': typeof AppTransferenciasTransferenciaIdRoute
   '/_app/cartoes/': typeof AppCartoesIndexRoute
   '/_app/contas/': typeof AppContasIndexRoute
   '/_app/despesas/': typeof AppDespesasIndexRoute
+  '/_app/receitas/': typeof AppReceitasIndexRoute
   '/_app/transferencias/': typeof AppTransferenciasIndexRoute
 }
 export interface FileRouteTypes {
@@ -232,11 +250,13 @@ export interface FileRouteTypes {
     | '/contas/bancos'
     | '/despesas/$despesaId'
     | '/despesas/tipos'
+    | '/receitas/$receitaId'
     | '/receitas/tipos'
     | '/transferencias/$transferenciaId'
     | '/cartoes/'
     | '/contas/'
     | '/despesas/'
+    | '/receitas/'
     | '/transferencias/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -255,11 +275,13 @@ export interface FileRouteTypes {
     | '/contas/bancos'
     | '/despesas/$despesaId'
     | '/despesas/tipos'
+    | '/receitas/$receitaId'
     | '/receitas/tipos'
     | '/transferencias/$transferenciaId'
     | '/cartoes'
     | '/contas'
     | '/despesas'
+    | '/receitas'
     | '/transferencias'
   id:
     | '__root__'
@@ -279,11 +301,13 @@ export interface FileRouteTypes {
     | '/_app/contas/bancos'
     | '/_app/despesas/$despesaId'
     | '/_app/despesas/tipos'
+    | '/_app/receitas/$receitaId'
     | '/_app/receitas/tipos'
     | '/_app/transferencias/$transferenciaId'
     | '/_app/cartoes/'
     | '/_app/contas/'
     | '/_app/despesas/'
+    | '/_app/receitas/'
     | '/_app/transferencias/'
   fileRoutesById: FileRoutesById
 }
@@ -432,6 +456,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDespesasTiposRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/receitas/': {
+      id: '/_app/receitas/'
+      path: '/receitas'
+      fullPath: '/receitas/'
+      preLoaderRoute: typeof AppReceitasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/receitas/$receitaId': {
+      id: '/_app/receitas/$receitaId'
+      path: '/receitas/$receitaId'
+      fullPath: '/receitas/$receitaId'
+      preLoaderRoute: typeof AppReceitasReceitaIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/receitas/tipos': {
       id: '/_app/receitas/tipos'
       path: '/receitas/tipos'
@@ -464,11 +502,13 @@ interface AppRouteChildren {
   AppContasBancosRoute: typeof AppContasBancosRoute
   AppDespesasDespesaIdRoute: typeof AppDespesasDespesaIdRoute
   AppDespesasTiposRoute: typeof AppDespesasTiposRoute
+  AppReceitasReceitaIdRoute: typeof AppReceitasReceitaIdRoute
   AppReceitasTiposRoute: typeof AppReceitasTiposRoute
   AppTransferenciasTransferenciaIdRoute: typeof AppTransferenciasTransferenciaIdRoute
   AppCartoesIndexRoute: typeof AppCartoesIndexRoute
   AppContasIndexRoute: typeof AppContasIndexRoute
   AppDespesasIndexRoute: typeof AppDespesasIndexRoute
+  AppReceitasIndexRoute: typeof AppReceitasIndexRoute
   AppTransferenciasIndexRoute: typeof AppTransferenciasIndexRoute
 }
 
@@ -480,11 +520,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppContasBancosRoute: AppContasBancosRoute,
   AppDespesasDespesaIdRoute: AppDespesasDespesaIdRoute,
   AppDespesasTiposRoute: AppDespesasTiposRoute,
+  AppReceitasReceitaIdRoute: AppReceitasReceitaIdRoute,
   AppReceitasTiposRoute: AppReceitasTiposRoute,
   AppTransferenciasTransferenciaIdRoute: AppTransferenciasTransferenciaIdRoute,
   AppCartoesIndexRoute: AppCartoesIndexRoute,
   AppContasIndexRoute: AppContasIndexRoute,
   AppDespesasIndexRoute: AppDespesasIndexRoute,
+  AppReceitasIndexRoute: AppReceitasIndexRoute,
   AppTransferenciasIndexRoute: AppTransferenciasIndexRoute,
 }
 

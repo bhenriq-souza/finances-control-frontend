@@ -1,4 +1,4 @@
-import { House } from 'lucide-react';
+import { ArrowUp, House } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -28,8 +28,8 @@ const labels = (entries: readonly { label: string }[]) => entries.map(({ label }
 
 // INV-0006-03: a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
 describe('navItemsFor', () => {
-    it('shows Início, Despesas, Cartões, Contas and Transferências to every profile, in order', () => {
-        const common = ['Início', 'Despesas', 'Cartões', 'Contas', 'Transferências'];
+    it('shows the spec 0009 items to every profile, in order', () => {
+        const common = ['Início', 'Despesas', 'Receitas', 'Cartões', 'Contas', 'Transferências'];
         for (const profile of ['BILLER', 'VIEWER'] as const) {
             expect(labels(navItemsFor(profile))).toEqual(common);
         }
@@ -37,6 +37,7 @@ describe('navItemsFor', () => {
         expect(NAV_ITEMS.map(({ to }) => to)).toEqual([
             '/',
             '/despesas',
+            '/receitas',
             '/cartoes',
             '/contas',
             '/transferencias',
@@ -52,6 +53,17 @@ describe('navItemsFor', () => {
         for (const profile of ['BILLER', 'VIEWER'] as const) {
             expect(labels(navItemsFor(profile))).not.toContain('Usuários');
         }
+    });
+
+    // Spec 0014, "Rotas e navegação": Receitas na barra, para todos os perfis.
+    it('declares Receitas in the bottom bar with the ArrowUp icon', () => {
+        expect(NAV_ITEMS.find(({ to }) => to === '/receitas')).toEqual({
+            to: '/receitas',
+            label: 'Receitas',
+            icon: ArrowUp,
+            profiles: ALL,
+            slot: 'barra',
+        });
     });
 
     it('keeps only the items whose profiles include the user profile, in order', () => {
@@ -84,12 +96,14 @@ describe('navigation slots', () => {
     it('declares Início and Cartões in the bottom bar and Contas in Mais', () => {
         expect(NAV_ITEMS.find(({ to }) => to === '/')?.slot).toBe('barra');
         expect(NAV_ITEMS.find(({ to }) => to === '/despesas')?.slot).toBe('barra');
+        expect(NAV_ITEMS.find(({ to }) => to === '/receitas')?.slot).toBe('barra');
         expect(NAV_ITEMS.find(({ to }) => to === '/cartoes')?.slot).toBe('barra');
         expect(NAV_ITEMS.find(({ to }) => to === '/contas')?.slot).toBe('mais');
         for (const profile of ['ADMIN', 'BILLER', 'VIEWER'] as const) {
             expect(labels(bottomBarEntries(navItemsFor(profile)))).toEqual([
                 'Início',
                 'Despesas',
+                'Receitas',
                 'Cartões',
                 'Mais',
             ]);
