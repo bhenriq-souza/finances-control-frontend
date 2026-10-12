@@ -20,14 +20,26 @@ export async function chooseUser(
     );
 }
 
+/** Outra pessoa, para conferir que nada do usuário anterior sobra depois de sair (AC-0006-06). */
+export const OTHER_PERSON = {
+    id: '00000000-0000-4000-8000-000000000002',
+    email: 'bruno@example.com',
+    name: 'Bruno Lima',
+} as const;
+
 /** Corpo `200` de `GET /users/me` (schema `UserResponse` do contrato). */
-export function userResponse(profile: 'ADMIN' | 'BILLER' | 'VIEWER' | null) {
+export function userResponse(
+    profile: 'ADMIN' | 'BILLER' | 'VIEWER' | null,
+    person: { id: string; email: string; name: string } = {
+        id: '00000000-0000-4000-8000-000000000001',
+        email: 'ativo@example.com',
+        name: 'Ana Souza',
+    },
+) {
     return {
         data: {
-            id: '00000000-0000-4000-8000-000000000001',
-            email: 'ativo@example.com',
+            ...person,
             emailVerified: true,
-            name: 'Ana Souza',
             profile,
             profileGrantedAt: profile ? '2026-10-01T12:00:00Z' : null,
             createdAt: '2026-10-01T12:00:00Z',

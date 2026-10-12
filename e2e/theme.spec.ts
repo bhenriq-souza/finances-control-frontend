@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
+import { chooseUser, signInWithEmail, stubUsersMe } from './fixtures/auth';
 import { stubRuntime } from './fixtures/runtime-config';
 
 // Cores do hub (tokens.css): fundo de cada tema.
@@ -56,5 +57,42 @@ test.describe('theme choice', () => {
         await page.goto('/');
         await expect(page.locator('html')).not.toHaveAttribute('data-tema', /.+/);
         expect(await fundo(page)).toBe(FUNDO_CLARO);
+    });
+});
+
+// AC-0006-08: o seletor de tema do menu do usuário muda o tema na hora e sobrevive a recarregar.
+test.describe('theme selector in the user menu', () => {
+    test.beforeEach(async ({ page }) => {
+        await stubRuntime(page);
+        await chooseUser(page, 'ativo');
+        await stubUsersMe(page, 'ativo');
+    });
+
+    test('changes the theme at once, and the choice survives a reload', async ({ page }) => {
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await page.goto('/entrar');
+        await signInWithEmail(page);
+        await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+
+        await page.getByRole('button', { name: 'Menu do usuário' }).click();
+        await expect(page.getByRole('radio', { name: 'Sistema' })).toBeChecked();
+        await page.getByText('Claro', { exact: true }).click();
+        await expect(page.getByRole('radio', { name: 'Claro' })).toBeChecked();
+        await expect(page.locator('html')).toHaveAttribute('data-tema', 'claro');
+        expect(await fundo(page)).toBe(FUNDO_CLARO);
+
+        // O fake de autenticação guarda a sessão só em memória: recarregar volta a `/entrar`.
+        await page.reload();
+        await expect(page.locator('html')).toHaveAttribute('data-tema', 'claro');
+        expect(await fundo(page)).toBe(FUNDO_CLARO);
+        await expect(page).toHaveURL(/\/entrar/);
+        await signInWithEmail(page);
+        await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+        await page.getByRole('button', { name: 'Menu do usuário' }).click();
+        await expect(page.getByRole('radio', { name: 'Claro' })).toBeChecked();
+
+        await page.getByText('Escuro', { exact: true }).click();
+        await expect(page.locator('html')).toHaveAttribute('data-tema', 'escuro');
+        expect(await fundo(page)).toBe(FUNDO_ESCURO);
     });
 });
