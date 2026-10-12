@@ -60,7 +60,7 @@ Tarefas da [spec 0005](../specs/0005-api-client.md), da issue de entrega [FCF-00
 
 Tarefas da [spec 0006](../specs/0006-auth-and-shell.md), da issue de entrega [FCF-005](https://github.com/bhenriq-souza/finances-control-frontend/issues/5).
 
-- [ ] **T-0006-01 — Spike: login Google numa origem HTTP fora de `localhost`** · #17
+- [x] **T-0006-01 — Spike: login Google numa origem HTTP fora de `localhost`** · #17
     - What: primeira tarefa depois das specs de fundação; roteiro da spec no desktop e no celular, contra a página do spike publicada em `http://finances.dev.homelab.local/`; sucesso = login Google concluído e `GET /api/users/me` com `200` pelo token obtido; plano B = TLS no ingress de `dev` com CA local
     - Where: evidência no PR; só `docs/backlog.md` e, se falhar, a revisão da spec 0006
     - Done when: `AC-0006-01` — resultado registrado; depende de T-0003-02 e T-0007-04
