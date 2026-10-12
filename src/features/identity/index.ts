@@ -13,7 +13,7 @@ export {
     useCurrentUser,
     type CurrentUser,
     type Profile,
-} from './current-user';
+} from '@/api/queries/current-user';
 export { safeRedirect } from './redirect';
 export { HomePage } from './pages/home-page';
 export { PasswordResetPage } from './pages/password-reset-page';

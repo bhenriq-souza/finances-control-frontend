@@ -1,13 +1,15 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 
-import { api } from '@/api/client';
-import { ApiError, unwrap } from '@/api/errors/api-error';
-import type { components } from '@/api/generated/schema';
+import { api } from '../client';
+import { ApiError, unwrap } from '../errors/api-error';
+import type { components } from '../generated/schema';
+
+import { queryKeys, REFERENCE_STALE_TIME } from './keys';
 
 export type CurrentUser = components['schemas']['UserResponse'];
 export type Profile = NonNullable<CurrentUser['profile']>;
 
-export const CURRENT_USER_QUERY_KEY = ['users', 'me'] as const;
+export const CURRENT_USER_QUERY_KEY = queryKeys.users.me();
 
 /** Rótulos pt-BR dos perfis (spec 0006). */
 export const PROFILE_LABELS: Record<Profile, string> = {
@@ -23,13 +25,14 @@ async function fetchCurrentUser(): Promise<CurrentUser> {
 }
 
 /**
- * `GET /users/me`, chave `['users', 'me']`. Os códigos de estado da conta são tratados por quem
+ * `GET /users/me`, chave `['users', 'me']`, `staleTime` de 5 minutos (spec 0009). Os códigos de estado da conta são tratados por quem
  * consulta (a guarda de `_app` e as telas de estado), não pelos efeitos globais do `app`.
  */
 export function currentUserQueryOptions() {
     return queryOptions({
         queryKey: CURRENT_USER_QUERY_KEY,
         queryFn: fetchCurrentUser,
+        staleTime: REFERENCE_STALE_TIME,
         meta: { globalEffects: false },
     });
 }

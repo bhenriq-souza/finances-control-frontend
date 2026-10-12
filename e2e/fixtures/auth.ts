@@ -1,9 +1,52 @@
 import type { Page, Route } from '@playwright/test';
 
-/** Usuários fixos do fake de autenticação (spec 0006, "Fake de autenticação no e2e"). */
-export type E2EUser = 'ativo' | 'sem-perfil' | 'email-nao-verificado' | 'nenhum';
+/**
+ * Usuários fixos do fake de autenticação (spec 0006, "Fake de autenticação no e2e"); `lancador`
+ * e `leitor` são da spec 0009.
+ */
+export type E2EUser =
+    'ativo' | 'lancador' | 'leitor' | 'sem-perfil' | 'email-nao-verificado' | 'nenhum';
 
-const PROFILE = { ativo: 'ADMIN', 'sem-perfil': null } as const;
+type Person = { id: string; email: string; name: string };
+
+/** Perfil e pessoa que `GET /users/me` devolve para cada usuário que tem conta no backend. */
+const BACKEND_USERS = {
+    ativo: {
+        profile: 'ADMIN',
+        person: {
+            id: '00000000-0000-4000-8000-000000000001',
+            email: 'ativo@example.com',
+            name: 'Ana Souza',
+        },
+    },
+    lancador: {
+        profile: 'BILLER',
+        person: {
+            id: '00000000-0000-4000-8000-000000000003',
+            email: 'lancador@example.com',
+            name: 'Lucas Martins',
+        },
+    },
+    leitor: {
+        profile: 'VIEWER',
+        person: {
+            id: '00000000-0000-4000-8000-000000000004',
+            email: 'leitor@example.com',
+            name: 'Lívia Rocha',
+        },
+    },
+    'sem-perfil': {
+        profile: null,
+        person: {
+            id: '00000000-0000-4000-8000-000000000001',
+            email: 'ativo@example.com',
+            name: 'Ana Souza',
+        },
+    },
+} as const satisfies Record<
+    string,
+    { profile: 'ADMIN' | 'BILLER' | 'VIEWER' | null; person: Person }
+>;
 
 /** Escolhe o usuário do fake antes do carregamento; `extra` grava outras chaves do e2e. */
 export async function chooseUser(
@@ -30,11 +73,7 @@ export const OTHER_PERSON = {
 /** Corpo `200` de `GET /users/me` (schema `UserResponse` do contrato). */
 export function userResponse(
     profile: 'ADMIN' | 'BILLER' | 'VIEWER' | null,
-    person: { id: string; email: string; name: string } = {
-        id: '00000000-0000-4000-8000-000000000001',
-        email: 'ativo@example.com',
-        name: 'Ana Souza',
-    },
+    person: Person = BACKEND_USERS.ativo.person,
 ) {
     return {
         data: {
@@ -63,7 +102,8 @@ export async function stubUsersMe(page: Page, user: E2EUser): Promise<void> {
                 json: { error: { code: 'UNAUTHENTICATED', message: 'no token' } },
             });
         }
-        return route.fulfill({ status: 200, json: userResponse(PROFILE[user]) });
+        const { profile, person } = BACKEND_USERS[user];
+        return route.fulfill({ status: 200, json: userResponse(profile, person) });
     });
 }
 

@@ -9,7 +9,7 @@ import { authErrorMessage } from '../auth-errors';
 import { useAuthSession } from '../auth-session';
 import { AuthLayout } from '../components/auth-layout';
 import { FormAlert } from '../components/form-alert';
-import { currentUserQueryOptions } from '../current-user';
+import { currentUserQueryOptions } from '@/api/queries/current-user';
 
 /** Um reenvio por minuto (spec 0006, ERR-0006-06). */
 export const RESEND_COOLDOWN_SECONDS = 60;

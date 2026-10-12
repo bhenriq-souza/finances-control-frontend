@@ -14,6 +14,8 @@ export const E2E_EMAIL_VERIFIED_STORAGE_KEY = 'ftech.e2e.email-verificado';
 
 const FIXED_USERS: Record<string, AuthUser> = {
     ativo: { uid: 'e2e-ativo', email: 'ativo@example.com', emailVerified: true },
+    lancador: { uid: 'e2e-lancador', email: 'lancador@example.com', emailVerified: true },
+    leitor: { uid: 'e2e-leitor', email: 'leitor@example.com', emailVerified: true },
     'sem-perfil': { uid: 'e2e-sem-perfil', email: 'sem-perfil@example.com', emailVerified: true },
     'email-nao-verificado': {
         uid: 'e2e-nao-verificado',
