@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     checkCatalog,
+    checkTheme,
     compareCatalog,
     downloadSources,
     extractCatalogKeys,
@@ -18,6 +19,7 @@ import {
     STEPS,
     verifySource,
 } from './contract.mjs';
+import { generateTheme } from './theme.mjs';
 
 const CONTENT = 'openapi: 3.1.0\n';
 const SOURCE = {
@@ -229,8 +231,96 @@ describe('generateApiTypes (step 2)', () => {
     });
 });
 
+describe('checkTheme (step 3, AC-0004-02)', () => {
+    const TOKENS = {
+        color: {
+            tokens: [
+                { name: 'marca-noite', value: '#0b0f0c' },
+                { name: 'fundo', value: { escuro: '{marca-noite}', claro: '#eef3e9' } },
+                ...[
+                    'superficie',
+                    'superficie-elevada',
+                    'linha',
+                    'linha-forte',
+                    'texto',
+                    'texto-apoio',
+                    'acento',
+                    'sobre-acento',
+                    'foco',
+                    'negativo',
+                ].map((name) => ({ name, value: { escuro: '#111111', claro: '#222222' } })),
+            ],
+        },
+        type: { families: { sans: 'a', mono: 'b' }, groups: [] },
+        radius: {
+            tokens: ['sm', 'md', 'lg', 'pill'].map((name) => ({
+                name: `raio-${name}`,
+                value: '4px',
+            })),
+        },
+        shadow: { tokens: [] },
+        breakpoint: {
+            tokens: ['tablet', 'desktop'].map((name) => ({ name: `bp-${name}`, value: '1px' })),
+        },
+    };
+    const body = JSON.stringify(TOKENS);
+    const tokensSource = {
+        ...SOURCE,
+        repository: 'owner/hub',
+        path: 'tokens.json',
+        sha256: sha256(body),
+    };
+
+    async function themeContext(css) {
+        const dir = await mkdtemp(join(tmpdir(), 'theme-'));
+        const themePath = join(dir, 'tokens.css');
+        if (css !== undefined) await writeFile(themePath, css);
+        const ctx = { ...context({ tokens: tokensSource }, fetch), themePath };
+        ctx.downloads.set('tokens', Buffer.from(body));
+        return ctx;
+    }
+
+    it('passes when tokens.css equals the regenerated theme', async () => {
+        const ctx = await themeContext(generateTheme(TOKENS, tokensSource));
+        expect((await checkTheme(ctx)).status).toBe('PASS');
+    });
+
+    it('fails with a hand-edited colour, telling to run npm run theme (ERR-0002-08)', async () => {
+        const edited = generateTheme(TOKENS, tokensSource).replace(
+            '--ft-fundo: #0b0f0c;',
+            '--ft-fundo: #0b0f0d;',
+        );
+        const result = await checkTheme(await themeContext(edited));
+        expect(result.status).toBe('FAIL');
+        expect(result.lines.join('\n')).toContain('npm run theme');
+        expect(result.lines.join('\n')).toContain('--ft-fundo: #0b0f0d;');
+    });
+
+    it('fails when tokens.css is missing', async () => {
+        const result = await checkTheme(await themeContext(undefined));
+        expect(result.status).toBe('FAIL');
+        expect(result.lines.join('\n')).toContain('npm run theme');
+    });
+
+    it('fails when the pinned tokens cannot generate a theme (ERR-0004-01)', async () => {
+        const ctx = await themeContext('');
+        ctx.downloads.set('tokens', Buffer.from(JSON.stringify({ color: { tokens: [] } })));
+        expect((await checkTheme(ctx)).status).toBe('FAIL');
+    });
+
+    it('fails when the tokens source was not downloaded', async () => {
+        const ctx = await themeContext('');
+        ctx.downloads.clear();
+        expect((await checkTheme(ctx)).status).toBe('FAIL');
+    });
+
+    it('skips (contexto) without a tokens entry in sources.json', async () => {
+        expect((await checkTheme(context({}, fetch))).status).toBe('SKIP');
+    });
+});
+
 describe('runContract', () => {
-    it('keeps step 3 pending, naming the task that implements it', async () => {
+    it('skips step 3 (contexto) only when sources.json has no tokens entry', async () => {
         const log = [];
         const code = await runContract(
             context({}, fetch),
@@ -239,7 +329,6 @@ describe('runContract', () => {
         );
         expect(code).toBe(0);
         expect(log[0]).toMatch(/^SKIP \(contexto\)/);
-        expect(log.join('\n')).toContain('T-0004-01');
     });
 
     it('declares the four steps in order', () => {

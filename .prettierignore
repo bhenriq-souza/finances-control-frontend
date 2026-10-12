@@ -9,3 +9,6 @@ test-results
 blob-report
 # Gerado pelo plugin do TanStack Router (spec 0003)
 src/routeTree.gen.ts
+
+# Gerado por scripts/theme.mjs (spec 0004)
+src/ui/theme/tokens.css

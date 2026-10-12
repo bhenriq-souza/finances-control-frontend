@@ -4,5 +4,11 @@
         "ref": "v1.1.0",
         "path": "docs/openapi.yaml",
         "sha256": "6ee247a6256782adb865f51cf4586c852f35ab296d6cf74a1ea400fb03895d8b"
+    },
+    "tokens": {
+        "repository": "bhenriq-souza/finances-control",
+        "ref": "9104278508cfafe19eb878a6da987bc7249348bb",
+        "path": "docs/design/tokens.json",
+        "sha256": "ace7761fa3f3a26fd689d5545aab57a66003897a4bbb6659795bd99a992cdade"
     }
 }

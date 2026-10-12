@@ -13,6 +13,7 @@ import { parse as parseYaml } from 'yaml';
 // Import circular com api-generate.mjs (que usa `verifySource` daqui): seguro, só há declarações
 // no topo dos dois módulos e os usos acontecem em tempo de chamada.
 import { SCHEMA_PATH, writeTypes } from './api-generate.mjs';
+import { generateTheme, THEME_PATH } from './theme.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const CATALOG_PATH = resolve(ROOT, 'src/api/errors/catalog.ts');
@@ -150,16 +151,55 @@ export async function checkCatalog(context) {
     return { status: 'FAIL', lines };
 }
 
+/** Passo 3: tokens.css commitado é igual ao tema regenerado em memória da fonte `tokens` (INV-0004-01). */
+export async function checkTheme(context) {
+    const source = context.sources.tokens;
+    if (!source) {
+        return {
+            status: 'SKIP',
+            lines: ['sources.json não declara a fonte tokens — nada a conferir'],
+        };
+    }
+    const content = context.downloads.get('tokens');
+    if (!content) {
+        return { status: 'FAIL', lines: ['o tokens.json não foi baixado (passo 1)'] };
+    }
+    let expected;
+    try {
+        expected = generateTheme(JSON.parse(content.toString()), source);
+    } catch (error) {
+        return { status: 'FAIL', lines: [`falha ao gerar o tema: ${error.message}`] }; // ERR-0004-01
+    }
+    let actual;
+    try {
+        actual = await readFile(context.themePath ?? THEME_PATH, 'utf8');
+    } catch (error) {
+        return {
+            status: 'FAIL',
+            lines: [`src/ui/theme/tokens.css ilegível (${error.message}) — rode \`npm run theme\``],
+        };
+    }
+    if (actual === expected) {
+        return { status: 'PASS', lines: ['src/ui/theme/tokens.css confere com o tema regenerado'] };
+    }
+    // ERR-0002-08
+    const a = actual.split('\n');
+    const e = expected.split('\n');
+    const at = e.findIndex((line, index) => line !== a[index]);
+    const first = at === -1 ? Math.min(a.length, e.length) : at;
+    return {
+        status: 'FAIL',
+        lines: [
+            'src/ui/theme/tokens.css difere do tema regenerado da fonte fixada — rode `npm run theme` e commite o resultado',
+            `primeira diferença na linha ${first + 1}: esperado ${JSON.stringify(e[first] ?? '(fim do arquivo)')}, encontrado ${JSON.stringify(a[first] ?? '(fim do arquivo)')}`,
+        ],
+    };
+}
+
 export const STEPS = [
     { title: '1. Baixar as fontes e conferir o sha256', run: downloadSources },
     { title: '2. Gerar os tipos da API', run: generateApiTypes },
-    {
-        title: '3. Conferir o tema',
-        run: pendingStep(
-            'o tema (src/ui/theme/tokens.css) e a entrada tokens de sources.json ainda não existem',
-            'T-0004-01',
-        ),
-    },
+    { title: '3. Conferir o tema', run: checkTheme },
     { title: '4. Conferir o catálogo de erros', run: checkCatalog },
 ];
 

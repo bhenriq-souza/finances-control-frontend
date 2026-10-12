@@ -34,7 +34,7 @@ Tarefas da [spec 0003](../specs/0003-scaffold.md), da issue de entrega [FCF-002]
 
 Tarefas da [spec 0004](../specs/0004-theme.md), da issue de entrega [FCF-003](https://github.com/bhenriq-souza/finances-control-frontend/issues/3).
 
-- [ ] **T-0004-01 — Gerador do tema e sincronia no gate `contract`** · #13
+- [x] **T-0004-01 — Gerador do tema e sincronia no gate `contract`** · #13
     - What: entrada `tokens` em `sources.json`, `scripts/theme.mjs`, `npm run theme`, `tokens.css` gerado e o passo 3 de `scripts/contract.mjs`, sobre o esqueleto da T-0003-01
     - Where: `sources.json`, `scripts/theme.mjs`, `scripts/contract.mjs`, `src/ui/theme/tokens.css`, `src/index.css`
     - Done when: `AC-0004-01` e `AC-0004-02` cobertos; `INV-0004-01` verificado

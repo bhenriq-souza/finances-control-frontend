@@ -1,0 +1,184 @@
+/* Gerado por scripts/theme.mjs — não edite. Fonte: bhenriq-souza/finances-control@9104278508cfafe19eb878a6da987bc7249348bb (docs/design/tokens.json), sha256 ace7761fa3f3a26fd689d5545aab57a66003897a4bbb6659795bd99a992cdade. */
+
+:root,
+:root[data-tema='escuro'] {
+    --ft-fundo: #0b0f0c;
+    --ft-superficie: #151c17;
+    --ft-superficie-elevada: #1c261f;
+    --ft-linha: #232c25;
+    --ft-linha-forte: #5e755f;
+    --ft-texto: #eef3e9;
+    --ft-texto-apoio: #9aa69d;
+    --ft-acento: #a6e86b;
+    --ft-acento-hover: #b8ef86;
+    --ft-sobre-acento: #0b0f0c;
+    --ft-foco: #a6e86b;
+    --ft-positivo: #a6e86b;
+    --ft-positivo-fundo: #1a2e14;
+    --ft-negativo: #ec6355;
+    --ft-negativo-fundo: #3a1f15;
+    --ft-atencao: #e9c46a;
+    --ft-atencao-fundo: #3a2f12;
+    --ft-info: #8fc1eb;
+    --ft-info-fundo: #15283a;
+    --ft-sombra-flutuante: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-tema='claro'] {
+    --ft-fundo: #eef3e9;
+    --ft-superficie: #ffffff;
+    --ft-superficie-elevada: #f6f9f3;
+    --ft-linha: #cbd5c7;
+    --ft-linha-forte: #7a8a7d;
+    --ft-texto: #0b0f0c;
+    --ft-texto-apoio: #5a665c;
+    --ft-acento: #2f7a1a;
+    --ft-acento-hover: #27661a;
+    --ft-sobre-acento: #ffffff;
+    --ft-foco: #2f7a1a;
+    --ft-positivo: #2f7a1a;
+    --ft-positivo-fundo: #ddf2d1;
+    --ft-negativo: #ad2724;
+    --ft-negativo-fundo: #f8dfd3;
+    --ft-atencao: #7a5a00;
+    --ft-atencao-fundo: #f6ebc6;
+    --ft-info: #1f5c8f;
+    --ft-info-fundo: #d9e8f6;
+    --ft-sombra-flutuante: 0 8px 24px rgba(11, 15, 12, 0.14);
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-tema]) {
+        --ft-fundo: #eef3e9;
+        --ft-superficie: #ffffff;
+        --ft-superficie-elevada: #f6f9f3;
+        --ft-linha: #cbd5c7;
+        --ft-linha-forte: #7a8a7d;
+        --ft-texto: #0b0f0c;
+        --ft-texto-apoio: #5a665c;
+        --ft-acento: #2f7a1a;
+        --ft-acento-hover: #27661a;
+        --ft-sobre-acento: #ffffff;
+        --ft-foco: #2f7a1a;
+        --ft-positivo: #2f7a1a;
+        --ft-positivo-fundo: #ddf2d1;
+        --ft-negativo: #ad2724;
+        --ft-negativo-fundo: #f8dfd3;
+        --ft-atencao: #7a5a00;
+        --ft-atencao-fundo: #f6ebc6;
+        --ft-info: #1f5c8f;
+        --ft-info-fundo: #d9e8f6;
+        --ft-sombra-flutuante: 0 8px 24px rgba(11, 15, 12, 0.14);
+    }
+}
+
+:root {
+    --background: var(--ft-fundo);
+    --foreground: var(--ft-texto);
+    --card: var(--ft-superficie);
+    --card-foreground: var(--ft-texto);
+    --popover: var(--ft-superficie);
+    --popover-foreground: var(--ft-texto);
+    --primary: var(--ft-acento);
+    --primary-foreground: var(--ft-sobre-acento);
+    --secondary: var(--ft-superficie-elevada);
+    --secondary-foreground: var(--ft-texto);
+    --muted: var(--ft-superficie-elevada);
+    --muted-foreground: var(--ft-texto-apoio);
+    --accent: var(--ft-superficie-elevada);
+    --accent-foreground: var(--ft-texto);
+    --destructive: var(--ft-negativo);
+    --border: var(--ft-linha);
+    --input: var(--ft-linha-forte);
+    --ring: var(--ft-foco);
+    --radius: 8px;
+}
+
+@theme inline {
+    --color-fundo: var(--ft-fundo);
+    --color-superficie: var(--ft-superficie);
+    --color-superficie-elevada: var(--ft-superficie-elevada);
+    --color-linha: var(--ft-linha);
+    --color-linha-forte: var(--ft-linha-forte);
+    --color-texto: var(--ft-texto);
+    --color-texto-apoio: var(--ft-texto-apoio);
+    --color-acento: var(--ft-acento);
+    --color-acento-hover: var(--ft-acento-hover);
+    --color-sobre-acento: var(--ft-sobre-acento);
+    --color-foco: var(--ft-foco);
+    --color-positivo: var(--ft-positivo);
+    --color-positivo-fundo: var(--ft-positivo-fundo);
+    --color-negativo: var(--ft-negativo);
+    --color-negativo-fundo: var(--ft-negativo-fundo);
+    --color-atencao: var(--ft-atencao);
+    --color-atencao-fundo: var(--ft-atencao-fundo);
+    --color-info: var(--ft-info);
+    --color-info-fundo: var(--ft-info-fundo);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --font-sans: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --spacing: 4px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 999px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --text-display: 32px;
+    --text-display--line-height: 40px;
+    --text-display--font-weight: 600;
+    --text-display--letter-spacing: -0.01em;
+    --text-titulo-1: 24px;
+    --text-titulo-1--line-height: 32px;
+    --text-titulo-1--font-weight: 600;
+    --text-titulo-1--letter-spacing: -0.01em;
+    --text-titulo-2: 20px;
+    --text-titulo-2--line-height: 28px;
+    --text-titulo-2--font-weight: 600;
+    --text-titulo-3: 16px;
+    --text-titulo-3--line-height: 24px;
+    --text-titulo-3--font-weight: 600;
+    --text-corpo: 15px;
+    --text-corpo--line-height: 22px;
+    --text-corpo--font-weight: 400;
+    --text-corpo-forte: 15px;
+    --text-corpo-forte--line-height: 22px;
+    --text-corpo-forte--font-weight: 600;
+    --text-pequeno: 13px;
+    --text-pequeno--line-height: 18px;
+    --text-pequeno--font-weight: 400;
+    --text-rotulo: 12px;
+    --text-rotulo--line-height: 16px;
+    --text-rotulo--font-weight: 600;
+    --text-rotulo--letter-spacing: 0.04em;
+    --text-valor-destaque: 32px;
+    --text-valor-destaque--line-height: 40px;
+    --text-valor-destaque--font-weight: 600;
+    --text-valor-destaque--letter-spacing: -0.01em;
+    --text-valor: 16px;
+    --text-valor--line-height: 24px;
+    --text-valor--font-weight: 600;
+    --text-valor-pequeno: 13px;
+    --text-valor-pequeno--line-height: 18px;
+    --text-valor-pequeno--font-weight: 600;
+    --text-codigo: 13px;
+    --text-codigo--line-height: 20px;
+    --text-codigo--font-weight: 400;
+}
