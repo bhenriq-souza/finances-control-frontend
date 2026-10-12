@@ -8,7 +8,14 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { parse as parseYaml } from 'yaml';
+
+// Import circular com api-generate.mjs (que usa `verifySource` daqui): seguro, só há declarações
+// no topo dos dois módulos e os usos acontecem em tempo de chamada.
+import { SCHEMA_PATH, writeTypes } from './api-generate.mjs';
+
 const ROOT = resolve(import.meta.dirname, '..');
+const CATALOG_PATH = resolve(ROOT, 'src/api/errors/catalog.ts');
 
 /**
  * @typedef {{ repository: string, ref: string, path: string, sha256: string }} Source
@@ -72,12 +79,80 @@ export function pendingStep(reason, task) {
     return async () => ({ status: 'SKIP', lines: [`${reason} — implementado pela ${task}`] });
 }
 
+/** Passo 2: gera os tipos da API a partir do contrato baixado no passo 1 (mesma função do `api:generate`). */
+export async function generateApiTypes(context) {
+    const content = context.downloads.get('openapi');
+    if (!content) {
+        return { status: 'FAIL', lines: ['o contrato openapi não foi baixado (passo 1)'] };
+    }
+    try {
+        await writeTypes(content, context.schemaPath ?? SCHEMA_PATH);
+    } catch (error) {
+        return { status: 'FAIL', lines: [`falha ao gerar os tipos: ${error.message}`] };
+    }
+    return { status: 'PASS', lines: ['src/api/generated/schema.d.ts gerado do contrato fixado'] };
+}
+
+/** Códigos do enum `components.schemas.ErrorCode` de um contrato OpenAPI (YAML ou JSON). */
+export function extractErrorCodes(openapiText) {
+    const codes = parseYaml(openapiText.toString())?.components?.schemas?.ErrorCode?.enum;
+    if (!Array.isArray(codes) || codes.length === 0) {
+        throw new Error('o contrato não declara components.schemas.ErrorCode com enum');
+    }
+    return codes;
+}
+
+/**
+ * Chaves de `ERROR_MESSAGES` no catálogo TS: o formato é `CODIGO: 'texto'`, uma chave por linha,
+ * sem aspas, dentro do bloco `export const ERROR_MESSAGES … = { … };` (convenção do catalog.ts).
+ */
+export function extractCatalogKeys(catalogSource) {
+    const block = /export const ERROR_MESSAGES\b[^=]*=\s*\{\n([\s\S]*?)\n\};/.exec(catalogSource);
+    if (!block) throw new Error('bloco ERROR_MESSAGES não encontrado no catálogo');
+    return [...block[1].matchAll(/^ {4}([A-Z][A-Z0-9_]*):/gm)].map((match) => match[1]);
+}
+
+/** Compara o enum com as chaves: códigos sem mensagem e mensagens sem código (ERR-0002-09). */
+export function compareCatalog(codes, keys) {
+    const keySet = new Set(keys);
+    const codeSet = new Set(codes);
+    return {
+        withoutMessage: codes.filter((code) => !keySet.has(code)),
+        withoutCode: keys.filter((key) => !codeSet.has(key)),
+    };
+}
+
+/** Passo 4: as chaves de ERROR_MESSAGES são exatamente os valores do enum ErrorCode. */
+export async function checkCatalog(context) {
+    const content = context.downloads.get('openapi');
+    if (!content) {
+        return { status: 'FAIL', lines: ['o contrato openapi não foi baixado (passo 1)'] };
+    }
+    let codes;
+    let keys;
+    try {
+        codes = extractErrorCodes(content);
+        keys = extractCatalogKeys(await readFile(context.catalogPath ?? CATALOG_PATH, 'utf8'));
+    } catch (error) {
+        return { status: 'FAIL', lines: [error.message] };
+    }
+    const { withoutMessage, withoutCode } = compareCatalog(codes, keys);
+    if (withoutMessage.length === 0 && withoutCode.length === 0) {
+        return { status: 'PASS', lines: [`${codes.length} códigos, todos com mensagem`] };
+    }
+    const lines = [];
+    if (withoutMessage.length > 0) {
+        lines.push(`códigos do contrato sem mensagem no catálogo: ${withoutMessage.join(', ')}`);
+    }
+    if (withoutCode.length > 0) {
+        lines.push(`mensagens no catálogo sem código no contrato: ${withoutCode.join(', ')}`);
+    }
+    return { status: 'FAIL', lines };
+}
+
 export const STEPS = [
     { title: '1. Baixar as fontes e conferir o sha256', run: downloadSources },
-    {
-        title: '2. Gerar os tipos da API',
-        run: pendingStep('src/api/generated/schema.d.ts ainda não é gerado', 'T-0005-01'),
-    },
+    { title: '2. Gerar os tipos da API', run: generateApiTypes },
     {
         title: '3. Conferir o tema',
         run: pendingStep(
@@ -85,10 +160,7 @@ export const STEPS = [
             'T-0004-01',
         ),
     },
-    {
-        title: '4. Conferir o catálogo de erros',
-        run: pendingStep('o catálogo de erros pt-BR ainda não existe', 'T-0005-01'),
-    },
+    { title: '4. Conferir o catálogo de erros', run: checkCatalog },
 ];
 
 /** Executa todos os passos, mesmo depois de uma falha. Devolve o código de saída. */

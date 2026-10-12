@@ -47,7 +47,7 @@ Tarefas da [spec 0004](../specs/0004-theme.md), da issue de entrega [FCF-003](ht
 
 Tarefas da [spec 0005](../specs/0005-api-client.md), da issue de entrega [FCF-004](https://github.com/bhenriq-souza/finances-control-frontend/issues/4). Contrato fixado na tag `v1.1.0` do backend.
 
-- [ ] **T-0005-01 — Tipos gerados, catálogo pt-BR e o gate `contract`** · #15
+- [x] **T-0005-01 — Tipos gerados, catálogo pt-BR e o gate `contract`** · #15
     - What: `scripts/api-generate.mjs` com `predev`/`prebuild`, os passos 2 e 4 de `scripts/contract.mjs`, sobre o esqueleto da T-0003-01 (que já traz a entrada `openapi` e o passo 1), e o catálogo com os 55 códigos
     - Where: `sources.json`, `scripts/`, `src/api/errors/catalog.ts`
     - Done when: `AC-0005-01` e `AC-0005-05` cobertos; `INV-0005-01` e `INV-0005-04` verificados
