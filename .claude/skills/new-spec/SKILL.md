@@ -1,0 +1,18 @@
+---
+name: new-spec
+description: Cria ou revisa uma spec seguindo o template 0000 (frontmatter + oito seções obrigatórias), registra no índice e adiciona suas tarefas ao backlog. Use quando pedirem para criar uma spec, formalizar uma feature, ou quando uma tarefa exigir correção de spec primeiro.
+---
+
+# Criar ou revisar uma spec
+
+## Passos
+
+1. Leia `specs/0000-spec-process.md` (template, ciclo de vida, formato de tarefa) se ainda não estiver em contexto.
+2. **Spec nova:** próximo ID livre dentro da faixa correta (`0000`–`0009` processo/plataforma, `0010`+ domínio na ordem dos requisitos). IDs nunca são reutilizados. **Revisão de spec aprovada:** edite no lugar apenas enquanto nada que dependa da parte alterada estiver implementado; caso contrário documente a mudança explicitamente no PR.
+3. Decisões de arquitetura **não** viram spec: decisões de produto vão para `docs/adr/` do repositório hub; decisões locais do frontend vão para `specs/adr/` — imutáveis depois de aceitas, superseda em vez de editar. Comportamento da API não se especifica aqui: ele vive nas specs do backend e chega pelo contrato; cite a spec do backend por link.
+4. Escreva a spec com frontmatter (`id`, `title`, `status: draft`, `depends_on`) e as oito seções na ordem: Goal · Scope/Non-goals · Contracts · Invariants (`INV-NNNN-nn`) · Error cases (`ERR-NNNN-nn`) · Acceptance criteria (`AC-NNNN-nn`) · Test mapping · Open questions.
+5. Reutilize nomes existentes literalmente (nomes de módulo, códigos de erro do `ErrorCode`, rotas e campos do contrato, nomes de token do tema). Nunca invente um nome paralelo para um conceito que já existe.
+6. Respeite as invariantes transversais da spec 0000 — em especial INV-0000-04 (dinheiro em centavos) e INV-0000-06 (pt-BR, erros pelo `code`) — e as fronteiras de módulo da spec 0003. Toda tela declara o comportamento nos três tamanhos (celular, tablet, desktop).
+7. Registre: adicione a linha em `specs/README.md` e as tarefas (`T-<id>-<nn>`, com What/Where/Done when) em `docs/backlog.md`, em ordem de dependência. Toda tarefa cita ao menos um `AC-*` ou `INV-*` — o gate `check-specs` reprova se faltar.
+8. Rode `npm run check` e abra o PR pelo fluxo padrão: branch `docs/`, Conventional Commit (`docs(specs): …`), PR via `/finish-task`. O `status` só vira `approved` quando _Open questions_ estiver vazia e o responsável aprovar o PR.
+9. Com o PR aberto, crie uma issue por tarefa (spec 0000, _Rastreabilidade com o board_): título `T-xxxx-yy — <título>`, corpo com What/Where/Done when e o link da spec, labels `task` e da fase, como sub-issue da `FCF-*` da spec (`gh api -X POST repos/<owner>/<repo>/issues/<FCF>/sub_issues -F sub_issue_id=<id>`), adicionada ao board em `Todo`. Anote `· #N` ao lado de cada tarefa no backlog. Commite as anotações na mesma branch; se a revisão mudar as tarefas, ajuste as issues junto.
