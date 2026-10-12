@@ -181,7 +181,7 @@ Tarefas da [spec 0012](../specs/0012-expenses.md), da issue de entrega [FCF-011]
     - What: ações do detalhe por status, pagar, excluir com cascata, trocar forma de pagamento, parâmetros `?pagar`, `?excluir`, `?meio`; depende de T-0012-01
     - Where: `src/features/expenses/detail/actions/`, `e2e/expenses-detail.spec.ts`
     - Done when: `AC-0012-06` a `AC-0012-10` cobertos; `INV-0012-02`, `INV-0012-03` e `INV-0012-04` verificados
-- [ ] **T-0012-04 — Tipos de despesa** · #70
+- [x] **T-0012-04 — Tipos de despesa** · #70
     - What: `/despesas/tipos` com criar, renomear, arquivar e desarquivar
     - Where: `src/features/expenses/types/`, `src/routes/_app/despesas.tipos.tsx`, `e2e/expense-types.spec.ts`
     - Done when: `AC-0012-11` coberto
