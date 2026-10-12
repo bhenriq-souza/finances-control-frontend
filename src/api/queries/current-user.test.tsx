@@ -31,12 +31,13 @@ beforeEach(() => {
 });
 
 describe('GET /users/me query', () => {
-    it('uses the key users/me, unwraps the data and opts out of the global effects', async () => {
+    it('uses the key users/me, 5 minutes stale time, unwraps the data, opts out of global effects', async () => {
         mocks.get.mockResolvedValue(ok({ data: USER }));
         const options = currentUserQueryOptions();
 
         expect(options.queryKey).toEqual(['users', 'me']);
         expect(options.meta).toEqual({ globalEffects: false });
+        expect(options.staleTime).toBe(300_000);
         await expect(new QueryClient().fetchQuery(options)).resolves.toEqual(USER);
         expect(mocks.get).toHaveBeenCalledWith('/users/me');
     });

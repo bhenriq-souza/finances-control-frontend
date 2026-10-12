@@ -1,4 +1,4 @@
-import { PROFILE_LABELS, useCurrentUser } from '../current-user';
+import { PROFILE_LABELS, useCurrentUser } from '@/api/queries/current-user';
 
 /**
  * Tela inicial provisória de `/` (spec 0006), até o dashboard da spec 0015. Renderiza dentro do

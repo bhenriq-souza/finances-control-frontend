@@ -9,7 +9,7 @@ import { GENERIC_AUTH_ERROR } from '../auth-errors';
 import { useAuthSession } from '../auth-session';
 import { AuthLayout } from '../components/auth-layout';
 import { FormAlert } from '../components/form-alert';
-import { currentUserQueryOptions } from '../current-user';
+import { currentUserQueryOptions } from '@/api/queries/current-user';
 
 export const STILL_PENDING = 'Seu acesso ainda não foi liberado.';
 

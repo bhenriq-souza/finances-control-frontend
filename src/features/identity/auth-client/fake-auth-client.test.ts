@@ -26,6 +26,25 @@ describe('fake auth client', () => {
         await expect(client.getIdToken()).resolves.toMatch(/^fake-token-/);
     });
 
+    it.each([
+        ['lancador', 'lancador@example.com'],
+        ['leitor', 'leitor@example.com'],
+    ])('signs in as the %s user (spec 0009)', async (key, email) => {
+        localStorage.setItem(E2E_USER_STORAGE_KEY, key);
+        const client = createFakeAuthClient();
+        const listener = vi.fn();
+        client.onAuthStateChanged(listener);
+
+        await client.signInWithEmail('a@b.c', 'x');
+
+        expect(listener).toHaveBeenLastCalledWith({
+            uid: `e2e-${key}`,
+            email,
+            emailVerified: true,
+        });
+        await expect(client.getIdToken()).resolves.toBe(`fake-token-e2e-${key}`);
+    });
+
     it('signs in with Google as the chosen user too', async () => {
         localStorage.setItem(E2E_USER_STORAGE_KEY, 'ativo');
         const client = createFakeAuthClient();

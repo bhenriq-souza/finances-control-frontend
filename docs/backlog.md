@@ -122,7 +122,7 @@ As tarefas das specs 0009 a 0018 rodam em quatro rodadas de subagentes, com arqu
 
 Tarefas da [spec 0009](../specs/0009-lists-and-reference-data.md), da issue de entrega [FCF-008](https://github.com/bhenriq-souza/finances-control-frontend/issues/49).
 
-- [ ] **T-0009-01 — Consultas, chaves, invalidação e permissões** · #59
+- [x] **T-0009-01 — Consultas, chaves, invalidação e permissões** · #59
     - What: `src/api/queries/` (chaves, consultas de referência, lookups, usuário atual movido de `identity`, `invalidateAfter`), `src/api/permissions.ts`, os usuários `lancador` e `leitor` no fake e o `stubApi` do e2e
     - Where: `src/api/queries/`, `src/api/permissions.ts`, `src/features/identity/current-user.ts`, `src/features/identity/index.ts`, `src/features/identity/auth-client/fake-auth-client.ts`, `e2e/fixtures/`
     - Done when: `AC-0009-01`, `AC-0009-02` e `AC-0009-10` cobertos; `INV-0009-01`, `INV-0009-02` e `INV-0009-03` verificados
