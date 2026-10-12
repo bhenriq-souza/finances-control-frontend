@@ -1,7 +1,7 @@
 ---
 id: '0015'
 title: Dashboard de saldo e relatórios
-status: draft
+status: approved
 depends_on: ['0009', '0011', '0012', '0013', '0014']
 ---
 
@@ -16,6 +16,7 @@ Trocar a tela inicial provisória pelo dashboard de saldo aprovado no [Design](h
 - **Em escopo:** o dashboard em `/` (substitui a `HomePage` de `identity`, que é removida), `/relatorios` com as abas de saldo, por tipo e fluxo de caixa, o componente de colunas mensais e o item **Relatórios** da navegação.
 - **Fora de escopo:** orçamentos, alertas e exportação (a API não tem); saldo diário (os relatórios são mensais); um endpoint agregado para o dashboard (a API não tem: o dashboard compõe consultas existentes, abaixo).
 - **Depende do backend:** [spec 0015](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0015-reporting.md) (`/reports/*`, todo perfil) e as listas das specs 0011–0014 do backend, na tag `v1.1.0`.
+- **Decisões de 2026-10-12 (aprovação):** "Previsto" mostra o saldo previsto (`accountsTotalCents` do ponto `FORECAST`) com a variação ao lado; "Receitas do mês" e "Despesas do mês" somam todos os status, inclusive previstos. **Limite aceito:** sem rota agregada, o dashboard faz 4 consultas fixas e mais uma por cartão ativo.
 - **Forma visual:** os seis artboards do [dashboard](https://claude.ai/artifact/HEj1d1jqqwAPMBVYZdMsyy) (celular, tablet e desktop, nos dois temas) e, para os relatórios, o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC).
 
 ## Contracts
@@ -103,6 +104,4 @@ Código em `src/features/reporting/reports/`. Abas (com `role="tablist"`) na URL
 
 ## Open questions
 
-- No artboard, "Previsto para 31 de out. **+R$ 2.140,00**" pode ser lido como a variação até o fim do mês ou como o saldo previsto. A proposta é mostrar o saldo previsto (`accountsTotalCents`) e a variação ao lado; confirmar com o responsável.
-- "Receitas do mês" e "Despesas do mês" somam todos os status, inclusive previstos; a alternativa é somar só os confirmados (como o relatório por tipo sem `includeForecast`). Confirmar.
-- Não há rota agregada para o dashboard: ele faz 4 consultas fixas, mais uma por cartão ativo. Aceitável com poucos cartões; uma rota de resumo no backend é a melhoria natural.
+Nenhuma.

@@ -1,7 +1,7 @@
 ---
 id: '0010'
 title: Administração de usuários e perfis
-status: draft
+status: approved
 depends_on: ['0006', '0009']
 ---
 
@@ -16,6 +16,7 @@ Dar ao `ADMIN` a tela que fecha o F001: ver quem tem conta na plataforma, libera
 - **Em escopo:** a rota `/usuarios`, o item **Usuários** da navegação, a lista de usuários, os diálogos de conceder/trocar perfil e de revogar acesso, o filtro "Aguardando aprovação".
 - **Fora de escopo:** convite, exclusão de usuário, edição do próprio nome, histórico de quem concedeu (a API não oferece nenhum deles); a tela de aguardando aprovação do próprio usuário (spec 0006).
 - **Depende do backend:** [spec 0010](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0010-identity.md) na tag `v1.1.0` — `GET /users`, `PATCH /users/{id}/profile` e `DELETE /users/{id}/profile`, só `ADMIN`.
+- **Lacunas do contrato `v1.1.0`** (o frontend trata pelo `code`; a correção, quando houver, é do backend, numa tag nova): `GET /users/me` não declara o `403 EMAIL_NOT_VERIFIED` que o backend devolve.
 - **Forma visual:** padrão de **cadastro** da spec 0009 e o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC).
 
 ## Contracts
@@ -100,4 +101,4 @@ Dar ao `ADMIN` a tela que fecha o F001: ver quem tem conta na plataforma, libera
 
 ## Open questions
 
-- O contrato `v1.1.0` não declara o `403 EMAIL_NOT_VERIFIED` em `GET /users/me`, embora o backend o devolva (spec 0010 do backend). O frontend já trata pelo `code` (spec 0006); a correção é do backend, numa tag nova do contrato.
+Nenhuma.

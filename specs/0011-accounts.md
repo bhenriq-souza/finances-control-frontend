@@ -1,7 +1,7 @@
 ---
 id: '0011'
 title: Bancos, contas bancárias e cartões de crédito
-status: draft
+status: approved
 depends_on: ['0008', '0009']
 ---
 
@@ -16,6 +16,7 @@ Mostrar a todo perfil onde o dinheiro está — saldo de cada conta, limite e ci
 - **Em escopo:** `/contas` (contas bancárias), `/contas/bancos` (bancos), `/cartoes` (cartões), `/cartoes/$cartaoId` (resumo do cartão, onde a spec 0013 acrescenta as faturas); os formulários de criar e alterar e as ações de arquivar e desarquivar; os itens **Cartões** e **Contas** da navegação.
 - **Fora de escopo:** extrato de movimentos por conta (a API não tem; o fluxo de caixa mensal é da spec 0015); ajuste manual de saldo; importação CSV (fora da v1); faturas (spec 0013); transferências (spec 0018).
 - **Depende do backend:** [spec 0011](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0011-accounts.md) na tag `v1.1.0` — `/banks`, `/bank-accounts`, `/credit-cards`, leitura para todo perfil e escrita só `ADMIN`.
+- **Lacunas do contrato `v1.1.0`** (o frontend trata pelo `code`; a correção, quando houver, é do backend, numa tag nova): `PATCH /credit-cards/{id}` não lista `BANK_ACCOUNT_ARCHIVED` entre os `409` (ERR-0011-13 do backend).
 - **Forma visual:** padrão de **cadastro** da spec 0009 e o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC); a seção "Contas e cartões" do [dashboard](https://claude.ai/artifact/HEj1d1jqqwAPMBVYZdMsyy) é a referência dos cartões de conta e de cartão.
 
 ## Contracts
@@ -135,5 +136,4 @@ Mostrar a todo perfil onde o dinheiro está — saldo de cada conta, limite e ci
 
 ## Open questions
 
-- O contrato `v1.1.0` não lista `BANK_ACCOUNT_ARCHIVED` entre os `409` de `PATCH /credit-cards/{id}` (resposta `AccountsConflict`), embora a spec 0011 do backend o devolva para conta pagadora arquivada (ERR-0011-13). O frontend trata pelo `code`; a documentação do contrato é do backend.
-- Saldo inicial negativo por caixa de seleção, em vez de aceitar `-` no `MoneyInput`: confirmar com o responsável.
+Nenhuma.

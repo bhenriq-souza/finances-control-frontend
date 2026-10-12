@@ -1,7 +1,7 @@
 ---
 id: '0012'
 title: Despesas e tipos de despesa
-status: draft
+status: approved
 depends_on: ['0008', '0009', '0011']
 ---
 
@@ -16,6 +16,7 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 - **Em escopo:** `/despesas`, `/despesas/$despesaId`, `/despesas/tipos`; o formulário de despesa (criar e alterar); os diálogos de status, de exclusão e de troca de forma de pagamento; o item **Despesas** da navegação.
 - **Fora de escopo:** pagamento de despesa de cartão (é pela fatura, spec 0013); a lista de séries e o encerramento de série (spec 0017; aqui só o `scope=following` de uma ocorrência e o link para a série); estornos (spec 0013); busca por texto e ordenação no servidor (a API não oferece); importação CSV.
 - **Depende do backend:** [spec 0012](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0012-expenses.md) e, para séries, a [0017](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0017-jobs-and-recurrence.md), na tag `v1.1.0`. Escrita: `ADMIN` e `BILLER`; leitura: todos.
+- **Limites da API aceitos:** o filtro `status` aceita um valor só, e a lista mantém um status por vez (o dashboard, spec 0015, faz as duas consultas); sem busca nem totais no servidor, o resumo do mês soma no cliente a lista carregada, que é completa por não haver paginação.
 - **Forma visual:** padrão de **lançamento** da spec 0009, o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) e a tabela "Vence esta semana" do [dashboard](https://claude.ai/artifact/HEj1d1jqqwAPMBVYZdMsyy).
 
 ## Contracts
@@ -153,5 +154,4 @@ Padrão de **cadastro**: `EntryList` por `name`, selo **Arquivado**; com `entrie
 
 ## Open questions
 
-- O filtro `status` da API aceita um valor só: "Pendentes e vencidas" juntas exigiriam duas consultas. A proposta é manter um status por vez na lista; o dashboard (spec 0015) faz as duas consultas.
-- Sem busca por texto nem total no servidor: o resumo do mês soma no cliente a lista já carregada (sem paginação, a lista do mês é completa).
+Nenhuma.

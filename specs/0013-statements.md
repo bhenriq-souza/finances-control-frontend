@@ -1,7 +1,7 @@
 ---
 id: '0013'
 title: Faturas de cartão, pagamentos e estornos
-status: draft
+status: approved
 depends_on: ['0008', '0009', '0011', '0012']
 ---
 
@@ -16,6 +16,7 @@ Levar o F004 para a tela: em cada cartão, a fatura aberta de hoje e as anterior
 - **Em escopo:** o painel de faturas em `/cartoes/$cartaoId` (rota da spec 0011), `/cartoes/$cartaoId/faturas/$faturaId`, os diálogos de pagamento, de desfazer pagamento, de mínimo e de estorno (criar, alterar descrição e observações, excluir).
 - **Fora de escopo:** juros e encargos (o backend não calcula); cálculo de mínimo (é informado); visão de faturas de todos os cartões juntos (o dashboard, spec 0015, faz a sua); cadastro do cartão (spec 0011); pagamento de despesa de cartão uma a uma (não existe: é pela fatura).
 - **Depende do backend:** [spec 0013](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0013-statements.md) na tag `v1.1.0`. Escrita (pagar, desfazer, mínimo, estornos): `ADMIN` e `BILLER`; leitura: todos.
+- **Lacunas do contrato `v1.1.0`** (o frontend trata pelo `code`; a correção, quando houver, é do backend, numa tag nova): `UpdateStatement` não é anulável, então a tela só informa e troca o mínimo, sem **Remover mínimo**. **Limite aceito:** a visão de faturas de todos os cartões faz uma chamada por cartão (não há rota agregada).
 - **Forma visual:** padrão de **lançamento** da spec 0009 e o detalhe de fatura do [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC).
 
 ## Contracts
@@ -134,5 +135,4 @@ Na fatura persistida, **Informar mínimo** (com `entries.write`): `FormDialog` c
 
 ## Open questions
 
-- A spec 0013 do backend aceita `minimumPaymentCents: null` para apagar o mínimo, mas o schema `UpdateStatement` do contrato `v1.1.0` não é anulável: sem correção do contrato, a tela só informa e troca o mínimo, sem **Remover mínimo**.
-- A visão de faturas de todos os cartões faz uma chamada por cartão (não há rota agregada). Aceitável com poucos cartões; registrar como lacuna do backend se crescer.
+Nenhuma.

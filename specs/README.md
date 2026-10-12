@@ -15,14 +15,14 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0006](0006-auth-and-shell.md)           | Autenticação, estados da conta e app shell                         | implemented |
 | [0007](0007-publication.md)              | Publicação — imagem nginx, configuração em runtime e deploy em dev | implemented |
 | [0008](0008-money.md)                    | Dinheiro no cliente — parser e formatação BRL em centavos          | implemented |
-| [0009](0009-lists-and-reference-data.md) | Listas, formulários e dados de referência compartilhados           | draft       |
-| [0010](0010-users-admin.md)              | Administração de usuários e perfis                                 | draft       |
-| [0011](0011-accounts.md)                 | Bancos, contas bancárias e cartões de crédito                      | draft       |
-| [0012](0012-expenses.md)                 | Despesas e tipos de despesa                                        | draft       |
-| [0013](0013-statements.md)               | Faturas de cartão, pagamentos e estornos                           | draft       |
-| [0014](0014-earnings.md)                 | Receitas e tipos de receita                                        | draft       |
-| [0015](0015-dashboard-and-reports.md)    | Dashboard de saldo e relatórios                                    | draft       |
-| [0017](0017-recurrences.md)              | Séries fixas de despesas e receitas                                | draft       |
-| [0018](0018-transfers.md)                | Transferências entre contas próprias                               | draft       |
+| [0009](0009-lists-and-reference-data.md) | Listas, formulários e dados de referência compartilhados           | approved    |
+| [0010](0010-users-admin.md)              | Administração de usuários e perfis                                 | approved    |
+| [0011](0011-accounts.md)                 | Bancos, contas bancárias e cartões de crédito                      | approved    |
+| [0012](0012-expenses.md)                 | Despesas e tipos de despesa                                        | approved    |
+| [0013](0013-statements.md)               | Faturas de cartão, pagamentos e estornos                           | approved    |
+| [0014](0014-earnings.md)                 | Receitas e tipos de receita                                        | approved    |
+| [0015](0015-dashboard-and-reports.md)    | Dashboard de saldo e relatórios                                    | approved    |
+| [0017](0017-recurrences.md)              | Séries fixas de despesas e receitas                                | approved    |
+| [0018](0018-transfers.md)                | Transferências entre contas próprias                               | approved    |
 
 Decisões de arquitetura: as de **produto** vivem em [`docs/adr/` do hub](https://github.com/bhenriq-souza/finances-control/tree/main/docs/adr); as **locais do frontend**, em `adr/` (ainda vazia).
