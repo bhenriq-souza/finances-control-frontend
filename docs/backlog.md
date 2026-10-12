@@ -130,7 +130,7 @@ Tarefas da [spec 0009](../specs/0009-lists-and-reference-data.md), da issue de e
     - What: `src/shared/dates/` e o selo com as tabelas de status e os selos derivados
     - Where: `src/shared/dates/`, `src/ui/status-badge.tsx`, `src/ui/status-labels.ts`
     - Done when: `AC-0009-03` e `AC-0009-04` cobertos; `INV-0009-04` e `INV-0009-05` verificados
-- [ ] **T-0009-03 — `EntryList`, estados e `BarList`** · #61
+- [x] **T-0009-03 — `EntryList`, estados e `BarList`** · #61
     - What: lista que vira tabela, `EmptyState`, `Skeleton`, `EntryListSkeleton`, `BarList` e a página de prova `/_e2e/lista`
     - Where: `src/ui/entry-list.tsx`, `src/ui/empty-state.tsx`, `src/ui/skeleton.tsx`, `src/ui/charts/bar-list.tsx`, `src/routes/_e2e/lista.tsx`, `e2e/entry-list.spec.ts`
     - Done when: `AC-0009-05` coberto

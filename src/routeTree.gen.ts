@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as E2eRouteImport } from './routes/[_]e2e'
 import { Route as AguardandoAprovacaoRouteImport } from './routes/aguardando-aprovacao'
 import { Route as CriarContaRouteImport } from './routes/criar-conta'
 import { Route as EntrarRouteImport } from './routes/entrar'
@@ -17,9 +18,15 @@ import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as VerificarEmailRouteImport } from './routes/verificar-email'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppMaisRouteImport } from './routes/_app/mais'
+import { Route as E2eListaRouteImport } from './routes/[_]e2e/lista'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const E2eRoute = E2eRouteImport.update({
+  id: '/_e2e',
+  path: '/_e2e',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AguardandoAprovacaoRoute = AguardandoAprovacaoRouteImport.update({
@@ -57,69 +64,87 @@ const AppMaisRoute = AppMaisRouteImport.update({
   path: '/mais',
   getParentRoute: () => AppRoute,
 } as any)
+const E2eListaRoute = E2eListaRouteImport.update({
+  id: '/lista',
+  path: '/lista',
+  getParentRoute: () => E2eRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/_e2e': typeof E2eRouteWithChildren
   '/aguardando-aprovacao': typeof AguardandoAprovacaoRoute
   '/criar-conta': typeof CriarContaRoute
   '/entrar': typeof EntrarRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/mais': typeof AppMaisRoute
+  '/_e2e/lista': typeof E2eListaRoute
 }
 export interface FileRoutesByTo {
+  '/_e2e': typeof E2eRouteWithChildren
   '/aguardando-aprovacao': typeof AguardandoAprovacaoRoute
   '/criar-conta': typeof CriarContaRoute
   '/entrar': typeof EntrarRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/mais': typeof AppMaisRoute
+  '/_e2e/lista': typeof E2eListaRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/_e2e': typeof E2eRouteWithChildren
   '/aguardando-aprovacao': typeof AguardandoAprovacaoRoute
   '/criar-conta': typeof CriarContaRoute
   '/entrar': typeof EntrarRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/verificar-email': typeof VerificarEmailRoute
   '/_app/mais': typeof AppMaisRoute
+  '/_e2e/lista': typeof E2eListaRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/_e2e'
     | '/aguardando-aprovacao'
     | '/criar-conta'
     | '/entrar'
     | '/redefinir-senha'
     | '/verificar-email'
     | '/mais'
+    | '/_e2e/lista'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/_e2e'
     | '/aguardando-aprovacao'
     | '/criar-conta'
     | '/entrar'
     | '/redefinir-senha'
     | '/verificar-email'
     | '/mais'
+    | '/_e2e/lista'
     | '/'
   id:
     | '__root__'
     | '/_app'
+    | '/_e2e'
     | '/aguardando-aprovacao'
     | '/criar-conta'
     | '/entrar'
     | '/redefinir-senha'
     | '/verificar-email'
     | '/_app/mais'
+    | '/_e2e/lista'
     | '/_app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  E2eRoute: typeof E2eRouteWithChildren
   AguardandoAprovacaoRoute: typeof AguardandoAprovacaoRoute
   CriarContaRoute: typeof CriarContaRoute
   EntrarRoute: typeof EntrarRoute
@@ -134,6 +159,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_e2e': {
+      id: '/_e2e'
+      path: '/_e2e'
+      fullPath: '/_e2e'
+      preLoaderRoute: typeof E2eRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aguardando-aprovacao': {
@@ -185,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_e2e/lista': {
+      id: '/_e2e/lista'
+      path: '/lista'
+      fullPath: '/_e2e/lista'
+      preLoaderRoute: typeof E2eListaRouteImport
+      parentRoute: typeof E2eRoute
+    }
   }
 }
 
@@ -200,8 +239,19 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface E2eRouteChildren {
+  E2eListaRoute: typeof E2eListaRoute
+}
+
+const E2eRouteChildren: E2eRouteChildren = {
+  E2eListaRoute: E2eListaRoute,
+}
+
+const E2eRouteWithChildren = E2eRoute._addFileChildren(E2eRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  E2eRoute: E2eRouteWithChildren,
   AguardandoAprovacaoRoute: AguardandoAprovacaoRoute,
   CriarContaRoute: CriarContaRoute,
   EntrarRoute: EntrarRoute,
