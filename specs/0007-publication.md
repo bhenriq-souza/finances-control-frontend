@@ -88,6 +88,16 @@ O diretório entra em `clusters/homelab/workloads/dev/kustomization.yaml`. Sem l
 
 No mesmo PR do `homelab-gitops` que cria o `finances-frontend`: apagar `finances-backend/ingress.yaml` (a regra `/` do backend) e tirá-lo do `kustomization.yaml` dele. Fica só o `finances-backend-api` (`/api` com `stripPrefix`). O Traefik escolhe o prefixo mais longo, então `/api/**` vai ao backend e todo o resto ao frontend. As probes do backend batem no pod, não no ingress, e não mudam.
 
+### Host alternativo para celular e tablet
+
+Celular e tablet na rede local não resolvem `homelab.local`: o roteador da operadora não tem encaminhamento condicional de DNS, e a rede fica como está por decisão do responsável (2026-10-12). Enquanto isso, o app também responde em **`finances.192.168.15.97.nip.io`**, que o nip.io resolve pelo DNS público para o IP do Traefik:
+
+- os ingresses `finances-frontend` (`/`) e `finances-backend-api` (`/api`, com o mesmo `stripPrefix`) têm uma segunda regra com esse host;
+- o domínio está nos domínios autorizados do projeto Firebase `dev-financial-control`, sem o que o login Google falha com `auth/unauthorized-domain`;
+- o `config.js` é o mesmo: a SPA usa URLs relativas, e o `authDomain` continua `dev-financial-control.firebaseapp.com`.
+
+É temporário: sai quando houver DNS de `homelab.local` para os aparelhos da rede, numa tarefa de infraestrutura própria. Foi por ele que o spike do login Google passou no celular (T-0006-01).
+
 ### Ordem de publicação
 
 1. T-0007-01: imagem e nginx neste repositório (sem deploy).
@@ -100,7 +110,7 @@ No mesmo PR do `homelab-gitops` que cria o `finances-frontend`: apagar `finances
 - **INV-0007-01:** a imagem é a mesma para qualquer ambiente; o ambiente só existe no `config.js` montado.
 - **INV-0007-02:** o container roda sem root, sem escalada de privilégio e com o sistema de arquivos raiz só de leitura.
 - **INV-0007-03:** `index.html` e `config.js` nunca são servidos com cache; assets com hash são imutáveis.
-- **INV-0007-04:** depois da T-0007-04, `/` do host de `dev` é do frontend e `/api` do backend; nenhuma outra regra de ingress existe para o host.
+- **INV-0007-04:** depois da T-0007-04, `/` do host de `dev` é do frontend e `/api` do backend; nenhuma outra regra de ingress existe para o host. O host alternativo do nip.io, enquanto existir, segue a mesma divisão.
 
 ## Error cases
 
