@@ -47,8 +47,8 @@ test('the main navigation is a bottom bar below 1024px and a left sidebar from 1
     }
 });
 
-// AC-0006-07, INV-0006-03: o item ativo é marcado por `aria-current`; o perfil vê Início, Cartões e
-// Contas (spec 0011) — no celular e no tablet, Contas fica em Mais.
+// AC-0006-07, INV-0006-03: o item ativo é marcado por `aria-current`; o perfil vê Início, Despesas
+// (spec 0012), Cartões e Contas (spec 0011) — no celular e no tablet, Contas fica em Mais.
 test('the active item is marked with aria-current="page"', async ({ page }) => {
     const nav = page.getByRole('navigation', { name: 'Principal' });
     const home = nav.getByRole('link', { name: 'Início' });

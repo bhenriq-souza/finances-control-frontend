@@ -28,12 +28,19 @@ const labels = (entries: readonly { label: string }[]) => entries.map(({ label }
 
 // INV-0006-03: a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
 describe('navItemsFor', () => {
-    it('shows Início, Cartões and Contas to every profile, in the spec order', () => {
+    it('shows Início, Despesas, Cartões and Contas to every profile, in the spec order', () => {
+        const common = ['Início', 'Despesas', 'Cartões', 'Contas'];
         for (const profile of ['BILLER', 'VIEWER'] as const) {
-            expect(labels(navItemsFor(profile))).toEqual(['Início', 'Cartões', 'Contas']);
+            expect(labels(navItemsFor(profile))).toEqual(common);
         }
-        expect(labels(navItemsFor('ADMIN'))).toEqual(['Início', 'Cartões', 'Contas', 'Usuários']);
-        expect(NAV_ITEMS.map(({ to }) => to)).toEqual(['/', '/cartoes', '/contas', '/usuarios']);
+        expect(labels(navItemsFor('ADMIN'))).toEqual([...common, 'Usuários']);
+        expect(NAV_ITEMS.map(({ to }) => to)).toEqual([
+            '/',
+            '/despesas',
+            '/cartoes',
+            '/contas',
+            '/usuarios',
+        ]);
     });
 
     // INV-0010-01: só `ADMIN` vê **Usuários**, na página Mais (spec 0010).
@@ -75,11 +82,13 @@ describe('navigation slots', () => {
     // AC-0011-08: Cartões na barra inferior; Contas em Mais.
     it('declares Início and Cartões in the bottom bar and Contas in Mais', () => {
         expect(NAV_ITEMS.find(({ to }) => to === '/')?.slot).toBe('barra');
+        expect(NAV_ITEMS.find(({ to }) => to === '/despesas')?.slot).toBe('barra');
         expect(NAV_ITEMS.find(({ to }) => to === '/cartoes')?.slot).toBe('barra');
         expect(NAV_ITEMS.find(({ to }) => to === '/contas')?.slot).toBe('mais');
         for (const profile of ['ADMIN', 'BILLER', 'VIEWER'] as const) {
             expect(labels(bottomBarEntries(navItemsFor(profile)))).toEqual([
                 'Início',
+                'Despesas',
                 'Cartões',
                 'Mais',
             ]);
