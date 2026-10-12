@@ -26,6 +26,7 @@ import { Route as AppCartoesCartaoIdRouteImport } from './routes/_app/cartoes.$c
 import { Route as AppContasIndexRouteImport } from './routes/_app/contas.index'
 import { Route as AppContasBancosRouteImport } from './routes/_app/contas.bancos'
 import { Route as AppDespesasTiposRouteImport } from './routes/_app/despesas.tipos'
+import { Route as AppReceitasTiposRouteImport } from './routes/_app/receitas.tipos'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -111,6 +112,11 @@ const AppDespesasTiposRoute = AppDespesasTiposRouteImport.update({
   path: '/despesas/tipos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReceitasTiposRoute = AppReceitasTiposRouteImport.update({
+  id: '/receitas/tipos',
+  path: '/receitas/tipos',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/cartoes/$cartaoId': typeof AppCartoesCartaoIdRoute
   '/contas/bancos': typeof AppContasBancosRoute
   '/despesas/tipos': typeof AppDespesasTiposRoute
+  '/receitas/tipos': typeof AppReceitasTiposRoute
   '/cartoes/': typeof AppCartoesIndexRoute
   '/contas/': typeof AppContasIndexRoute
 }
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/cartoes/$cartaoId': typeof AppCartoesCartaoIdRoute
   '/contas/bancos': typeof AppContasBancosRoute
   '/despesas/tipos': typeof AppDespesasTiposRoute
+  '/receitas/tipos': typeof AppReceitasTiposRoute
   '/cartoes': typeof AppCartoesIndexRoute
   '/contas': typeof AppContasIndexRoute
 }
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_app/cartoes/$cartaoId': typeof AppCartoesCartaoIdRoute
   '/_app/contas/bancos': typeof AppContasBancosRoute
   '/_app/despesas/tipos': typeof AppDespesasTiposRoute
+  '/_app/receitas/tipos': typeof AppReceitasTiposRoute
   '/_app/cartoes/': typeof AppCartoesIndexRoute
   '/_app/contas/': typeof AppContasIndexRoute
 }
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/cartoes/$cartaoId'
     | '/contas/bancos'
     | '/despesas/tipos'
+    | '/receitas/tipos'
     | '/cartoes/'
     | '/contas/'
   fileRoutesByTo: FileRoutesByTo
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/cartoes/$cartaoId'
     | '/contas/bancos'
     | '/despesas/tipos'
+    | '/receitas/tipos'
     | '/cartoes'
     | '/contas'
   id:
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/_app/cartoes/$cartaoId'
     | '/_app/contas/bancos'
     | '/_app/despesas/tipos'
+    | '/_app/receitas/tipos'
     | '/_app/cartoes/'
     | '/_app/contas/'
   fileRoutesById: FileRoutesById
@@ -357,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDespesasTiposRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/receitas/tipos': {
+      id: '/_app/receitas/tipos'
+      path: '/receitas/tipos'
+      fullPath: '/receitas/tipos'
+      preLoaderRoute: typeof AppReceitasTiposRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -367,6 +386,7 @@ interface AppRouteChildren {
   AppCartoesCartaoIdRoute: typeof AppCartoesCartaoIdRoute
   AppContasBancosRoute: typeof AppContasBancosRoute
   AppDespesasTiposRoute: typeof AppDespesasTiposRoute
+  AppReceitasTiposRoute: typeof AppReceitasTiposRoute
   AppCartoesIndexRoute: typeof AppCartoesIndexRoute
   AppContasIndexRoute: typeof AppContasIndexRoute
 }
@@ -378,6 +398,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCartoesCartaoIdRoute: AppCartoesCartaoIdRoute,
   AppContasBancosRoute: AppContasBancosRoute,
   AppDespesasTiposRoute: AppDespesasTiposRoute,
+  AppReceitasTiposRoute: AppReceitasTiposRoute,
   AppCartoesIndexRoute: AppCartoesIndexRoute,
   AppContasIndexRoute: AppContasIndexRoute,
 }
