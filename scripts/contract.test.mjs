@@ -1,7 +1,16 @@
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
+    checkCatalog,
+    compareCatalog,
     downloadSources,
+    extractCatalogKeys,
+    extractErrorCodes,
+    generateApiTypes,
     pendingStep,
     runContract,
     sha256,
@@ -101,17 +110,140 @@ describe('downloadSources (step 1)', () => {
     });
 });
 
+const OPENAPI = `openapi: 3.1.0
+info: { title: t, version: '1' }
+paths: {}
+components:
+  schemas:
+    ErrorCode:
+      type: string
+      enum:
+        - FORBIDDEN
+        - NOT_READY
+        - USER_NOT_FOUND
+`;
+
+function catalogSource(keys) {
+    const entries = keys.map((key) => `    ${key}: 'texto',`).join('\n');
+    return `type ErrorCode = string;\nexport const ERROR_MESSAGES: Record<ErrorCode, string> = {\n${entries}\n};\n\nexport const CLIENT_ERROR_MESSAGES = {\n    NETWORK_ERROR: 'x',\n};\n`;
+}
+
+async function catalogStep(keys) {
+    const dir = await mkdtemp(join(tmpdir(), 'catalog-'));
+    const catalogPath = join(dir, 'catalog.ts');
+    await writeFile(catalogPath, catalogSource(keys));
+    const ctx = { ...context({}, fetch), catalogPath };
+    ctx.downloads.set('openapi', Buffer.from(OPENAPI));
+    return checkCatalog(ctx);
+}
+
+describe('extractErrorCodes / extractCatalogKeys', () => {
+    it('reads the ErrorCode enum from the contract', () => {
+        expect(extractErrorCodes(OPENAPI)).toEqual(['FORBIDDEN', 'NOT_READY', 'USER_NOT_FOUND']);
+    });
+
+    it('fails when the contract has no ErrorCode enum', () => {
+        expect(() => extractErrorCodes('openapi: 3.1.0\n')).toThrow('ErrorCode');
+    });
+
+    it('reads only the ERROR_MESSAGES keys, not the client messages', () => {
+        expect(extractCatalogKeys(catalogSource(['A_B', 'C']))).toEqual(['A_B', 'C']);
+    });
+
+    it('reads keys whose long text wraps to the next line', () => {
+        const source =
+            "export const ERROR_MESSAGES: Record<E, string> = {\n    A_B:\n        'texto longo',\n    C: 'x',\n};\n";
+        expect(extractCatalogKeys(source)).toEqual(['A_B', 'C']);
+    });
+
+    it('fails when the catalog has no ERROR_MESSAGES block', () => {
+        expect(() => extractCatalogKeys('export const X = {};')).toThrow('ERROR_MESSAGES');
+    });
+});
+
+describe('compareCatalog', () => {
+    it('lists codes without message and messages without code', () => {
+        expect(compareCatalog(['A', 'B'], ['B', 'C'])).toEqual({
+            withoutMessage: ['A'],
+            withoutCode: ['C'],
+        });
+    });
+});
+
+describe('checkCatalog (step 4, AC-0005-05)', () => {
+    it('passes when the keys are exactly the ErrorCode values', async () => {
+        const result = await catalogStep(['FORBIDDEN', 'NOT_READY', 'USER_NOT_FOUND']);
+        expect(result.status).toBe('PASS');
+    });
+
+    it('fails listing the code whose key was removed (ERR-0002-09)', async () => {
+        const result = await catalogStep(['FORBIDDEN', 'USER_NOT_FOUND']);
+        expect(result.status).toBe('FAIL');
+        expect(result.lines.join('\n')).toContain('sem mensagem no catálogo: NOT_READY');
+    });
+
+    it('fails listing the invented key (ERR-0002-09)', async () => {
+        const result = await catalogStep(['FORBIDDEN', 'NOT_READY', 'USER_NOT_FOUND', 'INVENTED']);
+        expect(result.status).toBe('FAIL');
+        expect(result.lines.join('\n')).toContain('sem código no contrato: INVENTED');
+    });
+
+    it('fails when the contract was not downloaded', async () => {
+        expect((await checkCatalog(context({}, fetch))).status).toBe('FAIL');
+    });
+
+    it('fails when the catalog file is missing', async () => {
+        const ctx = { ...context({}, fetch), catalogPath: '/nonexistent/catalog.ts' };
+        ctx.downloads.set('openapi', Buffer.from(OPENAPI));
+        expect((await checkCatalog(ctx)).status).toBe('FAIL');
+    });
+
+    it('reads the 55 keys of the real catalog', async () => {
+        const source = await readFile(
+            new URL('../src/api/errors/catalog.ts', import.meta.url),
+            'utf8',
+        );
+        expect(extractCatalogKeys(source)).toHaveLength(55);
+    });
+});
+
+describe('generateApiTypes (step 2)', () => {
+    it('fails when step 1 did not download the contract', async () => {
+        expect((await generateApiTypes(context({}, fetch))).status).toBe('FAIL');
+    });
+
+    it('writes the generated types to the schema path', async () => {
+        const dir = await mkdtemp(join(tmpdir(), 'schema-'));
+        const schemaPath = join(dir, 'schema.d.ts');
+        const ctx = { ...context({}, fetch), schemaPath };
+        ctx.downloads.set('openapi', Buffer.from(OPENAPI));
+        expect((await generateApiTypes(ctx)).status).toBe('PASS');
+        expect(await readFile(schemaPath, 'utf8')).toContain('ErrorCode');
+    });
+
+    it('fails with the reason when the contract is not valid OpenAPI', async () => {
+        const dir = await mkdtemp(join(tmpdir(), 'schema-'));
+        const ctx = { ...context({}, fetch), schemaPath: join(dir, 'schema.d.ts') };
+        ctx.downloads.set('openapi', Buffer.from('not: openapi\n'));
+        expect((await generateApiTypes(ctx)).status).toBe('FAIL');
+    });
+});
+
 describe('runContract', () => {
-    it('passes with steps 2, 3 and 4 skipped, naming the task that implements each', async () => {
-        const { fetchImpl } = fetchReturning(CONTENT);
+    it('keeps step 3 pending, naming the task that implements it', async () => {
         const log = [];
-        const code = await runContract(context({ openapi: SOURCE }, fetchImpl), STEPS, (line) =>
-            log.push(line),
+        const code = await runContract(
+            context({}, fetch),
+            STEPS.filter((step) => step.title.startsWith('3.')),
+            (line) => log.push(line),
         );
         expect(code).toBe(0);
-        const skipped = log.filter((line) => line.startsWith('SKIP (contexto)'));
-        expect(skipped).toHaveLength(3);
-        expect(log.join('\n')).toMatch(/T-0005-01[\s\S]*T-0004-01[\s\S]*T-0005-01/);
+        expect(log[0]).toMatch(/^SKIP \(contexto\)/);
+        expect(log.join('\n')).toContain('T-0004-01');
+    });
+
+    it('declares the four steps in order', () => {
+        expect(STEPS.map((step) => step.title.charAt(0))).toEqual(['1', '2', '3', '4']);
     });
 
     it('runs every step after a failure and exits with 1', async () => {
