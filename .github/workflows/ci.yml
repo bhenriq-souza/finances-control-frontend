@@ -12,6 +12,7 @@ on:
 jobs:
     check:
         runs-on: ubuntu-latest
+        timeout-minutes: 30
 
         steps:
             - uses: actions/checkout@v4
@@ -24,9 +25,14 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
-            # Até o scaffold (T-0003-01) os gates sem ferramenta aparecem como SKIP
-            # (contexto) e não bloqueiam. O scaffold acrescenta aqui a instalação do
-            # Chromium do Playwright e passa a usar --require-tools, que converte
-            # SKIP em falha (spec 0001, INV-0002-05).
+            # Navegador do gate e2e (spec 0002): sem ele o gate seria SKIP (ambiente).
+            # O --with-deps usa o apt do runner; um espelho do Ubuntu fora do ar já prendeu este
+            # passo por 15 minutos. O limite faz a falha aparecer cedo — rode o job de novo.
+            - name: Install Playwright Chromium
+              timeout-minutes: 8
+              run: npx playwright install --with-deps chromium
+
+            # Desde o scaffold (T-0003-01) o CI roda em modo estrito: --require-tools
+            # converte todo SKIP em falha (INV-0002-05, INV-0003-04).
             - name: Quality gates
-              run: npm run check
+              run: npm run check -- --require-tools
