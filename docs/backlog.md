@@ -81,7 +81,7 @@ Tarefas da [spec 0007](../specs/0007-publication.md), da issue de entrega [FCF-0
     - What: `Dockerfile` multi-stage, `nginx/default.conf` com cache, fallback da SPA, `/healthz` e cabeçalhos, e `.dockerignore`
     - Where: `Dockerfile`, `nginx/`, `.dockerignore`
     - Done when: `AC-0007-01` e `AC-0007-02` verificados localmente; `INV-0007-02` e `INV-0007-03`
-- [ ] **T-0007-02 — WIF, deploy key e secrets do CI** · #21
+- [x] **T-0007-02 — WIF, deploy key e secrets do CI** · #21
     - What: repositório em `github_allowed_repositories` do `homelab-infra` (o responsável aplica o Terraform), deploy key no `homelab-gitops` e os secrets `GCP_WIF_PROVIDER`, `GCP_SERVICE_ACCOUNT` e `GITOPS_DEPLOY_KEY`; executada pelo líder com o ok do responsável
     - Where: `homelab-infra`, `homelab-gitops` (deploy keys) e secrets deste repositório
     - Done when: pré-requisitos cumpridos, provados pela autenticação no GCP da `AC-0007-03` na T-0007-03
