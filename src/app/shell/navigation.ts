@@ -2,6 +2,7 @@ import type { LinkProps } from '@tanstack/react-router';
 import {
     ArrowDown,
     ArrowLeftRight,
+    ArrowUp,
     CreditCard,
     Ellipsis,
     House,
@@ -37,6 +38,7 @@ const ALL_PROFILES: readonly Profile[] = ['ADMIN', 'BILLER', 'VIEWER'];
 export const NAV_ITEMS: readonly NavItem[] = [
     { to: '/', label: 'Início', icon: House, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/despesas', label: 'Despesas', icon: ArrowDown, profiles: ALL_PROFILES, slot: 'barra' },
+    { to: '/receitas', label: 'Receitas', icon: ArrowUp, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/cartoes', label: 'Cartões', icon: CreditCard, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/contas', label: 'Contas', icon: Landmark, profiles: ALL_PROFILES, slot: 'mais' },
     {
