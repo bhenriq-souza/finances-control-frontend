@@ -63,7 +63,7 @@ src/
   features/
     identity/             autenticação e usuário (F001); único lugar que importa `firebase`
     accounts/ expenses/ statements/ earnings/ reporting/   vazios até as specs 0011+
-  api/                    cliente gerado e catálogo de erros (spec 0005)
+  api/                    cliente gerado e catálogo de erros (spec 0005); consultas e permissões compartilhadas entre features (spec 0009)
   ui/                     componentes (shadcn/ui copiados e os do Design System) e tema (spec 0004)
   shared/                 utilitários sem regra de domínio: config, money (spec 0008), datas
 e2e/                      testes do Playwright e fixtures da API
@@ -72,6 +72,8 @@ scripts/                  gates e geradores
 ```
 
 Cada pasta de `features/` expõe só o seu `index.ts`; o resto é interno.
+
+_Revisão (spec 0009):_ dado do servidor consumido por mais de uma feature — consultas de referência, usuário atual, chaves e invalidação do TanStack Query — e a matriz de permissões por perfil vivem em `src/api/queries/` e `src/api/permissions.ts`, nunca numa feature. As regras de fronteira abaixo não mudam: `features → api` já era permitido, e `src/api/**` continua importando só `api/` e `shared/`.
 
 ### Fronteiras (`.dependency-cruiser.cjs`)
 
