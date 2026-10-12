@@ -13,7 +13,7 @@ Pôr de pé a SPA do [ADR-0001](https://github.com/bhenriq-souza/finances-contro
 
 ## Scope / Non-goals
 
-- **Em escopo:** dependências e versões-base; `package.json` e scripts; TypeScript strict; Vite; TanStack Router (rotas por arquivo) e TanStack Query; Tailwind e a inicialização do shadcn/ui; Vitest, Testing Library e Playwright; ESLint e Prettier para TS/TSX; estrutura de pastas e regras do `dependency-cruiser`; configuração de runtime (`/config.js`); `scripts/build.mjs` (gate `build`); `--require-tools` e Chromium no CI; a página do spike.
+- **Em escopo:** dependências e versões-base; `package.json` e scripts; TypeScript strict; Vite; TanStack Router (rotas por arquivo) e TanStack Query; Tailwind e a inicialização do shadcn/ui; Vitest, Testing Library e Playwright; ESLint e Prettier para TS/TSX; estrutura de pastas e regras do `dependency-cruiser`; configuração de runtime (`/config.js`); `scripts/build.mjs` (gate `build`); o esqueleto do gate `contract` (abaixo); `--require-tools` e Chromium no CI; a página do spike.
 - **Fora de escopo:** o tema (spec 0004 — até lá, o shadcn/ui fica com o tema neutro dele); o cliente da API gerado e o catálogo de erros (spec 0005 — a página do spike usa `fetch` direto, único lugar autorizado, e é removida pela spec 0006); autenticação definitiva e app shell (spec 0006); imagem, nginx e manifests (spec 0007); dinheiro (spec 0008); qualquer tela de F001–F005.
 
 ## Contracts
@@ -148,9 +148,16 @@ Rota `/`, temporária, em `src/features/identity/spike/`, sem tema nem shell:
 
 `scripts/build.mjs` implementa o contrato do gate `build` da spec 0002: roda `vite build`, mede o gzip de cada arquivo `.js` e `.css` de `dist/assets/`, identifica o JavaScript inicial pelo `.vite/manifest.json` (entrada e os seus `imports` estáticos), aplica o orçamento e procura o marcador `__E2E_FAKE_AUTH__`.
 
+### Esqueleto do gate `contract`
+
+Com `--require-tools` no CI desde esta spec (INV-0003-04), o gate `contract` precisa existir já no scaffold. A T-0003-01 cria:
+
+- `sources.json` com a entrada `openapi` da spec 0005 (tag `v1.1.0` e o `sha256` dela);
+- `scripts/contract.mjs` com o passo 1 da spec 0002 (baixar cada fonte de `sources.json` e conferir o `sha256`), genérico para qualquer entrada, e os passos 2, 3 e 4 como SKIP (contexto) dentro do gate, com o motivo impresso e a tarefa que os implementa (T-0005-01 para os passos 2 e 4, T-0004-01 para o passo 3 e a entrada `tokens`).
+
 ### Playwright
 
-`playwright.config.ts` com os projetos `celular`, `tablet` e `desktop` da spec 0002 e o `webServer` `vite build --mode e2e && vite preview --port <porta>`, com a porta lida de `E2E_PORT` (padrão 4173), para que worktrees de execução paralela rodem o `e2e` ao mesmo tempo sem disputar a porta. Um teste de fumaça (`e2e/smoke.spec.ts`) abre `/` com `config.js` e `/api/**` interceptados por `page.route` e confere que a página do spike renderiza.
+`playwright.config.ts` com os projetos `celular`, `tablet` e `desktop` da spec 0002 e o `webServer` `vite build --mode e2e && vite preview --port <porta>`, com a porta lida de `E2E_PORT` (padrão 4173), para que worktrees de execução paralela rodem o `e2e` ao mesmo tempo sem disputar a porta. Um teste de fumaça (`e2e/smoke.spec.ts`) abre `/` com `config.js` e `/api/**` interceptados por `page.route` e confere que a página renderiza. Até a T-0003-02, `/` é uma página provisória com o nome do produto e o ambiente lido da configuração, e o teste de fumaça confere essa página; a T-0003-02 a troca pela página do spike e amplia o teste (AC-0003-05).
 
 ### CI
 
