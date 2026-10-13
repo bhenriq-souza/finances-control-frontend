@@ -1,7 +1,7 @@
 ---
 id: '0011'
 title: Bancos, contas bancárias e cartões de crédito
-status: implemented
+status: approved
 depends_on: ['0008', '0009']
 ---
 
@@ -49,6 +49,7 @@ Mostrar a todo perfil onde o dinheiro está — saldo de cada conta, limite e ci
 | (estado)        | selo **Arquivado** quando `archivedAt`                                          |
 
 - Com `accounts.write`: **Nova conta**; em cada linha, **Editar** e **Arquivar** (ou **Desarquivar**).
+- Em cada linha, para todos os perfis, o link **Extrato** (`/contas/$contaId`, spec 0015), antes das ações de escrita (revisão de 2026-10-13).
 
 ### Bancos — `/contas/bancos`
 
