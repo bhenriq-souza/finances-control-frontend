@@ -1,7 +1,7 @@
 ---
 id: '0011'
 title: Bancos, contas bancárias e cartões de crédito
-status: approved
+status: implemented
 depends_on: ['0008', '0009']
 ---
 
