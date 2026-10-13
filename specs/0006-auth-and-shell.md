@@ -1,7 +1,7 @@
 ---
 id: '0006'
 title: Autenticação, estados da conta e app shell
-status: implemented
+status: approved
 depends_on: ['0003', '0004', '0005']
 ---
 
@@ -99,6 +99,8 @@ Segue o componente `AppShell` do [Design System](https://claude.ai/artifact/DxDn
 - **Itens de navegação** declarados numa lista em `src/app/shell/navigation.ts` (`{ to, label, icon, profiles }`), filtrada pelo perfil do usuário. Nesta spec só existe **Início** (`/`); cada spec de tela acrescenta os seus.
 - **Menu do usuário:** nome, email, perfil em pt-BR (Administrador, Lançador, Leitor), seletor de tema (Sistema, Escuro, Claro — `useTheme` da spec 0004) e **Sair**.
 - **Marca:** os SVGs da FarmTech de `docs/design/assets/` do hub, copiados para `src/ui/brand/` no mesmo commit do hub fixado para os tokens, com o commit de origem anotado no `README.md` da pasta.
+- **Ícone da aba:** o `favicon.svg` do hub, do mesmo commit, vai para `public/`, com um `favicon-32.png` (32×32) e um `apple-touch-icon.png` (180×180) gerados dele e versionados; o `index.html` declara os três (`<link rel="icon" type="image/svg+xml">`, `<link rel="icon" type="image/png" sizes="32x32">` e `<link rel="apple-touch-icon">`) (decisão do responsável em 2026-10-13).
+- **Camadas:** o cabeçalho, com o menu do usuário aberto, e a barra de navegação ficam acima do botão flutuante das listas (**Nova despesa**, **Nova receita**); diálogos e folhas ficam acima de tudo.
 - **Acessibilidade:** navegação em `<nav aria-label="Principal">`, item ativo com `aria-current="page"`, alvos de toque de pelo menos 44×44px, foco visível com `foco`.
 
 ### Fake de autenticação no e2e
@@ -140,6 +142,8 @@ Segue o componente `AppShell` do [Design System](https://claude.ai/artifact/DxDn
 - **AC-0006-10:** a página do spike da spec 0003 e o `fetch` direto dela não existem mais.
 - **AC-0006-11:** no cadastro, uma falha de `sendEmailVerification` depois de criada a conta leva à guarda de `_app` mesmo assim, sem erro no formulário; uma falha de `createUserWithEmailAndPassword` fica no formulário.
 - **AC-0006-12:** em `/aguardando-aprovacao`, com `emailVerified: false`, aparecem o aviso e **Reenviar email**, que chama `sendEmailVerification` e fica desabilitado por um minuto; com `emailVerified: true`, nenhum dos dois. **Verificar de novo** chama `reloadUser` e `getIdToken(true)` antes da nova consulta a `/users/me`.
+- **AC-0006-13:** o `index.html` publicado declara o ícone SVG, o PNG de 32px e o `apple-touch-icon`, e os três arquivos respondem `200`.
+- **AC-0006-14:** no celular, com o menu do usuário aberto em `/despesas`, o painel do menu fica acima do botão flutuante **Nova despesa**: um clique no ponto em que os dois se sobrepõem atinge o painel.
 
 ## Test mapping
 
@@ -154,6 +158,7 @@ Segue o componente `AppShell` do [Design System](https://claude.ai/artifact/DxDn
 | AC-0006-09, INV-0006-05, INV-0006-06                         | `src/features/identity/auth-errors.test.ts` e `e2e/sign-in.spec.ts` |
 | AC-0006-10                                                   | revisão do PR da T-0006-02 e o gate `boundaries`                    |
 | AC-0006-11, AC-0006-12                                       | `src/features/identity/**/*.test.tsx` e `e2e/auth-guard.spec.ts`    |
+| AC-0006-13, AC-0006-14                                       | `e2e/shell.spec.ts`                                                 |
 
 ## Open questions
 

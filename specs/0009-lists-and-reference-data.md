@@ -1,7 +1,7 @@
 ---
 id: '0009'
 title: Listas, formulários e dados de referência compartilhados
-status: implemented
+status: approved
 depends_on: ['0003', '0004', '0005', '0006', '0008']
 ---
 
@@ -183,7 +183,7 @@ interface EntryColumn<T> {
     - qualquer outro código vai para o alerta do topo do formulário (`FormAlert`, `role="alert"`), com `userMessage`;
     - o formulário continua aberto e com os valores digitados.
 - **Padrões de rota das telas** (normativos para 0010–0018):
-    - **cadastros** (bancos, contas, cartões, tipos, usuários): lista; criar por `?novo=1` e editar por `?editar=<id>` na própria lista, em `FormDialog`;
+    - **cadastros** (bancos, contas, cartões, tipos, usuários): lista; criar por `?novo=1` e editar por `?editar=<id>` na própria lista, em `FormDialog`; as ações de cada linha são `Button` `variant="outline"` com ícone lucide (`Pencil` em **Editar**/**Renomear**, `Archive`/`ArchiveRestore` em **Arquivar**/**Desarquivar**), e **Mostrar arquivados**/**Mostrar arquivadas** é uma caixa de seleção com rótulo, nunca um botão de alternância (decisão do responsável em 2026-10-13);
     - **lançamentos** (despesas, receitas, transferências, faturas): lista com filtros na URL; detalhe em rota própria (`/despesas/$despesaId`); criar por `?novo=1` na lista; editar por `?editar=1` no detalhe; ações de status em `FormDialog` ou `ConfirmDialog` abertos do detalhe, também endereçáveis por parâmetro (ex.: `?pagar=1`), para que o dashboard leve direto a elas sem importar a feature.
     - Os parâmetros de busca de toda rota são validados por um schema zod no `validateSearch` da rota; parâmetro inválido é descartado.
 - **Depois de uma escrita bem-sucedida:** fecha o diálogo, chama `invalidateAfter` e mostra um `Notice` de sucesso curto ("Despesa salva.").
@@ -254,21 +254,23 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 - **AC-0009-08:** com um item de `slot: 'mais'` visível, a barra inferior mostra **Mais** e `/mais` lista o item; sem nenhum, **Mais** não aparece; no desktop a lateral lista todos e `/mais` redireciona para `/`.
 - **AC-0009-09:** um `AUTH_UNAVAILABLE` numa consulta mostra o aviso global com a mensagem do catálogo.
 - **AC-0009-10:** `useAccountLookup` devolve o rótulo de uma conta arquivada e "Conta removida" para um id desconhecido.
+- **AC-0009-11:** em `/despesas/tipos` e `/receitas/tipos`, **Renomear** e **Arquivar** são botões `outline` com ícone, e **Mostrar arquivados** é uma caixa de seleção que liga e desliga `?arquivados=1`.
 
 ## Test mapping
 
-| Item                    | Teste                                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| AC-0009-01, INV-0009-02 | `src/api/queries/invalidation.test.ts` e `src/api/queries/keys.test.ts`                                                          |
-| AC-0009-02, INV-0009-03 | `src/api/permissions.test.tsx`                                                                                                   |
-| AC-0009-03, INV-0009-05 | `src/shared/dates/dates.test.ts`                                                                                                 |
-| AC-0009-04, INV-0009-04 | `src/ui/status-badge.test.tsx`                                                                                                   |
-| AC-0009-05              | `src/ui/entry-list.test.tsx` e `e2e/entry-list.spec.ts` (página de prova `/_e2e/lista`)                                          |
-| AC-0009-06              | `src/ui/form-dialog.test.tsx`, `src/ui/confirm-dialog.test.tsx` e `e2e/form-dialog.spec.ts` (página de prova `/_e2e/formulario`) |
-| AC-0009-07, INV-0009-06 | `src/api/errors/form-errors.test.ts`                                                                                             |
-| AC-0009-08              | `src/app/shell/navigation.test.ts` e `e2e/more.spec.ts`                                                                          |
-| AC-0009-09              | `src/app/notices.test.tsx`                                                                                                       |
-| AC-0009-10, INV-0009-01 | `src/api/queries/lookups.test.tsx` e o gate `boundaries`                                                                         |
+| Item                    | Teste                                                                                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-0009-01, INV-0009-02 | `src/api/queries/invalidation.test.ts` e `src/api/queries/keys.test.ts`                                                                                                         |
+| AC-0009-02, INV-0009-03 | `src/api/permissions.test.tsx`                                                                                                                                                  |
+| AC-0009-03, INV-0009-05 | `src/shared/dates/dates.test.ts`                                                                                                                                                |
+| AC-0009-04, INV-0009-04 | `src/ui/status-badge.test.tsx`                                                                                                                                                  |
+| AC-0009-05              | `src/ui/entry-list.test.tsx` e `e2e/entry-list.spec.ts` (página de prova `/_e2e/lista`)                                                                                         |
+| AC-0009-06              | `src/ui/form-dialog.test.tsx`, `src/ui/confirm-dialog.test.tsx` e `e2e/form-dialog.spec.ts` (página de prova `/_e2e/formulario`)                                                |
+| AC-0009-07, INV-0009-06 | `src/api/errors/form-errors.test.ts`                                                                                                                                            |
+| AC-0009-08              | `src/app/shell/navigation.test.ts` e `e2e/more.spec.ts`                                                                                                                         |
+| AC-0009-09              | `src/app/notices.test.tsx`                                                                                                                                                      |
+| AC-0009-10, INV-0009-01 | `src/api/queries/lookups.test.tsx` e o gate `boundaries`                                                                                                                        |
+| AC-0009-11              | `src/features/expenses/types/expense-types-page.test.tsx`, `src/features/earnings/types/earning-types-page.test.tsx`, `e2e/expense-types.spec.ts` e `e2e/earning-types.spec.ts` |
 
 ## Open questions
 

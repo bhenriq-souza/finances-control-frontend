@@ -1,7 +1,7 @@
 ---
 id: '0014'
 title: Receitas e tipos de receita
-status: implemented
+status: approved
 depends_on: ['0008', '0009', '0011']
 ---
 
@@ -54,7 +54,7 @@ Os campos da spec 0012, com estas diferenças:
 | Observações             | máximo de 1000 caracteres (contrato)                                                                                                       |
 | Valor                   | alterável, exceto receita `RECEIVED`                                                                                                       |
 
-- **Criar:** `POST /earnings` (resposta em lista), `Notice` e navegação para o detalhe da primeira.
+- **Criar:** `POST /earnings` (resposta em lista), `Notice`; o diálogo fecha e a lista vai para o mês da primeira criada (`?mes=`), sem filtros; o detalhe não é aberto, como nas despesas (decisão do responsável em 2026-10-13).
 - **Alterar:** `PATCH /earnings/{id}` só com os campos alterados; série pergunta **Só esta** / **Esta e as próximas previstas** (`?scope=following`).
 - `invalidateAfter(..., 'earning')`.
 
@@ -115,13 +115,14 @@ Igual a `/despesas/tipos`, sobre `/earning-types`; `invalidateAfter(..., 'earnin
 - **AC-0014-07:** com `leitor`, nenhuma ação de escrita aparece e `?novo=1`/`?receber=1` não abrem diálogo.
 - **AC-0014-08:** `/receitas/tipos` cria, renomeia e arquiva; `409 EARNING_TYPE_ALREADY_EXISTS` marca o nome.
 - **AC-0014-09:** nos três projetos, lista e formulário seguem `EntryList` e `FormDialog`.
+- **AC-0014-10:** criar uma receita com data `2026-11-05` a partir de `/receitas?mes=2026-10` mostra o `Notice`, fecha o diálogo e leva a `/receitas?mes=2026-11`, sem filtros e sem abrir o detalhe.
 
 ## Test mapping
 
 | Item                                             | Teste                                                                            |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |
 | AC-0014-01, AC-0014-02, AC-0014-09, INV-0014-01  | `e2e/earnings-list.spec.ts` e `src/features/earnings/list/*.test.tsx`            |
-| AC-0014-03, AC-0014-04, INV-0014-04              | `src/features/earnings/form/earning-form.test.tsx` e `e2e/earnings-form.spec.ts` |
+| AC-0014-03, AC-0014-04, AC-0014-10, INV-0014-04  | `src/features/earnings/form/earning-form.test.tsx` e `e2e/earnings-form.spec.ts` |
 | AC-0014-05, AC-0014-06, INV-0014-02, INV-0014-03 | `src/features/earnings/detail/*.test.tsx` e `e2e/earnings-detail.spec.ts`        |
 | AC-0014-07                                       | `e2e/earnings-list.spec.ts` e `e2e/earnings-detail.spec.ts` (com `leitor`)       |
 | AC-0014-08                                       | `e2e/earning-types.spec.ts`                                                      |

@@ -1,7 +1,7 @@
 ---
 id: '0012'
 title: Despesas e tipos de despesa
-status: implemented
+status: approved
 depends_on: ['0008', '0009', '0011']
 ---
 
@@ -65,13 +65,14 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 | Valor (`amountCents`)            | `MoneyInput`, `moneySchema()`; rótulo "Valor total" em Parcelada                              | sim, exceto despesa `PAID`                           | > 0                                 |
 | Pagar com                        | `SelectField` com os grupos Contas e Cartões (ativos); vira `bankAccountId` ou `creditCardId` | só leitura (troca por **Trocar forma de pagamento**) | obrigatório, exatamente um          |
 | Data (`occurredOn`)              | `DateField`; rótulo "Vencimento" com conta, "Data da compra" com cartão                       | sim                                                  | obrigatória                         |
-| Fatura de (`postedOn`)           | `DateField` opcional, só com cartão; ajuda "Deixe vazio para a fatura do dia da compra."      | sim, só com cartão                                   | não anterior a `occurredOn`         |
+| Fatura de (`postedOn`)           | só com cartão, recolhido atrás do link **Lançar em outra fatura** (ver abaixo)                | sim, só com cartão; aberto quando difere da data     | não anterior a `occurredOn`         |
 | Parcelas (`installmentTotal`)    | número 2–120, só em Parcelada                                                                 | —                                                    | inteiro                             |
 | Repetir até (`recurrenceEndsOn`) | `DateField` opcional, só em Fixa; ajuda "Sem data, a série segue mês a mês."                  | —                                                    | não anterior a `occurredOn`         |
 | Situação inicial (`status`)      | `SelectField`: Pendente (`OPEN`, padrão), Previsto (`FORECAST`), Verificando (`VERIFYING`)    | —                                                    | —                                   |
 | Observações (`notes`)            | texto longo opcional                                                                          | sim                                                  | —                                   |
 
-- **Criar:** `POST /expenses`; a resposta é uma lista. `Notice` "Despesa salva." ou "n despesas criadas." (parcelas ou ocorrências da série) e navegação para o detalhe da primeira.
+- **Fatura do cartão** (decisão do responsável em 2026-10-13): o backend escolhe a fatura pela data da compra e, se ela já fechou, usa a próxima aberta; o campo só serve para lançar em outra fatura. Com um cartão em Pagar com, o formulário mostra o texto "Entra na fatura da data da compra. A fatura atual fecha em dd/mm." (`currentCycle.closesOn` do cartão, pelo lookup) e o link **Lançar em outra fatura**, que abre o `DateField` opcional **Fatura de** com a ajuda "A despesa entra na fatura que contém esta data."; fechado, `postedOn` não é enviado. Ao alterar, o campo já vem aberto quando `postedOn` difere de `occurredOn`. **Trocar forma de pagamento** segue o mesmo desenho.
+- **Criar:** `POST /expenses`; a resposta é uma lista. `Notice` "Despesa salva." ou "n despesas criadas." (parcelas ou ocorrências da série); o diálogo fecha e a lista vai para o mês da primeira criada (`?mes=`), sem filtros, para que o lançamento apareça; o detalhe não é aberto (decisão do responsável em 2026-10-13).
 - **Alterar:** `PATCH /expenses/{id}` só com os campos alterados. Despesa de série (`recurrenceId`) pergunta, antes de enviar, **Só esta** ou **Esta e as próximas previstas** (`?scope=following`). Parcela: nota "A alteração vale só para esta parcela."
 - `invalidateAfter(..., 'expense')`.
 
@@ -89,7 +90,7 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 
 - **Pagar:** `FormDialog` com `paidOn` (`DateField`, padrão `today()`) → `PATCH /expenses/{id}/status` `{ status: 'PAID', paidOn }`. As demais transições enviam só `{ status }`.
 - **Excluir** (não paga): `ConfirmDialog` com o texto da cascata — avulsa: "A despesa será excluída."; parcela: "Todas as parcelas não pagas deste parcelamento serão excluídas."; série: "Esta ocorrência e as seguintes ainda não pagas serão excluídas, e a série termina." → `DELETE /expenses/{id}`, volta para a lista.
-- **Trocar forma de pagamento** (não paga): `FormDialog` com "Pagar com" (contas e cartões ativos, exceto o atual) e, se o destino for cartão, `postedOn` opcional; em série, a mesma escolha **Só esta** / **Esta e as próximas previstas** → `PATCH /expenses/{id}/payment-method[?scope=following]` com exatamente um de `bankAccountId`/`creditCardId`. Parcela: nota "Vale para todas as parcelas não pagas do parcelamento."
+- **Trocar forma de pagamento** (não paga): `FormDialog` com "Pagar com" (contas e cartões ativos, exceto o atual) e, se o destino for cartão, `postedOn` opcional, recolhido como no formulário; em série, a mesma escolha **Só esta** / **Esta e as próximas previstas** → `PATCH /expenses/{id}/payment-method[?scope=following]` com exatamente um de `bankAccountId`/`creditCardId`. Parcela: nota "Vale para todas as parcelas não pagas do parcelamento."
 - **Estornar** (decisão do responsável, 2026-10-13): em despesa de cartão que não é `FORECAST`, com `entries.write`, um link no grupo de ações, depois das transições, para `/cartoes/$cartaoId?estorno=1&despesa=<id>`. Abre o **Novo estorno** da spec 0013 com a despesa pré-selecionada.
 - Cada ação é endereçável: `?pagar=1`, `?excluir=1`, `?meio=1` abrem o diálogo correspondente (o dashboard usa `?pagar=1`).
 - **Erro de uma ação** (decisão do responsável, 2026-10-13, padrão de despesas e receitas): sempre em alerta (`role="alert"`, mensagem do catálogo), nunca em aviso. Transição sem diálogo: o alerta aparece abaixo dos botões de ação. Ação com diálogo: o alerta fica no diálogo, que continua aberto, também quando um conflito de status recarrega o detalhe e a ação deixa de existir.
@@ -144,13 +145,15 @@ Padrão de **cadastro**: `EntryList` por `name`, selo **Arquivado**; com `entrie
 - **AC-0012-11:** `/despesas/tipos` cria, renomeia e arquiva um tipo; `409 EXPENSE_TYPE_ALREADY_EXISTS` marca o nome.
 - **AC-0012-12:** nos três projetos, a lista segue o `EntryList`, o formulário segue o `FormDialog` e **Nova despesa** fica acessível sem cobrir a barra inferior.
 - **AC-0012-13:** o detalhe de uma despesa de cartão que não é `FORECAST` mostra **Estornar**, que leva a `/cartoes/$cartaoId?estorno=1&despesa=<id>`; despesa de conta, despesa `FORECAST` e `leitor` não o veem.
+- **AC-0012-14:** criar uma despesa com data `2026-11-05` a partir de `/despesas?mes=2026-10&status=PAID` mostra "Despesa salva.", fecha o diálogo e leva a `/despesas?mes=2026-11`, sem filtros e sem abrir o detalhe.
+- **AC-0012-15:** com um cartão em Pagar com, **Fatura de** só aparece depois de **Lançar em outra fatura**; sem abri-lo, o texto mostra o fechamento da fatura atual do cartão e o `POST /expenses` não leva `postedOn`; aberto e preenchido, leva `postedOn`.
 
 ## Test mapping
 
 | Item                                                                                  | Teste                                                                            |
 | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | AC-0012-01, AC-0012-02, AC-0012-12, INV-0012-01                                       | `e2e/expenses-list.spec.ts` e `src/features/expenses/list/*.test.tsx`            |
-| AC-0012-03, AC-0012-04, AC-0012-05, INV-0012-05                                       | `src/features/expenses/form/expense-form.test.tsx` e `e2e/expenses-form.spec.ts` |
+| AC-0012-03, AC-0012-04, AC-0012-05, AC-0012-14, AC-0012-15, INV-0012-05               | `src/features/expenses/form/expense-form.test.tsx` e `e2e/expenses-form.spec.ts` |
 | AC-0012-06, AC-0012-07, AC-0012-08, AC-0012-09, INV-0012-02, INV-0012-03, INV-0012-04 | `src/features/expenses/detail/*.test.tsx` e `e2e/expenses-detail.spec.ts`        |
 | AC-0012-10                                                                            | `e2e/expenses-list.spec.ts` e `e2e/expenses-detail.spec.ts` (com `leitor`)       |
 | AC-0012-11                                                                            | `e2e/expense-types.spec.ts`                                                      |
