@@ -1,4 +1,4 @@
-import { ArrowUp, House } from 'lucide-react';
+import { ArrowUp, ChartColumn, House } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -29,7 +29,15 @@ const labels = (entries: readonly { label: string }[]) => entries.map(({ label }
 // INV-0006-03: a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
 describe('navItemsFor', () => {
     it('shows the spec 0009 items to every profile, in order', () => {
-        const common = ['Início', 'Despesas', 'Receitas', 'Cartões', 'Contas', 'Transferências'];
+        const common = [
+            'Início',
+            'Despesas',
+            'Receitas',
+            'Cartões',
+            'Contas',
+            'Transferências',
+            'Relatórios',
+        ];
         for (const profile of ['BILLER', 'VIEWER'] as const) {
             expect(labels(navItemsFor(profile))).toEqual(common);
         }
@@ -41,6 +49,7 @@ describe('navItemsFor', () => {
             '/cartoes',
             '/contas',
             '/transferencias',
+            '/relatorios',
             '/usuarios',
         ]);
     });
@@ -63,6 +72,17 @@ describe('navItemsFor', () => {
             icon: ArrowUp,
             profiles: ALL,
             slot: 'barra',
+        });
+    });
+
+    // Spec 0015, "Relatórios": em Mais, para todos os perfis.
+    it('declares Relatórios in Mais with the ChartColumn icon, for every profile', () => {
+        expect(NAV_ITEMS.find(({ to }) => to === '/relatorios')).toEqual({
+            to: '/relatorios',
+            label: 'Relatórios',
+            icon: ChartColumn,
+            profiles: ALL,
+            slot: 'mais',
         });
     });
 
@@ -113,9 +133,14 @@ describe('navigation slots', () => {
         expect(labels(moreItems(navItemsFor('ADMIN')))).toEqual([
             'Contas',
             'Transferências',
+            'Relatórios',
             'Usuários',
         ]);
-        expect(labels(moreItems(navItemsFor('BILLER')))).toEqual(['Contas', 'Transferências']);
+        expect(labels(moreItems(navItemsFor('BILLER')))).toEqual([
+            'Contas',
+            'Transferências',
+            'Relatórios',
+        ]);
         expect(MORE_ENTRY.to).toBe('/mais');
         expect(MORE_ENTRY.label).toBe('Mais');
     });
