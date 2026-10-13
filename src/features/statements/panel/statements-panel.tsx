@@ -17,6 +17,8 @@ import {
     upcomingWindow,
     type Statement,
 } from './statement-model';
+import { RefundActions, type RefundActionSlots } from '../refunds/refund-actions';
+
 import { Heading, StatementBadge, StatementBody, StatementDates } from './statement-parts';
 
 function closingMonth(statement: Statement): string {
@@ -45,7 +47,13 @@ function QueryError({ query }: { query: Pick<UseQueryResult, 'error' | 'refetch'
     );
 }
 
-function CurrentStatement({ query }: { query: UseQueryResult<Statement> }) {
+function CurrentStatement({
+    query,
+    refunds,
+}: {
+    query: UseQueryResult<Statement>;
+    refunds: RefundActionSlots;
+}) {
     if (query.isError) return <QueryError query={query} />;
     if (!query.data) {
         return (
@@ -62,7 +70,8 @@ function CurrentStatement({ query }: { query: UseQueryResult<Statement> }) {
                 <StatementDates statement={statement} />
                 <StatementBadge statement={statement} />
             </div>
-            <StatementBody statement={statement} level={3} />
+            {refunds.newRefund && <div className="flex flex-wrap gap-3">{refunds.newRefund}</div>}
+            <StatementBody statement={statement} level={3} refundActions={refunds.rowActions} />
         </div>
     );
 }
@@ -178,7 +187,9 @@ export function StatementsPanel({ cardId }: { cardId: string }) {
     return (
         <div className="flex flex-col gap-8">
             <PanelSection id="fatura-atual" title="Fatura atual">
-                <CurrentStatement query={current} />
+                <RefundActions cardId={cardId}>
+                    {(refunds) => <CurrentStatement query={current} refunds={refunds} />}
+                </RefundActions>
             </PanelSection>
             <PanelSection id="faturas-anteriores" title="Faturas anteriores">
                 <PreviousStatements cardId={cardId} />

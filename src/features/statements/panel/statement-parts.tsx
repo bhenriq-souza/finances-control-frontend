@@ -283,13 +283,15 @@ const REFUND_COLUMNS: readonly EntryColumn<StatementRefund>[] = [
     },
 ];
 
-/** **Estornos** da fatura (as ações de editar e excluir chegam com T-0013-03). */
+/** **Estornos** da fatura; com `actions` (só com `entries.write`), **Editar** e **Excluir**. */
 export function StatementRefunds({
     refunds,
     level,
+    actions,
 }: {
     refunds: readonly StatementRefund[];
     level: HeadingLevel;
+    actions?: (refund: StatementRefund) => ReactNode;
 }) {
     return (
         <Block title="Estornos" level={level}>
@@ -297,13 +299,20 @@ export function StatementRefunds({
                 items={refunds}
                 getKey={(refund) => refund.id}
                 caption="Estornos da fatura"
-                columns={REFUND_COLUMNS}
+                columns={
+                    actions
+                        ? [...REFUND_COLUMNS, { header: 'Ações', cell: actions, align: 'end' }]
+                        : REFUND_COLUMNS
+                }
                 renderCard={(refund) => (
-                    <CardLine
-                        title={refund.description}
-                        support={formatDate(refund.occurredOn, 'curta')}
-                        value={<RefundAmount cents={refund.amountCents} />}
-                    />
+                    <div className="flex flex-col gap-3">
+                        <CardLine
+                            title={refund.description}
+                            support={formatDate(refund.occurredOn, 'curta')}
+                            value={<RefundAmount cents={refund.amountCents} />}
+                        />
+                        {actions?.(refund)}
+                    </div>
                 )}
                 empty={<NoneText>Nenhum estorno nesta fatura.</NoneText>}
             />
@@ -353,10 +362,13 @@ export function StatementBody({
     statement,
     level,
     className,
+    refundActions,
 }: {
     statement: Statement;
     level: HeadingLevel;
     className?: string;
+    /** **Editar** e **Excluir** de cada estorno (T-0013-03). */
+    refundActions?: (refund: StatementRefund) => ReactNode;
 }) {
     return (
         <div className={clsx('flex flex-col gap-6', className)}>
@@ -365,7 +377,11 @@ export function StatementBody({
             </div>
             <StatementByType statement={statement} level={level} />
             <StatementExpenses expenses={statement.expenses ?? []} level={level} />
-            <StatementRefunds refunds={statement.refunds ?? []} level={level} />
+            <StatementRefunds
+                refunds={statement.refunds ?? []}
+                level={level}
+                actions={refundActions}
+            />
             <StatementPayments payments={statement.payments ?? []} level={level} />
         </div>
     );
