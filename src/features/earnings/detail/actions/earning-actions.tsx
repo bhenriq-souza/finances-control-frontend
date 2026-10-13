@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useCan } from '@/api/permissions';
 import { Button } from '@/ui/components/ui/button';
+import { FormAlert } from '@/ui/form-alert';
 import { useNotify } from '@/ui/notice';
 
 import type { Earning } from '../../list/earning-model';
@@ -44,6 +45,17 @@ function useDialogParams() {
     };
 }
 
+/**
+ * Um diálogo só abre se a ação existe no status atual; aberto, fica aberto mesmo que um
+ * recarregamento mude o status, para o alerta do erro continuar à vista (spec 0014).
+ */
+function useLatchedOpen(requested: boolean, allowed: boolean): boolean {
+    const [latched, setLatched] = useState(false);
+    const open = requested && (allowed || latched);
+    if (open !== latched) setLatched(open);
+    return open;
+}
+
 export interface EarningActionsProps {
     earning: Earning;
 }
@@ -67,17 +79,15 @@ function WriteActions({ earning }: EarningActionsProps) {
 
     const actions = statusActions(earning.status);
     const deletable = canDelete(earning);
+    const receiveOpen = useLatchedOpen(dialogs.receber, actions.includes('receber'));
+    const deleteOpen = useLatchedOpen(dialogs.excluir, deletable);
 
     const run = (action: EarningAction) => {
         if (action === 'receber') return dialogs.open('receber');
         if (action === 'desfazer') return setUndoOpen(true);
         change.mutate(
             { id: earning.id, body: { status: ACTION_TARGET[action] } },
-            {
-                onSuccess: () => notify({ tone: 'sucesso', message: ACTION_NOTICES[action] }),
-                onError: (error) =>
-                    notify({ tone: 'erro', message: asApiError(error).userMessage }),
-            },
+            { onSuccess: () => notify({ tone: 'sucesso', message: ACTION_NOTICES[action] }) },
         );
     };
 
@@ -105,16 +115,15 @@ function WriteActions({ earning }: EarningActionsProps) {
                     </Button>
                 )}
             </div>
+            <FormAlert message={change.error ? asApiError(change.error).userMessage : null} />
 
-            {dialogs.receber && actions.includes('receber') && (
+            {receiveOpen && (
                 <ReceiveDialog earning={earning} onClose={() => dialogs.close('receber')} />
             )}
-            {dialogs.excluir && deletable && (
+            {deleteOpen && (
                 <DeleteEarningDialog earning={earning} onClose={() => dialogs.close('excluir')} />
             )}
-            {undoOpen && actions.includes('desfazer') && (
-                <UndoReceiptDialog earning={earning} onClose={() => setUndoOpen(false)} />
-            )}
+            {undoOpen && <UndoReceiptDialog earning={earning} onClose={() => setUndoOpen(false)} />}
         </>
     );
 }

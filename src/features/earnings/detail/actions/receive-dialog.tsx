@@ -11,9 +11,7 @@ import { FormDialog } from '@/ui/form-dialog';
 import { useNotify } from '@/ui/notice';
 
 import type { Earning } from '../../list/earning-model';
-import { asApiError } from '../../list/earnings-query';
-
-import { isStaleEarningError, useChangeEarningStatus } from './api';
+import { useChangeEarningStatus } from './api';
 import { ACTION_NOTICES } from './transitions';
 
 const FORM_ID = 'receber-receita';
@@ -32,8 +30,7 @@ export interface ReceiveDialogProps {
 /**
  * **Receber** (spec 0014): `receivedOn` com padrão `today()` → `PATCH /earnings/{id}/status`
  * `{ status: 'RECEIVED', receivedOn }`. Um erro da API fica no alerta, com o diálogo aberto
- * (INV-0009-06). `EARNING_ALREADY_RECEIVED` e `EARNING_STATUS_TRANSITION_NOT_ALLOWED` dizem que a
- * receita mudou: o detalhe é recarregado, o diálogo fecha e o alerta vira um aviso de erro.
+ * (INV-0009-06), também num conflito de status, que recarrega o detalhe (`useChangeEarningStatus`).
  */
 export function ReceiveDialog({ earning, onClose }: ReceiveDialogProps) {
     const notify = useNotify();
@@ -56,14 +53,8 @@ export function ReceiveDialog({ earning, onClose }: ReceiveDialogProps) {
                     onClose();
                     notify({ tone: 'sucesso', message: ACTION_NOTICES.receber });
                 },
-                onError: (error) => {
-                    if (isStaleEarningError(error)) {
-                        onClose();
-                        notify({ tone: 'erro', message: asApiError(error).userMessage });
-                        return;
-                    }
-                    applyApiError(error, form, { fields: { receivedOn: 'receivedOn' } });
-                },
+                onError: (error) =>
+                    applyApiError(error, form, { fields: { receivedOn: 'receivedOn' } }),
             },
         );
     });
