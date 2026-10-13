@@ -14,6 +14,8 @@ import { earningBadge } from '@/ui/status-labels';
 import { EARNING_KIND_LABELS, type Earning } from '../list/earning-model';
 import { asApiError, earningDetailQuery } from '../list/earnings-query';
 
+import { EarningActions } from './actions/earning-actions';
+
 const LINK_CLASS =
     'rounded-sm text-acento underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-foco';
 
@@ -108,6 +110,7 @@ export function EarningDetail({ earningId }: EarningDetailProps) {
                         tone="auto"
                         size="valor-destaque"
                     />
+                    <EarningActions earning={earning} />
                 </header>
                 <Fields earning={earning} />
             </article>
