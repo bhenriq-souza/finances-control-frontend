@@ -134,7 +134,7 @@ export function EarningDetail({ earningId, search = {}, onSearchChange }: Earnin
                         size="valor-destaque"
                     />
                     {canWrite && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="hidden flex-wrap gap-2 md:flex">
                             <Button
                                 variant="outline"
                                 onClick={() => onSearchChange?.({ editar: 1 })}

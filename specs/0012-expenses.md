@@ -1,7 +1,7 @@
 ---
 id: '0012'
 title: Despesas e tipos de despesa
-status: approved
+status: implemented
 depends_on: ['0008', '0009', '0011']
 ---
 

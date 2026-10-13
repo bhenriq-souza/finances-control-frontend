@@ -74,6 +74,16 @@ async function open(
     return stub;
 }
 
+/** Abre o formulário de edição: **Alterar** no cabeçalho, ou **Editar** em **Mais ações** no celular. */
+async function openEditForm(page: Page): Promise<void> {
+    if (test.info().project.name === 'celular') {
+        await page.getByRole('button', { name: 'Mais ações' }).click();
+        await page.getByRole('menuitem', { name: 'Editar' }).click();
+    } else {
+        await page.getByRole('button', { name: 'Alterar' }).click();
+    }
+}
+
 const writes = (stub: ApiStub, method: 'POST' | 'PATCH') =>
     stub.requests.filter((request) => request.method === method);
 
@@ -224,7 +234,7 @@ test('edits a series occurrence and the next forecast ones', async ({ page }) =>
         ],
     });
 
-    await page.getByRole('button', { name: 'Alterar' }).click();
+    await openEditForm(page);
     await expect(page).toHaveURL(/editar=1/);
     const dialog = page.getByRole('dialog', { name: 'Alterar despesa' });
     await expect(dialog.getByLabel('Pagar com')).toHaveCount(0);

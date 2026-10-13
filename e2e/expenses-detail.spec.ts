@@ -192,7 +192,8 @@ test('a leitor sees no action and no dialog opens from the URL', async ({ page }
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
 });
 
-// AC-0012-18: no celular, Pagar em largura total e o resto em Mais ações; de `md` em diante, botões.
+// AC-0012-18: no celular, Pagar em largura total, o resto em Mais ações e sem Alterar no cabeçalho;
+// de `md` em diante, botões e Alterar.
 test('on a phone Pagar is full width and the rest is under Mais ações', async ({ page }) => {
     await openDetail(page, INTERNET);
 
@@ -203,6 +204,7 @@ test('on a phone Pagar is full width and the rest is under Mais ações', async 
         const [button, container] = await Promise.all([pay.boundingBox(), article.boundingBox()]);
         expect(button!.width).toBeGreaterThan(container!.width - 2);
         await expect(page.getByRole('button', { name: 'Excluir' })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: 'Alterar' })).toHaveCount(0);
         await page.getByRole('button', { name: 'Mais ações' }).click();
         await expect(page.getByRole('menuitem')).toHaveText([
             'Marcar para verificar',
@@ -212,6 +214,7 @@ test('on a phone Pagar is full width and the rest is under Mais ações', async 
         ]);
     } else {
         await expect(page.getByRole('button', { name: 'Mais ações' })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: 'Alterar' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Excluir' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Trocar forma de pagamento' })).toBeVisible();
     }

@@ -252,8 +252,8 @@ test('a biller opens Receber from ?receber=1', async ({ page }) => {
     await expect(page.getByRole('dialog', { name: 'Receber receita' })).toBeVisible();
 });
 
-// AC-0014-13: no celular, Receber em largura total e as demais ações em Mais ações; nos outros
-// tamanhos, todas lado a lado.
+// AC-0014-13: no celular, Receber em largura total, as demais ações em Mais ações e sem Alterar no
+// cabeçalho; nos outros tamanhos, todas lado a lado, com Alterar.
 test('on a phone the first action is full width and the rest are under Mais ações', async ({
     page,
 }) => {
@@ -263,7 +263,12 @@ test('on a phone the first action is full width and the rest are under Mais aç�
     });
 
     await expectActions(page, ['Receber', 'Marcar para verificar', 'Excluir']);
-    if (!isNarrow(page)) return;
+    const edit = page.getByRole('button', { name: 'Alterar' });
+    if (!isNarrow(page)) {
+        await expect(edit).toBeVisible();
+        return;
+    }
+    await expect(edit).toHaveCount(0);
 
     const group = await page.getByRole('group', { name: 'Ações' }).boundingBox();
     const receive = await page.getByRole('button', { name: 'Receber' }).boundingBox();
