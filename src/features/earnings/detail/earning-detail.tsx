@@ -1,17 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { useCan } from '@/api/permissions';
 import { useAccountLookup } from '@/api/queries/lookups';
 import { formatDate } from '@/shared/dates';
+import { Button } from '@/ui/components/ui/button';
 import { EmptyState } from '@/ui/empty-state';
 import { Money } from '@/ui/money';
 import { Skeleton } from '@/ui/skeleton';
 import { StatusBadge } from '@/ui/status-badge';
 import { earningBadge } from '@/ui/status-labels';
 
+import { EarningFormDialog } from '../form/earning-form';
 import { EARNING_KIND_LABELS, type Earning } from '../list/earning-model';
+import type { EarningDetailSearch } from '../list/earning-search';
 import { asApiError, earningDetailQuery } from '../list/earnings-query';
 
 import { EarningActions } from './actions/earning-actions';
@@ -74,14 +78,19 @@ function DetailSkeleton() {
 
 export interface EarningDetailProps {
     earningId: string;
+    /** Parâmetros de busca da rota (`editar` abre o formulário). */
+    search?: EarningDetailSearch;
+    /** Troca parâmetros de busca da rota, mantendo os demais. */
+    onSearchChange?: (next: Partial<EarningDetailSearch>) => void;
 }
 
 /**
- * Detalhe de uma receita, só leitura (spec 0014, "Detalhe"): todos os campos da resposta, o selo,
+ * Detalhe de uma receita (spec 0014, "Detalhe"): todos os campos da resposta, o selo,
  * a conta por nome e, numa parcela, o link para o parcelamento inteiro. `404 EARNING_NOT_FOUND`
  * vira o estado "não encontrado" (ERR-0009-02); outra falha, o estado de erro (ERR-0009-01).
  */
-export function EarningDetail({ earningId }: EarningDetailProps) {
+export function EarningDetail({ earningId, search = {}, onSearchChange }: EarningDetailProps) {
+    const canWrite = useCan('entries.write');
     const query = useQuery(earningDetailQuery(earningId));
 
     let content: ReactNode;
@@ -110,9 +119,29 @@ export function EarningDetail({ earningId }: EarningDetailProps) {
                         tone="auto"
                         size="valor-destaque"
                     />
+                    {canWrite && (
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => onSearchChange?.({ editar: 1 })}
+                            >
+                                <Pencil aria-hidden="true" />
+                                Alterar
+                            </Button>
+                        </div>
+                    )}
                     <EarningActions earning={earning} />
                 </header>
                 <Fields earning={earning} />
+                {canWrite && search.editar === 1 && (
+                    <EarningFormDialog
+                        open
+                        earning={earning}
+                        onOpenChange={(open) => {
+                            if (!open) onSearchChange?.({ editar: undefined });
+                        }}
+                    />
+                )}
             </article>
         );
     }

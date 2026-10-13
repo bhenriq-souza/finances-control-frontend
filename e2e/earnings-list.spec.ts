@@ -160,14 +160,18 @@ test('Nova receita is reachable without covering the bottom bar', async ({ page 
 
     const button = page.getByRole('button', { name: 'Nova receita' });
     await expect(button).toBeVisible();
+
+    if (testInfo.project.name !== 'desktop') {
+        const nav = await page.getByRole('navigation', { name: 'Principal' }).boundingBox();
+        const box = await button.boundingBox();
+        if (!nav || !box) throw new Error('no box');
+        expect(box.y + box.height).toBeLessThanOrEqual(nav.y);
+    }
+
+    // O botão abre o formulário (T-0014-02), que deixa o resto da tela inerte.
     await button.click();
     await expect(page).toHaveURL(/[?&]novo=1/);
-
-    if (testInfo.project.name === 'desktop') return;
-    const nav = await page.getByRole('navigation', { name: 'Principal' }).boundingBox();
-    const box = await button.boundingBox();
-    if (!nav || !box) throw new Error('no box');
-    expect(box.y + box.height).toBeLessThanOrEqual(nav.y);
+    await expect(page.getByRole('dialog', { name: 'Nova receita' })).toBeVisible();
 });
 
 // AC-0014-07 (lista): sem `entries.write`, nenhuma ação de escrita e `?novo=1` não abre nada.

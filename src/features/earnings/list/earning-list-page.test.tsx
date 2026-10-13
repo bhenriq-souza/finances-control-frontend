@@ -15,6 +15,7 @@ vi.mock('@/api/client', () => ({ api: { GET: mocks.get } }));
 
 import { CURRENT_USER_QUERY_KEY, type CurrentUser } from '@/api/queries/current-user';
 import { queryKeys } from '@/api/queries/keys';
+import { createNoticeStore, NoticeProvider } from '@/ui/notice';
 
 import type { Earning } from './earning-model';
 import { EarningListPage } from './earning-list-page';
@@ -119,7 +120,9 @@ async function renderList(url: string, profile: CurrentUser['profile'] = 'ADMIN'
     await act(async () => {
         render(
             <QueryClientProvider client={queryClient}>
-                <RouterProvider router={router} />
+                <NoticeProvider store={createNoticeStore()}>
+                    <RouterProvider router={router} />
+                </NoticeProvider>
             </QueryClientProvider>,
         );
     });
@@ -299,6 +302,11 @@ describe('EarningListPage (spec 0014)', () => {
         );
         await user.click(screen.getByRole('button', { name: 'Nova receita' }));
         expect(router.state.location.search).toEqual({ mes: '2026-10', novo: 1 });
+        const dialog = screen.getByRole('dialog', { name: 'Nova receita' });
+
+        await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+        expect(router.state.location.search).toEqual({ mes: '2026-10' });
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     // AC-0014-07 (lista), INV-0009-03: sem `entries.write`, nenhum controle de escrita.

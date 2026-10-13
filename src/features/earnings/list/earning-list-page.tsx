@@ -13,6 +13,8 @@ import { EntryListSkeleton } from '@/ui/skeleton';
 import { StatusBadge } from '@/ui/status-badge';
 import { earningBadge } from '@/ui/status-labels';
 
+import { EarningFormDialog } from '../form/earning-form';
+
 import { EarningFilters, MonthNavigation } from './earning-filters';
 import { earningSupport, type Earning } from './earning-model';
 import { earningListParams, type EarningListSearch } from './earning-search';
@@ -176,6 +178,14 @@ export function EarningListPage({ search, onSearchChange }: EarningListPageProps
                         }
                     />
                 </>
+            )}
+            {canWrite && search.novo === 1 && (
+                <EarningFormDialog
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) onSearchChange({ ...search, novo: undefined });
+                    }}
+                />
             )}
         </div>
     );
