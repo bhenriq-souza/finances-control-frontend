@@ -114,13 +114,11 @@ function Summary({ expenses }: { expenses: readonly Expense[] }) {
     return (
         <section
             aria-label="Resumo"
-            className="flex flex-col gap-1 rounded-md border border-linha bg-superficie p-4 md:flex-row md:items-center md:justify-between"
+            className="flex flex-col gap-1 rounded-md border border-linha bg-superficie p-4"
         >
-            <div className="flex items-baseline gap-2">
-                <span className="text-rotulo text-texto-apoio">Total</span>
-                <ExpenseAmount cents={summary.totalCents} size="valor-destaque" />
-            </div>
-            <p className="text-corpo text-texto-apoio">{summaryCountsText(summary)}</p>
+            <span className="text-rotulo text-texto-apoio">Total</span>
+            <ExpenseAmount cents={summary.totalCents} size="valor-destaque" />
+            <p className="text-pequeno text-texto-apoio">{summaryCountsText(summary)}</p>
         </section>
     );
 }
