@@ -1,15 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { applyApiError } from '@/api/errors/form-errors';
 import { useBankAccounts, useCreditCards } from '@/api/queries/reference';
 import { Alert } from '@/ui/components/ui/alert';
 import { Button } from '@/ui/components/ui/button';
-import { DateField } from '@/ui/date-field';
 import { FormDialog } from '@/ui/form-dialog';
 import { useNotify } from '@/ui/notice';
 import { SelectField } from '@/ui/select-field';
+
+import { StatementField } from '../../form/statement-field';
 
 import { ActionAlert } from './action-alert';
 import { paymentMethodSchema, type PaymentMethodValues } from './action-schemas';
@@ -74,9 +75,15 @@ export function PaymentMethodDialog({
         register,
         handleSubmit,
         control,
+        setValue,
         formState: { errors },
     } = form;
-    const toCard = parsePaymentMethod(useWatch({ control, name: 'method' }))?.kind === 'cartao';
+    const chosen = parsePaymentMethod(useWatch({ control, name: 'method' }));
+    const toCard = chosen?.kind === 'cartao';
+    // Sem cartão de destino, a fatura recolhe e o valor digitado se perde.
+    useEffect(() => {
+        if (!toCard) setValue('postedOn', '');
+    }, [toCard, setValue]);
     const series = expense.recurrenceId !== null;
 
     const onSubmit = handleSubmit(async ({ method, postedOn, scope }) => {
@@ -91,13 +98,15 @@ export function PaymentMethodDialog({
             notify({ tone: 'sucesso', message: 'Forma de pagamento trocada.' });
         } catch (error) {
             if (onActionError(error)) return;
-            // `STATEMENT_CLOSED` marca a fatura quando ela está no formulário (destino cartão);
-            // senão, vai para o alerta.
+            // `STATEMENT_CLOSED` marca a fatura quando ela foi informada (campo aberto); senão,
+            // vai para o alerta.
             applyApiError(error, form, {
                 fields: { bankAccountId: 'method', creditCardId: 'method', postedOn: 'postedOn' },
                 codes: {
                     ...METHOD_CODES,
-                    ...(target.kind === 'cartao' ? { STATEMENT_CLOSED: 'postedOn' as const } : {}),
+                    ...(target.kind === 'cartao' && postedOn
+                        ? { STATEMENT_CLOSED: 'postedOn' as const }
+                        : {}),
                 },
             });
         }
@@ -135,11 +144,12 @@ export function PaymentMethodDialog({
                     {...register('method')}
                 />
                 {toCard && (
-                    <DateField
-                        label="Fatura de"
-                        help="Deixe vazio para a fatura do dia da compra."
+                    <StatementField
+                        closesOn={
+                            cards.data?.find((item) => item.id === chosen.id)?.currentCycle.closesOn
+                        }
                         error={errors.postedOn?.message}
-                        {...register('postedOn')}
+                        field={register('postedOn')}
                     />
                 )}
                 {series && (

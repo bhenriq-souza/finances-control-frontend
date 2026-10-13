@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, type ComponentProps, type ReactNode } from 'react';
+import { useEffect, useMemo, type ComponentProps, type ReactNode } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { ApiError } from '@/api/errors/api-error';
@@ -47,6 +47,7 @@ import {
     useReloadOnConflict,
     useUpdateExpense,
 } from './expense-mutations';
+import { StatementField } from './statement-field';
 
 const FORM_ID = 'despesa-formulario';
 const SAVED = 'Despesa salva.';
@@ -68,8 +69,8 @@ export interface ExpenseFormDialogProps {
     /** Sem ela, criar; com ela, alterar. */
     expense?: Expense;
     /**
-     * Depois de criar: a primeira despesa da resposta (a tela navega para o detalhe dela, o que
-     * fecha o diálogo). Sem ele, o diálogo só fecha.
+     * Depois de criar: a primeira despesa da resposta (a tela decide para onde ir e fecha o
+     * diálogo). Sem ele, o diálogo só fecha.
      */
     onCreated?: (first: Expense) => void;
     /** Alterar uma despesa que não existe mais (`EXPENSE_NOT_FOUND`): a tela volta para a lista. */
@@ -356,18 +357,24 @@ function CreateExpenseDialog({ open, onOpenChange, onCreated }: ExpenseFormDialo
         register,
         control,
         handleSubmit,
+        setValue,
         formState: { errors },
     } = form;
     const [kind, payment] = useWatch({ control, name: ['kind', 'payment'] });
     const parsed = parsePayment(payment);
     const paymentKind = parsed ? ('creditCardId' in parsed ? 'card' : 'account') : null;
+    const card = parsed && 'creditCardId' in parsed ? parsed.creditCardId : null;
+    // Sem cartão, a fatura recolhe e o valor digitado se perde: `postedOn` só vai com o campo aberto.
+    useEffect(() => {
+        if (paymentKind !== 'card') setValue('postedOn', '');
+    }, [paymentKind, setValue]);
 
     const onSubmit = handleSubmit(async (values) => {
         const body = createBody(values);
         try {
             const created = await create.mutateAsync(body);
             notify({ tone: 'sucesso', message: createdMessage(created.length) });
-            // Com `onCreated`, a tela sai para o detalhe da primeira e o diálogo some com ela.
+            // Com `onCreated`, a tela fecha o diálogo e decide para onde ir.
             if (onCreated) onCreated(created[0]!);
             else onOpenChange(false);
         } catch (error) {
@@ -423,11 +430,12 @@ function CreateExpenseDialog({ open, onOpenChange, onCreated }: ExpenseFormDialo
                     {...register('occurredOn')}
                 />
                 {paymentKind === 'card' && (
-                    <DateField
-                        label="Fatura de"
-                        help="Deixe vazio para a fatura do dia da compra."
+                    <StatementField
+                        closesOn={
+                            cards.data?.find((item) => item.id === card)?.currentCycle.closesOn
+                        }
                         error={errors.postedOn?.message}
-                        {...register('postedOn')}
+                        field={register('postedOn')}
                     />
                 )}
                 {kind === 'INSTALLMENT' && (
@@ -481,6 +489,7 @@ function EditExpenseDialog({
     const types = useExpenseTypes();
     const accounts = useAccountLookup();
     const cards = useCardLookup();
+    const cardList = useCreditCards();
     const update = useUpdateExpense(expense.id);
     const card = expense.creditCardId !== null;
     const paid = expense.status === 'PAID';
@@ -505,6 +514,8 @@ function EditExpenseDialog({
         handleSubmit,
         formState: { errors },
     } = form;
+    // Já aberto quando a fatura difere da data da compra (spec 0012, "Fatura do cartão").
+    const otherStatement = expense.postedOn !== null && expense.postedOn !== expense.occurredOn;
 
     const onSubmit = handleSubmit(async (values) => {
         const body = changedFields(expense, values);
@@ -589,11 +600,14 @@ function EditExpenseDialog({
                     {...register('occurredOn')}
                 />
                 {card && (
-                    <DateField
-                        label="Fatura de"
-                        help="Deixe vazio para a fatura do dia da compra."
+                    <StatementField
+                        closesOn={
+                            cardList.data?.find((item) => item.id === expense.creditCardId)
+                                ?.currentCycle.closesOn
+                        }
+                        initiallyOpen={otherStatement}
                         error={errors.postedOn?.message}
-                        {...register('postedOn')}
+                        field={register('postedOn')}
                     />
                 )}
                 <NotesField error={errors.notes?.message} {...register('notes')} />
