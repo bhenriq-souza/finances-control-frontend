@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { stubRuntime } from './fixtures/runtime-config';
 
@@ -106,3 +106,82 @@ test('the list skeleton and the bar list render on every screen size', async ({ 
     await expect(bars.getByRole('listitem').first()).toContainText('Moradia');
     await expect(bars.getByRole('listitem').first()).toContainText('R$ 1.800,00');
 });
+
+// AC-0009-15: o `RowMenu` da linha abre por clique e por teclado, percorre os itens com as setas,
+// mostra **Excluir** em `negativo` e separado, fecha com `Esc` devolvendo o foco, e escolher um item
+// chama a ação sem navegar para o `href` da linha.
+test('the row menu opens by click and by keyboard, walks with the arrows and closes with Esc', async ({
+    page,
+}) => {
+    await page.goto('/_e2e/lista');
+    const section = page.getByRole('region', { name: 'Com itens' });
+    const trigger = section.getByRole('button', { name: 'Ações de Aluguel' }).filter({
+        visible: true,
+    });
+    const box = await trigger.boundingBox();
+    expect(box?.width).toBeGreaterThanOrEqual(44);
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+
+    await trigger.click();
+    const menu = page.getByRole('menu', { name: 'Ações de Aluguel' });
+    await expect(menu).toBeVisible();
+    const items = menu.getByRole('menuitem');
+    await expect(items).toHaveText(['Marcar como paga', 'Editar', 'Excluir']);
+    for (const index of [0, 1, 2]) {
+        expect((await items.nth(index).boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    }
+
+    await page.keyboard.press('ArrowDown');
+    await expect(items.nth(0)).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(items.nth(1)).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(items.nth(2)).toBeFocused();
+
+    // Excluir é negativo e vem depois de uma linha separadora.
+    await expect(items.nth(2)).toHaveCSS('color', await toneColor(page));
+    await expect(menu.getByRole('separator')).toHaveCount(1);
+    const separator = await menu.getByRole('separator').boundingBox();
+    const remove = await items.nth(2).boundingBox();
+    const edit = await items.nth(1).boundingBox();
+    expect(separator!.y).toBeGreaterThanOrEqual(edit!.y + edit!.height);
+    expect(separator!.y + separator!.height).toBeLessThanOrEqual(remove!.y);
+
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(trigger).toBeFocused();
+
+    // Pelo teclado: Enter no gatilho abre o menu.
+    await page.keyboard.press('Enter');
+    await expect(menu).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+});
+
+test('choosing a row menu item runs the action without following the row link', async ({
+    page,
+}) => {
+    await page.goto('/_e2e/lista');
+    const section = page.getByRole('region', { name: 'Com itens' });
+    await section
+        .getByRole('button', { name: 'Ações de Aluguel' })
+        .filter({ visible: true })
+        .click();
+
+    await page.getByRole('menuitem', { name: 'Excluir' }).click();
+
+    await expect(page.getByTestId('acao-escolhida')).toHaveText('Excluir: Aluguel');
+    expect(new URL(page.url()).pathname).toBe('/_e2e/lista');
+});
+
+// A cor do item negativo é a do token `negativo`, lida de uma amostra com a mesma classe.
+async function toneColor(page: Page): Promise<string> {
+    return page.evaluate(() => {
+        const probe = document.createElement('span');
+        probe.className = 'text-negativo';
+        document.body.append(probe);
+        const color = getComputedStyle(probe).color;
+        probe.remove();
+        return color;
+    });
+}

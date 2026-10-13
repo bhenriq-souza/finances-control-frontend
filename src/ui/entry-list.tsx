@@ -25,6 +25,8 @@ export interface EntryListProps<T> {
     renderCard: (item: T) => ReactNode;
     /** Linha/cartão navegável. */
     href?: (item: T) => string;
+    /** Menu da linha, fora do link (normalmente um `RowMenu`). */
+    actions?: (item: T) => ReactNode;
     /** Mostrado no lugar da lista sem itens; normalmente um `EmptyState`. */
     empty: ReactNode;
 }
@@ -50,6 +52,7 @@ export function EntryList<T>({
     columns,
     renderCard,
     href,
+    actions,
     empty,
 }: EntryListProps<T>) {
     const navigate = useNavigate();
@@ -64,10 +67,12 @@ export function EntryList<T>({
             <ul aria-label={caption} className="flex flex-col gap-3 md:hidden">
                 {items.map((item) => {
                     const key = getKey(item);
-                    const cardClass =
-                        'block min-h-11 rounded-md border border-linha bg-superficie p-4 text-texto';
+                    const cardClass = clsx(
+                        'block min-h-11 rounded-md border border-linha bg-superficie p-4 text-texto',
+                        actions && 'pe-14',
+                    );
                     return (
-                        <li key={key}>
+                        <li key={key} className={actions ? 'relative' : undefined}>
                             {href ? (
                                 <Link
                                     to={href(item)}
@@ -81,6 +86,9 @@ export function EntryList<T>({
                                 </Link>
                             ) : (
                                 <div className={cardClass}>{renderCard(item)}</div>
+                            )}
+                            {actions && (
+                                <div className="absolute end-1 top-1 flex">{actions(item)}</div>
                             )}
                         </li>
                     );
@@ -102,6 +110,11 @@ export function EntryList<T>({
                                 {column.header}
                             </th>
                         ))}
+                        {actions && (
+                            <th scope="col" className="px-4 py-3">
+                                <span className="sr-only">Ações</span>
+                            </th>
+                        )}
                     </tr>
                 </thead>
                 <tbody>
@@ -144,6 +157,18 @@ export function EntryList<T>({
                                         )}
                                     </td>
                                 ))}
+                                {actions && (
+                                    // O painel do menu fica num portal, mas os eventos do React sobem
+                                    // por ele: parar aqui impede o clique de repetir o link da linha.
+                                    <td
+                                        className="w-px px-2 py-1 text-end"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                        }}
+                                    >
+                                        {actions(item)}
+                                    </td>
+                                )}
                             </tr>
                         );
                     })}

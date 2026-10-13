@@ -292,7 +292,7 @@ Tarefas da revisão das specs [0004](../specs/0004-theme.md), [0006](../specs/00
 
 Tarefas da revisão das specs [0009](../specs/0009-lists-and-reference-data.md), [0012](../specs/0012-expenses.md) e [0014](../specs/0014-earnings.md), da issue de entrega [FCF-019](https://github.com/bhenriq-souza/finances-control-frontend/issues/121) (2026-10-13). A T-0009-08 roda primeiro; as outras duas, juntas, depois dela.
 
-- [ ] **T-0009-08 — Menu da linha** · #142
+- [x] **T-0009-08 — Menu da linha** · #142
     - What: `RowMenu` sobre `@radix-ui/react-dropdown-menu` e a coluna `actions` do `EntryList`, com a página de prova
     - Where: `package.json`, `src/ui/row-menu.tsx`, `src/ui/entry-list.tsx`, `src/routes/[_]e2e/`, `e2e/entry-list.spec.ts`
     - Done when: `AC-0009-15` coberto; `INV-0009-08` verificado
