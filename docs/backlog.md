@@ -228,7 +228,7 @@ Tarefas da [spec 0014](../specs/0014-earnings.md), da issue de entrega [FCF-013]
 
 Tarefas da [spec 0015](../specs/0015-dashboard-and-reports.md), da issue de entrega [FCF-014](https://github.com/bhenriq-souza/finances-control-frontend/issues/55).
 
-- [ ] **T-0015-01 — Dashboard de saldo** · #78
+- [x] **T-0015-01 — Dashboard de saldo** · #78
     - What: o dashboard em `/` pelos artboards aprovados e a remoção da `HomePage` provisória
     - Where: `src/features/reporting/dashboard/`, `src/routes/_app/index.tsx`, `src/features/identity/pages/home-page.tsx` (remoção), `e2e/dashboard.spec.ts`, `e2e/fixtures/data/reports.ts`
     - Done when: `AC-0015-01` a `AC-0015-05` e `AC-0015-10` cobertos; `INV-0015-01`, `INV-0015-02` e `INV-0015-04` verificados

@@ -135,7 +135,7 @@ test('ADMIN sees the users with the pending ones first, as cards or a table', as
 // INV-0010-01: o item **Usuários** só para ADMIN — na lateral do desktop, na página Mais abaixo.
 test('the Usuários navigation item leads ADMIN to the list', async ({ page }, testInfo) => {
     await signInTo(page, 'ativo', '/');
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
     const nav = page.getByRole('navigation', { name: 'Principal' });
 
     if (testInfo.project.name === 'desktop') {

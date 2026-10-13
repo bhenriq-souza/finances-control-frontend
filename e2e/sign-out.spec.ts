@@ -31,7 +31,7 @@ test('"Sair" goes to /entrar and the next sign-in shows nothing of the previous 
 
     await page.goto('/entrar');
     await signInWithEmail(page);
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
     const callsBeforeSignOut = calls;
 
     await signOutFromMenu(page);
@@ -40,14 +40,14 @@ test('"Sair" goes to /entrar and the next sign-in shows nothing of the previous 
 
     person = 'bruno';
     await signInWithEmail(page);
-    await expect(page.getByRole('heading', { name: 'Olá, Bruno Lima' })).toBeVisible();
-    await expect(page.getByText('Leitor')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
     expect(calls).toBeGreaterThan(callsBeforeSignOut);
     await expect(page.getByText('Ana Souza')).toHaveCount(0);
     await expect(page.getByText('Administrador')).toHaveCount(0);
 
     await page.getByRole('button', { name: 'Menu do usuário' }).click();
     await expect(page.getByText(OTHER_PERSON.email)).toBeVisible();
+    await expect(page.getByText('Leitor')).toBeVisible();
     await expect(page.getByText('ativo@example.com')).toHaveCount(0);
     await expect(page.getByText('Ana Souza')).toHaveCount(0);
 });
@@ -62,7 +62,7 @@ test('after "Sair", another fake user follows its own account state', async ({ p
 
     await page.goto('/entrar');
     await signInWithEmail(page);
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
 
     await signOutFromMenu(page);
     await expect(page).toHaveURL(/\/entrar$/);

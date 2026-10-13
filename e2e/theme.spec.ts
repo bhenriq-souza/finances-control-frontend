@@ -72,7 +72,7 @@ test.describe('theme selector in the user menu', () => {
         await page.emulateMedia({ colorScheme: 'dark' });
         await page.goto('/entrar');
         await signInWithEmail(page);
-        await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
 
         await page.getByRole('button', { name: 'Menu do usuário' }).click();
         await expect(page.getByRole('radio', { name: 'Sistema' })).toBeChecked();
@@ -87,7 +87,7 @@ test.describe('theme selector in the user menu', () => {
         expect(await fundo(page)).toBe(FUNDO_CLARO);
         await expect(page).toHaveURL(/\/entrar/);
         await signInWithEmail(page);
-        await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
         await page.getByRole('button', { name: 'Menu do usuário' }).click();
         await expect(page.getByRole('radio', { name: 'Claro' })).toBeChecked();
 

@@ -18,7 +18,7 @@ test('with a visible mais item, the bottom bar shows Mais and the sidebar does n
 }, testInfo) => {
     await page.goto('/entrar');
     await signInWithEmail(page);
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
 
     const nav = page.getByRole('navigation', { name: 'Principal' });
     await expect(nav.getByRole('link', { name: 'Início' })).toBeVisible();
@@ -38,7 +38,7 @@ test('/mais redirects to / on desktop and shows the Mais page on phone and table
     await signInWithEmail(page);
 
     if (testInfo.project.name === 'desktop') {
-        await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
         await expect(page).toHaveURL(/\/$/);
         await expect(page.getByRole('heading', { name: 'Mais' })).toHaveCount(0);
     } else {
@@ -62,6 +62,6 @@ test('/mais follows a resize to desktop back to /', async ({ page }, testInfo) =
     await expect(page.getByRole('heading', { name: 'Mais' })).toBeVisible();
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
 });

@@ -65,7 +65,7 @@ test('Google sign-in with the active user reaches the home', async ({ page }) =>
     await page.goto('/entrar');
     await page.getByRole('button', { name: 'Entrar com Google' }).click();
 
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
 });
 
 // ERR-0006-04: rede ou 5xx em `/users/me` — tela de erro, sessão mantida, "Tentar de novo".
@@ -92,7 +92,7 @@ test('a 5xx on /users/me shows the error screen and "Tentar de novo" keeps the s
     );
     healthy = true;
     await page.getByRole('button', { name: 'Tentar de novo' }).click();
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
 });
 
 test('a network failure on /users/me shows the NETWORK_ERROR message', async ({ page }) => {
@@ -139,7 +139,7 @@ for (const external of ['//exemplo.com', 'https://exemplo.com/']) {
         await page.goto(`/entrar?redirect=${encodeURIComponent(external)}`);
         await signInWithEmail(page);
 
-        await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
         await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/$/);
     });
 }
@@ -160,7 +160,7 @@ test('with a session, the public pages redirect to /', async ({ page }) => {
 
     await page.goto('/entrar');
     await signInWithEmail(page);
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
 
     // Navegação dentro da SPA (o fake guarda a sessão em memória).
     for (const path of ['/entrar', '/criar-conta', '/redefinir-senha']) {
