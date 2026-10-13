@@ -73,9 +73,9 @@ function isNarrow(page: Page) {
 
 /** As ações oferecidas: todas lado a lado, ou, no celular, a primeira e Mais ações (AC-0014-13). */
 async function expectActions(page: Page, names: string[]) {
-    const [first, ...rest] = names;
+    const [first] = names;
     await expect(actionNames(page)).toHaveText(
-        isNarrow(page) && rest.length > 0 ? [first ?? '', 'Mais ações'] : names,
+        isNarrow(page) ? [first ?? '', 'Mais ações'] : names,
     );
 }
 
@@ -270,5 +270,9 @@ test('on a phone the first action is full width and the rest are under Mais aç�
     expect(receive?.width).toBeCloseTo(group?.width ?? 0, 0);
 
     await page.getByRole('button', { name: 'Mais ações' }).click();
-    await expect(page.getByRole('menuitem')).toHaveText(['Marcar para verificar', 'Excluir']);
+    await expect(page.getByRole('menuitem')).toHaveText([
+        'Marcar para verificar',
+        'Editar',
+        'Excluir',
+    ]);
 });

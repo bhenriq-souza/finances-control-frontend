@@ -42,7 +42,7 @@ function useIsWide(): boolean {
 }
 
 /** Os parâmetros de busca do detalhe que abrem os diálogos destas ações. */
-type DialogParam = 'receber' | 'excluir';
+type DialogParam = 'receber' | 'excluir' | 'editar';
 
 /** O diálogo que um parâmetro de busca abre e que a tela fecha tirando-o da URL. */
 function useDialogParams() {
@@ -152,11 +152,15 @@ function WriteActions({ earning }: EarningActionsProps) {
                         label={`Mais ações de ${earning.description}`}
                         trigger="texto"
                         items={menuItems(
-                            [...actions.slice(1), ...(deletable ? (['excluir'] as const) : [])],
+                            [
+                                ...actions.slice(1),
+                                'editar',
+                                ...(deletable ? (['excluir'] as const) : []),
+                            ],
                             (action: MenuAction) =>
-                                action === 'excluir'
-                                    ? dialogs.open('excluir')
-                                    : run(action as EarningAction),
+                                action === 'excluir' || action === 'editar'
+                                    ? dialogs.open(action)
+                                    : run(action),
                             change.isPending,
                         )}
                     />

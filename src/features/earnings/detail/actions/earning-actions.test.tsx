@@ -128,7 +128,7 @@ beforeEach(() => {
 describe('EarningActions on a narrow screen (spec 0014)', () => {
     // AC-0014-13, INV-0014-05: abaixo de `md`, a primeira transição em largura total e as demais
     // (mais Excluir) em Mais ações.
-    it('shows Receber full width and the rest under Mais ações', async () => {
+    it('shows Receber full width and the rest, with Editar, under Mais ações', async () => {
         vi.stubGlobal('matchMedia', () => ({
             matches: false,
             addEventListener: () => undefined,
@@ -151,7 +151,7 @@ describe('EarningActions on a narrow screen (spec 0014)', () => {
             within(menu)
                 .getAllByRole('menuitem')
                 .map((item) => item.textContent),
-        ).toEqual(['Marcar para verificar', 'Excluir']);
+        ).toEqual(['Marcar para verificar', 'Editar', 'Excluir']);
     });
 });
 
