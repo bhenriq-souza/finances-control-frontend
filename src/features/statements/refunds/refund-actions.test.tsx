@@ -59,8 +59,37 @@ const CLOSED_DETAIL = {
     payments: [],
 };
 
-function stubReads() {
+/** Uma despesa fora da fatura atual e da última fechada, como `GET /expenses/{id}` responde. */
+const OLD_EXPENSE_ID = '60000000-0000-4000-8000-0000000000aa';
+const OTHER_CARD_ID = '22000000-0000-4000-8000-000000000002';
+function oldExpense(creditCardId: string) {
+    return {
+        id: OLD_EXPENSE_ID,
+        description: 'Geladeira',
+        kind: 'VARIABLE',
+        status: 'PAID',
+        amountCents: 320000,
+        occurredOn: '2026-07-05',
+        paidOn: '2026-08-10',
+        notes: null,
+        expenseType: { id: 't', name: 'Casa', archivedAt: null },
+        bankAccountId: null,
+        creditCardId,
+        postedOn: '2026-07-05',
+        installment: null,
+        recurrenceId: null,
+        createdAt: '2026-07-05T12:00:00Z',
+        updatedAt: '2026-08-10T12:00:00Z',
+    };
+}
+
+function stubReads(expense?: ReturnType<typeof oldExpense>) {
     mocks.get.mockImplementation((path: string, init: Init) => {
+        if (path === '/expenses/{id}') {
+            return Promise.resolve(
+                expense ? ok({ data: expense }) : fail(404, 'EXPENSE_NOT_FOUND'),
+            );
+        }
         if (path === '/statements/current') return Promise.resolve(ok({ data: CURRENT }));
         if (path === '/statements') {
             return Promise.resolve(
@@ -215,6 +244,7 @@ describe('refund actions (spec 0013)', () => {
         expect(screen.getByRole('dialog', { name: 'Novo estorno' })).toBeInTheDocument();
     });
 
+    // AC-0013-11: uma `despesa` que não existe (404) é ignorada.
     it('ignores a ?despesa that is not among the options', async () => {
         await renderPanel({
             path: '/?estorno=1&despesa=60000000-0000-4000-8000-0000000000ff',
@@ -224,6 +254,65 @@ describe('refund actions (spec 0013)', () => {
         expect(mocks.get).toHaveBeenCalledWith('/statements/{id}', {
             params: { path: { id: CLOSED_ID } },
         });
+        expect(mocks.get).toHaveBeenCalledWith('/expenses/{id}', {
+            params: { path: { id: '60000000-0000-4000-8000-0000000000ff' } },
+        });
+    });
+
+    // AC-0013-11: a despesa deste cartão de uma fatura mais antiga entra num grupo próprio, já
+    // selecionada, e vai como `expenseId`.
+    it('reads a ?despesa from an older statement of this card into its own group', async () => {
+        stubReads(oldExpense(CARD_ID));
+        mocks.post.mockResolvedValue(ok({ data: { ...REFUND, id: 'novo' } }));
+        await renderPanel({ path: `/?estorno=1&despesa=${OLD_EXPENSE_ID}` });
+
+        const dialog = await screen.findByRole('dialog', { name: 'Novo estorno' });
+        const origin = await within(dialog).findByLabelText('Despesa de origem');
+        expect(origin).toHaveValue(OLD_EXPENSE_ID);
+        const group = within(origin).getByRole('group', { name: 'Outra fatura' });
+        expect(
+            within(group).getByRole('option', { name: /^Geladeira · 5 jul\. · R\$ 3\.200,00$/ }),
+        ).toHaveValue(OLD_EXPENSE_ID);
+        expect(within(origin).getByRole('group', { name: 'Fatura atual' })).toBeInTheDocument();
+
+        fireEvent.change(within(dialog).getByLabelText('Descrição'), {
+            target: { value: 'Devolução da geladeira' },
+        });
+        fireEvent.change(within(dialog).getByLabelText('Valor'), { target: { value: '100,00' } });
+        await submit(dialog);
+        await waitFor(() =>
+            expect(mocks.post).toHaveBeenCalledWith('/credit-card-refunds', {
+                body: {
+                    creditCardId: CARD_ID,
+                    description: 'Devolução da geladeira',
+                    amountCents: 10000,
+                    occurredOn: '2026-10-20',
+                    expenseId: OLD_EXPENSE_ID,
+                },
+            }),
+        );
+    });
+
+    // AC-0013-11: uma `despesa` de outro cartão é ignorada.
+    it('ignores a ?despesa of another card', async () => {
+        stubReads(oldExpense(OTHER_CARD_ID));
+        await renderPanel({ path: `/?estorno=1&despesa=${OLD_EXPENSE_ID}` });
+
+        const dialog = await screen.findByRole('dialog', { name: 'Novo estorno' });
+        const origin = await within(dialog).findByLabelText('Despesa de origem');
+        expect(origin).toHaveValue('');
+        expect(within(origin).queryByRole('group', { name: 'Outra fatura' })).toBeNull();
+        expect(within(origin).queryByRole('option', { name: /Geladeira/ })).toBeNull();
+        expect(mocks.get).toHaveBeenCalledWith('/expenses/{id}', {
+            params: { path: { id: OLD_EXPENSE_ID } },
+        });
+    });
+
+    it('does not read GET /expenses/{id} when ?despesa is in a listed statement', async () => {
+        await renderPanel({ path: `/?estorno=1&despesa=${EXPENSE_ID}` });
+        const dialog = await screen.findByRole('dialog', { name: 'Novo estorno' });
+        expect(await within(dialog).findByLabelText('Despesa de origem')).toHaveValue(EXPENSE_ID);
+        expect(mocks.get).not.toHaveBeenCalledWith('/expenses/{id}', expect.anything());
     });
 
     it('edits only the description and the notes', async () => {

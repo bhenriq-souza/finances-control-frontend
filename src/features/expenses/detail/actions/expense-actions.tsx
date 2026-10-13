@@ -1,7 +1,8 @@
+import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { useCan } from '@/api/permissions';
-import { Button } from '@/ui/components/ui/button';
+import { Button, buttonVariants } from '@/ui/components/ui/button';
 import { useNotify } from '@/ui/notice';
 
 import type { Expense } from '../../list/expense-model';
@@ -52,8 +53,8 @@ function useLatchedOpen(requested: boolean, allowed: boolean): boolean {
 
 /**
  * As ações do detalhe (spec 0012, "Detalhe e ações"), só com `entries.write` (INV-0009-03):
- * a tabela de transições por status e por conta ou cartão, **Trocar forma de pagamento** e
- * **Excluir**. `?pagar=1`, `?excluir=1` e `?meio=1` abrem o diálogo correspondente.
+ * a tabela de transições por status e por conta ou cartão, **Estornar** (link para o **Novo
+ * estorno** do cartão), **Trocar forma de pagamento** e **Excluir**. `?pagar=1`, `?excluir=1` e `?meio=1` abrem o diálogo correspondente.
  */
 export function ExpenseActions(props: ExpenseActionsProps) {
     const canWrite = useCan('entries.write');
@@ -73,7 +74,9 @@ function WriterActions({ expense, search, onSearchChange, onBackToList }: Expens
     const deleteOpen = useLatchedOpen(search.excluir === 1, actions.remove);
     const methodOpen = useLatchedOpen(search.meio === 1, actions.changeMethod);
     const failure = change.error ? describeError(change.error) : null;
-    const hasButtons = actions.status.length > 0 || actions.changeMethod || actions.remove;
+    const cardId = expense.creditCardId;
+    const hasButtons =
+        actions.status.length > 0 || actions.refund || actions.changeMethod || actions.remove;
 
     function run(action: StatusAction) {
         if (action === 'pay') {
@@ -109,6 +112,17 @@ function WriterActions({ expense, search, onSearchChange, onBackToList }: Expens
                             {STATUS_ACTION_LABELS[action]}
                         </Button>
                     ))}
+                    {/* AC-0012-13: abre o **Novo estorno** do cartão com esta despesa selecionada. */}
+                    {actions.refund && cardId && (
+                        <Link
+                            to="/cartoes/$cartaoId"
+                            params={{ cartaoId: cardId }}
+                            search={{ estorno: 1, despesa: expense.id }}
+                            className={buttonVariants({ variant: 'outline' })}
+                        >
+                            Estornar
+                        </Link>
+                    )}
                     {actions.changeMethod && (
                         <Button variant="outline" onClick={() => onSearchChange({ meio: 1 })}>
                             Trocar forma de pagamento

@@ -38,6 +38,9 @@ describe('expenseActions (INV-0012-02, INV-0012-03)', () => {
             expect(actions.remove).toBe(unpaid);
             expect(actions.changeMethod).toBe(unpaid);
         }
+        // AC-0012-13: **Estornar** só em despesa de cartão que não é `FORECAST`.
+        expect(forAccount.refund).toBe(false);
+        expect(forCard.refund).toBe(status !== 'FORECAST');
     });
 });
 

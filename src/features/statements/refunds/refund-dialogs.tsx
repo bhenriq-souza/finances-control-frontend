@@ -95,18 +95,21 @@ function Footer({
 
 export interface NewRefundDialogProps {
     cardId: string;
-    /** A despesa de origem pré-selecionada (`?despesa`), se estiver entre as opções. */
+    /**
+     * A despesa de origem pré-selecionada (`?despesa`): das duas faturas listadas ou, fora delas,
+     * lida por `GET /expenses/{id}` quando é deste cartão; senão, ignorada (AC-0013-11).
+     */
     expenseId?: string;
     onClose: () => void;
 }
 
 /**
  * **Novo estorno** (spec 0013, "Estornos") → `POST /credit-card-refunds` com `creditCardId`. O
- * formulário espera as despesas de origem (fatura atual e última fechada) para já vir com a de
- * `?despesa` selecionada. Um erro da API vai ao campo do mapa ou ao alerta, com o diálogo aberto.
+ * formulário espera as despesas de origem (fatura atual, última fechada e, se for o caso, a de
+ * `?despesa` lida à parte) para já vir com ela selecionada. Um erro da API vai ao campo do mapa ou ao alerta, com o diálogo aberto.
  */
 export function NewRefundDialog({ cardId, expenseId, onClose }: NewRefundDialogProps) {
-    const options = useRefundExpenseOptions(cardId);
+    const options = useRefundExpenseOptions(cardId, expenseId);
     const create = useCreateRefund();
     return (
         <FormDialog
