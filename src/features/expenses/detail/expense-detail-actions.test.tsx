@@ -135,7 +135,9 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
     it('offers Pagar, Marcar para verificar, Trocar forma de pagamento and Excluir on an open account expense', async () => {
         await renderDetail(ACCOUNT_OPEN);
         const names = screen.getAllByRole('button').map((b) => b.textContent);
+        // **Alterar** é do formulário (T-0012-02) e vem antes das ações de status.
         expect(names).toEqual([
+            'Alterar',
             'Pagar',
             'Marcar para verificar',
             'Trocar forma de pagamento',
@@ -235,9 +237,10 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
         expect(await screen.findByText('Pagamento desfeito.')).toBeInTheDocument();
     });
 
-    it('offers nothing on a paid card expense', async () => {
+    it('offers only Alterar on a paid card expense', async () => {
         await renderDetail({ ...CARD_OPEN, status: 'PAID', paidOn: '2026-11-10' });
-        expect(screen.queryByRole('button')).toBeNull();
+        const names = screen.getAllByRole('button').map((b) => b.textContent);
+        expect(names).toEqual(['Alterar']);
     });
 
     // AC-0012-07, INV-0012-04: a cascata da parcela antes do `DELETE`, depois volta para a lista.
