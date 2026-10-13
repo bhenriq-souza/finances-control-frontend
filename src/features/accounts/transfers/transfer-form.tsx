@@ -251,11 +251,7 @@ function FullFormDialog({ open, onOpenChange, transfer }: TransferFormDialogProp
                         />
                     )}
                 />
-                <DateField
-                    label="Data"
-                    error={errors.occurredOn?.message}
-                    {...register('occurredOn')}
-                />
+                <DateField label="Data" control={form.control} name="occurredOn" />
                 {!editing && (
                     <fieldset className="flex flex-col gap-2">
                         <legend className="mb-2 text-rotulo text-texto">Situação</legend>
@@ -285,8 +281,8 @@ function FullFormDialog({ open, onOpenChange, transfer }: TransferFormDialogProp
                     <DateField
                         label="Concluída em"
                         help="Vazio usa a data da transferência."
-                        error={errors.completedOn?.message}
-                        {...register('completedOn')}
+                        control={form.control}
+                        name="completedOn"
                     />
                 )}
                 <DescriptionFields

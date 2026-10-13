@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { isIsoDate } from '@/shared/dates';
+import { dateSchema, optionalDateSchema } from '@/shared/dates';
 import { moneySchema } from '@/shared/money';
 
 import type { StatementRefund } from '../panel/statement-model';
@@ -15,7 +15,6 @@ export const REFUND_FORM_MESSAGES = {
     description: 'Informe a descrição.',
     descriptionMax: `Use no máximo ${DESCRIPTION_MAX} caracteres.`,
     occurredOn: 'Informe a data do estorno.',
-    postedOn: 'Informe uma data válida.',
     notesMax: `Use no máximo ${NOTES_MAX} caracteres.`,
 } as const;
 
@@ -30,10 +29,8 @@ const notes = z.string().trim().max(NOTES_MAX, REFUND_FORM_MESSAGES.notesMax);
 export const newRefundSchema = z.object({
     description,
     amount: moneySchema(),
-    occurredOn: z.string().refine(isIsoDate, REFUND_FORM_MESSAGES.occurredOn),
-    postedOn: z.string().refine((text) => text === '' || isIsoDate(text), {
-        message: REFUND_FORM_MESSAGES.postedOn,
-    }),
+    occurredOn: dateSchema(REFUND_FORM_MESSAGES.occurredOn),
+    postedOn: optionalDateSchema(),
     expenseId: z.string(),
     notes,
 });

@@ -145,7 +145,7 @@ describe('EarningRecurrenceDetailPage (spec 0017)', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Encerrar série' }));
         const dialog = await screen.findByRole('dialog', { name: 'Encerrar a série?' });
         expect(within(dialog).getByText(END_EFFECT_TEXT)).toBeInTheDocument();
-        expect(within(dialog).getByLabelText('Último mês')).toHaveValue('2026-10-31');
+        expect(within(dialog).getByLabelText('Último mês')).toHaveValue('31/10/2026');
 
         await act(async () => {
             fireEvent.click(within(dialog).getByRole('button', { name: 'Encerrar série' }));

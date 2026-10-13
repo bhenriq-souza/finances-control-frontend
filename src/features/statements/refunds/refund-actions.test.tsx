@@ -171,7 +171,7 @@ describe('refund actions (spec 0013)', () => {
         expect(
             within(origin).getByRole('option', { name: /^Feira · 10 out\. · R\$ 400,00$/ }),
         ).toHaveValue(CLOSED_EXPENSE_ID);
-        expect(within(dialog).getByLabelText('Data do estorno')).toHaveValue('2026-10-20');
+        expect(within(dialog).getByLabelText('Data do estorno')).toHaveValue('20/10/2026');
         expect(within(dialog).getByText('Deixe vazio para a fatura do dia.')).toBeVisible();
 
         fireEvent.change(within(dialog).getByLabelText('Descrição'), {

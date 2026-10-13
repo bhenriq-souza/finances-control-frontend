@@ -134,7 +134,7 @@ describe('TransferDetailPage (spec 0018)', () => {
         vi.useRealTimers();
         const dialog = screen.getByRole('dialog', { name: 'Concluir a transferência?' });
         const date = within(dialog).getByLabelText('Concluída em');
-        expect(date).toHaveValue('2026-10-12');
+        expect(date).toHaveValue('12/10/2026');
 
         fireEvent.change(date, { target: { value: '' } });
         await act(async () => {

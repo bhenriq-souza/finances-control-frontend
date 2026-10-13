@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { addMonths, monthOf, monthRange, today, type IsoDate } from '@/shared/dates';
+import { addMonths, dateSchema, monthOf, monthRange, today, type IsoDate } from '@/shared/dates';
 
 // Regras puras das séries de despesa (spec 0017): janela das ocorrências, encerrar e o texto.
 
@@ -53,10 +53,10 @@ export function defaultEndsOn({ startsOn }: Pick<SeriesDates, 'startsOn'>, refer
 /** **Último mês**: obrigatório e não anterior a `startsOn`. */
 export function endRecurrenceSchema(startsOn: IsoDate) {
     return z.object({
-        endsOn: z
-            .string()
-            .min(1, 'Informe o último mês.')
-            .refine((value) => value >= startsOn, ENDS_BEFORE_START_MESSAGE),
+        endsOn: dateSchema('Informe o último mês.').refine(
+            (value) => value >= startsOn,
+            ENDS_BEFORE_START_MESSAGE,
+        ),
     });
 }
 

@@ -426,16 +426,16 @@ function CreateExpenseDialog({ open, onOpenChange, onCreated }: ExpenseFormDialo
                 />
                 <DateField
                     label={dateLabel(paymentKind)}
-                    error={errors.occurredOn?.message}
-                    {...register('occurredOn')}
+                    control={form.control}
+                    name="occurredOn"
                 />
                 {paymentKind === 'card' && (
                     <StatementField
                         closesOn={
                             cards.data?.find((item) => item.id === card)?.currentCycle.closesOn
                         }
-                        error={errors.postedOn?.message}
-                        field={register('postedOn')}
+                        control={form.control}
+                        name="postedOn"
                     />
                 )}
                 {kind === 'INSTALLMENT' && (
@@ -457,8 +457,8 @@ function CreateExpenseDialog({ open, onOpenChange, onCreated }: ExpenseFormDialo
                     <DateField
                         label="Repetir até"
                         help="Sem data, a série segue mês a mês."
-                        error={errors.recurrenceEndsOn?.message}
-                        {...register('recurrenceEndsOn')}
+                        control={form.control}
+                        name="recurrenceEndsOn"
                     />
                 )}
                 <SelectField
@@ -596,8 +596,8 @@ function EditExpenseDialog({
                 </ReadOnly>
                 <DateField
                     label={card ? 'Data da compra' : 'Vencimento'}
-                    error={errors.occurredOn?.message}
-                    {...register('occurredOn')}
+                    control={form.control}
+                    name="occurredOn"
                 />
                 {card && (
                     <StatementField
@@ -606,8 +606,8 @@ function EditExpenseDialog({
                                 ?.currentCycle.closesOn
                         }
                         initiallyOpen={otherStatement}
-                        error={errors.postedOn?.message}
-                        field={register('postedOn')}
+                        control={form.control}
+                        name="postedOn"
                     />
                 )}
                 <NotesField error={errors.notes?.message} {...register('notes')} />

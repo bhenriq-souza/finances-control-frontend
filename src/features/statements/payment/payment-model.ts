@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { addDays, isIsoDate, type IsoDate } from '@/shared/dates';
+import { addDays, dateSchema, type IsoDate } from '@/shared/dates';
 import { moneySchema } from '@/shared/money';
 
 import type { Statement, StatementPayment } from '../panel/statement-model';
@@ -111,10 +111,10 @@ export function paymentSchema(statement: Statement, today: IsoDate) {
             choice: z.enum(['total', 'minimo', 'outro']),
             other: z.string(),
             bankAccountId: z.string().min(1, PAYMENT_MESSAGES.conta),
-            paidOn: z
-                .string()
-                .refine(isIsoDate, PAYMENT_MESSAGES.data)
-                .refine((date) => date >= window.min && date <= window.max, outsideWindow),
+            paidOn: dateSchema(PAYMENT_MESSAGES.data).refine(
+                (date) => date >= window.min && date <= window.max,
+                outsideWindow,
+            ),
         })
         .transform((values, ctx): PaymentOutput => {
             let amountCents: number = statement.remainingCents;

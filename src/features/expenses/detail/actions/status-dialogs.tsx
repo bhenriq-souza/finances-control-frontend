@@ -36,7 +36,6 @@ export function PayExpenseDialog({ expense, open, onOpenChange, onBackToList }: 
         defaultValues: { paidOn: today() },
     });
     const {
-        register,
         handleSubmit,
         formState: { errors },
     } = form;
@@ -75,7 +74,7 @@ export function PayExpenseDialog({ expense, open, onOpenChange, onBackToList }: 
                     code={errors.root?.api?.type}
                     cardId={expense.creditCardId}
                 />
-                <DateField label="Pago em" error={errors.paidOn?.message} {...register('paidOn')} />
+                <DateField label="Pago em" control={form.control} name="paidOn" />
             </form>
         </FormDialog>
     );

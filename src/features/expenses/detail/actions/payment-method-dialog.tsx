@@ -148,8 +148,8 @@ export function PaymentMethodDialog({
                         closesOn={
                             cards.data?.find((item) => item.id === chosen.id)?.currentCycle.closesOn
                         }
-                        error={errors.postedOn?.message}
-                        field={register('postedOn')}
+                        control={form.control}
+                        name="postedOn"
                     />
                 )}
                 {series && (

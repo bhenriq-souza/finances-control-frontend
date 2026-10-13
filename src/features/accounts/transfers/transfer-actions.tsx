@@ -37,7 +37,6 @@ export function CompleteTransferDialog({ transfer, open, onOpenChange }: ActionD
         defaultValues: { completedOn: today() },
     });
     const {
-        register,
         handleSubmit,
         formState: { errors },
     } = form;
@@ -77,11 +76,7 @@ export function CompleteTransferDialog({ transfer, open, onOpenChange }: ActionD
                 onSubmit={onSubmit}
             >
                 <FormAlert message={errors.root?.api?.message} />
-                <DateField
-                    label="Concluída em"
-                    error={errors.completedOn?.message}
-                    {...register('completedOn')}
-                />
+                <DateField label="Concluída em" control={form.control} name="completedOn" />
             </form>
         </FormDialog>
     );

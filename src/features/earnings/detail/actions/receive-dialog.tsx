@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { applyApiError } from '@/api/errors/form-errors';
-import { isIsoDate, today } from '@/shared/dates';
+import { dateSchema, today } from '@/shared/dates';
 import { Button } from '@/ui/components/ui/button';
 import { DateField } from '@/ui/date-field';
 import { FormAlert } from '@/ui/form-alert';
@@ -17,7 +17,7 @@ import { ACTION_NOTICES } from './transitions';
 const FORM_ID = 'receber-receita';
 
 const schema = z.object({
-    receivedOn: z.string().refine(isIsoDate, 'Informe a data do recebimento.'),
+    receivedOn: dateSchema('Informe a data do recebimento.'),
 });
 
 type Values = z.infer<typeof schema>;
@@ -40,7 +40,6 @@ export function ReceiveDialog({ earning, onClose }: ReceiveDialogProps) {
         defaultValues: { receivedOn: today() },
     });
     const {
-        register,
         handleSubmit,
         formState: { errors },
     } = form;
@@ -80,11 +79,7 @@ export function ReceiveDialog({ earning, onClose }: ReceiveDialogProps) {
         >
             <form id={FORM_ID} noValidate className="flex flex-col gap-4" onSubmit={onSubmit}>
                 <FormAlert message={errors.root?.api?.message} />
-                <DateField
-                    label="Recebida em"
-                    error={errors.receivedOn?.message}
-                    {...register('receivedOn')}
-                />
+                <DateField label="Recebida em" control={form.control} name="receivedOn" />
             </form>
         </FormDialog>
     );

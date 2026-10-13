@@ -96,7 +96,7 @@ test('creates an installment expense on a card and returns to the list', async (
     await dialog.getByLabel('Tipo').selectOption({ label: 'Mercado' });
     await dialog.getByLabel('Valor total').fill('1.200,00');
     await dialog.getByLabel('Pagar com').selectOption({ label: 'Nubank' });
-    await expect(dialog.getByLabel('Data da compra')).toHaveValue('2026-10-20');
+    await expect(dialog.getByLabel('Data da compra')).toHaveValue('20/10/2026');
     // AC-0012-15: a fatura vem recolhida, com o fechamento da fatura atual do cartão.
     await expect(dialog.getByLabel('Fatura de')).toHaveCount(0);
     await expect(

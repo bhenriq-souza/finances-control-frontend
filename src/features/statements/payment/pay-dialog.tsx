@@ -211,8 +211,8 @@ function PayForm({
                 label="Pago em"
                 min={window.min}
                 max={window.max}
-                error={errors.paidOn?.message}
-                {...register('paidOn')}
+                control={form.control}
+                name="paidOn"
             />
         </form>
     );

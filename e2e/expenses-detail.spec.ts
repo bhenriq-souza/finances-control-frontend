@@ -69,7 +69,7 @@ test('pays an account expense with today as the payment date', async ({ page }) 
     await page.getByRole('button', { name: 'Pagar' }).click();
     await expect(page).toHaveURL(/pagar=1/);
     const dialog = page.getByRole('dialog', { name: 'Pagar a despesa' });
-    await expect(dialog.getByLabel('Pago em')).toHaveValue('2026-10-20');
+    await expect(dialog.getByLabel('Pago em')).toHaveValue('20/10/2026');
     await dialog.getByRole('button', { name: 'Pagar' }).click();
 
     await expect(dialog).toBeHidden();
