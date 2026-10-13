@@ -1,8 +1,12 @@
+import { Check, Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+
 import type { Cents } from '@/shared/money';
 import { BarList } from '@/ui/charts/bar-list';
 import { EmptyState } from '@/ui/empty-state';
 import { EntryList, type EntryColumn } from '@/ui/entry-list';
 import { Money } from '@/ui/money';
+import { RowMenu } from '@/ui/row-menu';
 import { EntryListSkeleton } from '@/ui/skeleton';
 
 /**
@@ -73,6 +77,7 @@ function Card({ entry }: { entry: ProofEntry }) {
 }
 
 export function ListProofPage() {
+    const [chosen, setChosen] = useState('Nenhuma ação escolhida.');
     return (
         <main
             data-e2e-marker={E2E_PROOF_MARKER}
@@ -90,8 +95,40 @@ export function ListProofPage() {
                     columns={COLUMNS}
                     renderCard={(entry) => <Card entry={entry} />}
                     href={(entry) => `/despesas/${entry.id}`}
+                    actions={(entry) => (
+                        <RowMenu
+                            label={`Ações de ${entry.description}`}
+                            items={[
+                                {
+                                    label: 'Marcar como paga',
+                                    icon: Check,
+                                    onSelect: () => {
+                                        setChosen(`Marcar como paga: ${entry.description}`);
+                                    },
+                                },
+                                {
+                                    label: 'Editar',
+                                    icon: Pencil,
+                                    onSelect: () => {
+                                        setChosen(`Editar: ${entry.description}`);
+                                    },
+                                },
+                                {
+                                    label: 'Excluir',
+                                    icon: Trash2,
+                                    tone: 'negativo',
+                                    onSelect: () => {
+                                        setChosen(`Excluir: ${entry.description}`);
+                                    },
+                                },
+                            ]}
+                        />
+                    )}
                     empty={<EmptyState variant="vazio" title="Nenhuma despesa." />}
                 />
+                <p role="status" data-testid="acao-escolhida" className="text-pequeno">
+                    {chosen}
+                </p>
             </section>
             <section aria-labelledby="sem-itens" className="flex flex-col gap-3">
                 <h2 id="sem-itens" className="text-titulo-3">

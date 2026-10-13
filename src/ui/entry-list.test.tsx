@@ -7,12 +7,13 @@ import {
 } from '@tanstack/react-router';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Cents } from '@/shared/money';
 
 import { EntryList, type EntryColumn, type EntryListProps } from './entry-list';
 import { Money } from './money';
+import { RowMenu } from './row-menu';
 
 interface Entry {
     id: string;
@@ -50,6 +51,22 @@ async function renderInRouter(node: ReactNode) {
     });
     return router;
 }
+
+// Sem `@testing-library/user-event` no projeto: o mínimo que o Radix lê do ponteiro e do teclado.
+const user = {
+    async click(element: Element) {
+        await act(async () => {
+            fireEvent.pointerDown(element, { button: 0, ctrlKey: false, pointerType: 'mouse' });
+            fireEvent.pointerUp(element, { button: 0, pointerType: 'mouse' });
+            fireEvent.click(element);
+        });
+    },
+    async key(key: string) {
+        await act(async () => {
+            fireEvent.keyDown(document.activeElement ?? document.body, { key });
+        });
+    },
+};
 
 function list(props: Partial<EntryListProps<Entry>> = {}) {
     return (
@@ -157,5 +174,59 @@ describe('EntryList (spec 0009)', () => {
         expect(screen.getByText('Nada aqui.')).toBeInTheDocument();
         expect(screen.queryByRole('table')).not.toBeInTheDocument();
         expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    });
+
+    describe('actions', () => {
+        const actions = (e: Entry, onSelect = () => undefined) => (
+            <RowMenu label={`Ações de ${e.name}`} items={[{ label: 'Editar', onSelect }]} />
+        );
+
+        it('adds a last table column with an accessible "Ações" header and a menu per row', async () => {
+            await renderInRouter(list({ actions: (e) => actions(e) }));
+            const table = screen.getByRole('table', { name: 'Despesas' });
+
+            const headers = within(table).getAllByRole('columnheader');
+            expect(headers.at(-1)).toHaveTextContent('Ações');
+            expect(within(headers.at(-1)!).getByText('Ações')).toHaveClass('sr-only');
+            const rows = within(table).getAllByRole('row').slice(1);
+            expect(
+                within(rows[0]!).getByRole('button', { name: 'Ações de Mercado' }),
+            ).toBeInTheDocument();
+            expect(
+                within(rows[1]!).getByRole('button', { name: 'Ações de Aluguel' }),
+            ).toBeInTheDocument();
+        });
+
+        it('puts the card menu beside the link, never inside it', async () => {
+            await renderInRouter(
+                list({ href: (e) => `/itens/${e.id}`, actions: (e) => actions(e) }),
+            );
+            const cards = screen.getByRole('list', { name: 'Despesas' });
+            const menu = within(cards).getByRole('button', { name: 'Ações de Mercado' });
+
+            expect(menu.closest('a')).toBeNull();
+            expect(menu.closest('li')).toBe(within(cards).getAllByRole('listitem')[0]);
+        });
+
+        it('a click on the menu or on its items does not follow the row link', async () => {
+            const onSelect = vi.fn();
+            const router = await renderInRouter(
+                list({ href: (e) => `/itens/${e.id}`, actions: (e) => actions(e, onSelect) }),
+            );
+            const table = screen.getByRole('table', { name: 'Despesas' });
+
+            await user.click(within(table).getByRole('button', { name: 'Ações de Mercado' }));
+            expect(router.state.location.pathname).toBe('/');
+            await user.click(await screen.findByRole('menuitem', { name: 'Editar' }));
+
+            expect(onSelect).toHaveBeenCalledTimes(1);
+            expect(router.state.location.pathname).toBe('/');
+        });
+
+        it('without actions there is no extra column', async () => {
+            await renderInRouter(list());
+
+            expect(screen.queryByRole('columnheader', { name: 'Ações' })).not.toBeInTheDocument();
+        });
     });
 });
