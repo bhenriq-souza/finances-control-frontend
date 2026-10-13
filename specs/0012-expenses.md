@@ -91,6 +91,7 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 - **Excluir** (não paga): `ConfirmDialog` com o texto da cascata — avulsa: "A despesa será excluída."; parcela: "Todas as parcelas não pagas deste parcelamento serão excluídas."; série: "Esta ocorrência e as seguintes ainda não pagas serão excluídas, e a série termina." → `DELETE /expenses/{id}`, volta para a lista.
 - **Trocar forma de pagamento** (não paga): `FormDialog` com "Pagar com" (contas e cartões ativos, exceto o atual) e, se o destino for cartão, `postedOn` opcional; em série, a mesma escolha **Só esta** / **Esta e as próximas previstas** → `PATCH /expenses/{id}/payment-method[?scope=following]` com exatamente um de `bankAccountId`/`creditCardId`. Parcela: nota "Vale para todas as parcelas não pagas do parcelamento."
 - Cada ação é endereçável: `?pagar=1`, `?excluir=1`, `?meio=1` abrem o diálogo correspondente (o dashboard usa `?pagar=1`).
+- **Erro de uma ação** (decisão do responsável, 2026-10-13, padrão de despesas e receitas): sempre em alerta (`role="alert"`, mensagem do catálogo), nunca em aviso. Transição sem diálogo: o alerta aparece abaixo dos botões de ação. Ação com diálogo: o alerta fica no diálogo, que continua aberto, também quando um conflito de status recarrega o detalhe e a ação deixa de existir.
 - Toda ação: `invalidateAfter(..., 'expense')`.
 
 ### Tipos de despesa — `/despesas/tipos`

@@ -70,6 +70,7 @@ Os campos da spec 0012, com estas diferenças:
 - **Receber:** `FormDialog` com `receivedOn` (padrão `today()`) → `PATCH /earnings/{id}/status` `{ status: 'RECEIVED', receivedOn }`.
 - **Excluir** (não recebida): `ConfirmDialog` com a cascata (parcelas não recebidas; série: esta e as seguintes, e a série termina) → `DELETE /earnings/{id}`.
 - `?receber=1` e `?excluir=1` abrem os diálogos.
+- **Erro de uma ação** (decisão do responsável, 2026-10-13, padrão de receitas e despesas): sempre em alerta (`role="alert"`, mensagem do catálogo), nunca em aviso. Transição sem diálogo: o alerta aparece abaixo dos botões de ação. Ação com diálogo: o alerta fica no diálogo, que continua aberto, também quando um conflito de status recarrega o detalhe e a ação deixa de existir.
 - `invalidateAfter(..., 'earning')`.
 
 ### Tipos de receita — `/receitas/tipos`
