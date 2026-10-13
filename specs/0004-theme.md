@@ -1,7 +1,7 @@
 ---
 id: '0004'
 title: Tema gerado do tokens.json do hub
-status: implemented
+status: approved
 depends_on: ['0002', '0003']
 ---
 
@@ -83,6 +83,7 @@ Outfit e JetBrains Mono, pesos 400, 500 e 600, empacotadas pelo `@fontsource` (`
 - três opções: `sistema` (padrão), `escuro` e `claro`, guardadas em `localStorage` na chave `ftech.tema`;
 - `escuro` e `claro` gravam `data-tema` no `<html>`; `sistema` remove o atributo e deixa o `prefers-color-scheme` decidir;
 - um script inline no `index.html` aplica a escolha guardada antes da primeira pintura, para não piscar o tema errado;
+- o `color-scheme` acompanha o tema em uso — `dark` no escuro, `light` no claro, e no `sistema` o do `prefers-color-scheme` —, declarado em `src/index.css`, fora do `tokens.css` gerado, para que os controles nativos do navegador (ícones de campos, barras de rolagem) usem a cor do tema (decisão do responsável em 2026-10-13);
 - `useTheme(): { tema, setTema }` é a única API; o seletor visual entra no app shell (spec 0006).
 
 ### Contraste
@@ -118,6 +119,7 @@ Outfit e JetBrains Mono, pesos 400, 500 e 600, empacotadas pelo `@fontsource` (`
 - **AC-0004-03:** o teste de contraste roda os 60 pares e falha se `texto-apoio` do tema claro for trocado por `#9aa69d` (a névoa, 2,3:1).
 - **AC-0004-04:** com `prefers-color-scheme: light` emulado e a escolha `sistema`, a página usa as cores do tema claro; com `escuro` escolhido, usa as do escuro mesmo com o sistema claro; a escolha sobrevive a um recarregamento.
 - **AC-0004-05:** um componente com `bg-[#a6e86b]` ou `text-green-600` faz o gate `lint` falhar (regra que proíbe cor literal e paleta do Tailwind em `className`).
+- **AC-0004-06:** `color-scheme` do `<html>` é `dark` com o tema escuro escolhido, `light` com o claro, e no `sistema` segue o `prefers-color-scheme` emulado.
 
 ## Test mapping
 
@@ -128,6 +130,7 @@ Outfit e JetBrains Mono, pesos 400, 500 e 600, empacotadas pelo `@fontsource` (`
 | AC-0004-03, INV-0004-03 | `src/ui/theme/contrast.test.ts`                                          |
 | AC-0004-04, INV-0004-04 | `src/ui/theme/theme-provider.test.tsx` e `e2e/theme.spec.ts`             |
 | AC-0004-05, INV-0004-02 | regra de lint e prova manual no PR                                       |
+| AC-0004-06              | `e2e/theme.spec.ts`                                                      |
 
 ## Open questions
 

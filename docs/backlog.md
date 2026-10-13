@@ -254,3 +254,28 @@ Tarefas da [spec 0018](../specs/0018-transfers.md), da issue de entrega [FCF-016
     - What: `/transferencias` e o detalhe, formulário, concluir, desfazer, excluir, item **Transferências**
     - Where: `src/features/accounts/transfers/`, `src/routes/_app/transferencias*`, `src/app/shell/navigation.ts`, `e2e/transfers.spec.ts`, `e2e/fixtures/data/transfers.ts`
     - Done when: `AC-0018-01` a `AC-0018-07` cobertos; `INV-0018-01` a `INV-0018-03` verificados
+
+## Ajustes dos testes em dev
+
+Tarefas da revisão das specs [0004](../specs/0004-theme.md), [0006](../specs/0006-auth-and-shell.md), [0009](../specs/0009-lists-and-reference-data.md), [0012](../specs/0012-expenses.md) e [0014](../specs/0014-earnings.md), da issue de entrega [FCF-017](https://github.com/bhenriq-souza/finances-control-frontend/issues/119): pontos levantados pelo responsável ao testar `dev` em 2026-10-13. Rodam juntas na R5, com arquivos disjuntos.
+
+- [ ] **T-0004-03 — `color-scheme` por tema** · #125
+    - What: `color-scheme` do `<html>` acompanhando o tema em uso, para que os controles nativos usem a cor do tema
+    - Where: `src/index.css`, `e2e/theme.spec.ts`
+    - Done when: `AC-0004-06` coberto
+- [ ] **T-0006-04 — Favicon e camada do menu do usuário** · #126
+    - What: favicon SVG, PNG de 32px e `apple-touch-icon` em `public/`, declarados no `index.html`; o menu do usuário aberto acima do botão flutuante das listas
+    - Where: `public/`, `index.html`, `src/ui/brand/README.md`, `src/app/shell/`, `e2e/shell.spec.ts`
+    - Done when: `AC-0006-13` e `AC-0006-14` cobertos
+- [ ] **T-0009-06 — Telas de tipos no padrão de cadastro** · #127
+    - What: botões `outline` com ícone em `/receitas/tipos`; **Mostrar arquivados** como caixa de seleção em `/despesas/tipos`
+    - Where: `src/features/expenses/types/`, `src/features/earnings/types/`, `e2e/expense-types.spec.ts`, `e2e/earning-types.spec.ts`
+    - Done when: `AC-0009-11` coberto
+- [ ] **T-0012-05 — Lista depois de criar e fatura recolhida** · #128
+    - What: criar despesa volta para a lista no mês da primeira criada, sem filtros; **Fatura de** recolhido atrás de **Lançar em outra fatura**, com o fechamento da fatura atual, no formulário e em **Trocar forma de pagamento**
+    - Where: `src/features/expenses/form/`, `src/features/expenses/list/`, `src/features/expenses/detail/actions/`, `e2e/expenses-form.spec.ts`
+    - Done when: `AC-0012-14` e `AC-0012-15` cobertos
+- [ ] **T-0014-05 — Lista depois de criar uma receita** · #129
+    - What: criar receita volta para a lista no mês da primeira criada, sem filtros, sem abrir o detalhe
+    - Where: `src/features/earnings/form/`, `src/features/earnings/list/`, `e2e/earnings-form.spec.ts`
+    - Done when: `AC-0014-10` coberto
