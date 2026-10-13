@@ -211,7 +211,7 @@ Tarefas da [spec 0014](../specs/0014-earnings.md), da issue de entrega [FCF-013]
     - What: `/receitas` com filtros e resumo, `/receitas/$receitaId` só leitura, item **Receitas**
     - Where: `src/features/earnings/list/`, `src/features/earnings/detail/earning-detail.tsx`, `src/routes/_app/receitas*`, `src/app/shell/navigation.ts`, `e2e/earnings-list.spec.ts`, `e2e/fixtures/data/earnings.ts`
     - Done when: `AC-0014-01`, `AC-0014-02` e `AC-0014-09` cobertos; `INV-0014-01` verificado
-- [ ] **T-0014-02 — Formulário de receita** · #75
+- [x] **T-0014-02 — Formulário de receita** · #75
     - What: criar (variável, parcelada, fixa) e alterar com escopo de série e troca de conta; depende de T-0014-01
     - Where: `src/features/earnings/form/`, `e2e/earnings-form.spec.ts`
     - Done when: `AC-0014-03` e `AC-0014-04` cobertos; `INV-0014-04` verificado

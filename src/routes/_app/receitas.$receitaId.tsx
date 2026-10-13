@@ -10,5 +10,13 @@ export const Route = createFileRoute('/_app/receitas/$receitaId')({
 
 function Earning() {
     const { receitaId } = Route.useParams();
-    return <EarningDetail earningId={receitaId} />;
+    const search = Route.useSearch();
+    const navigate = Route.useNavigate();
+    return (
+        <EarningDetail
+            earningId={receitaId}
+            search={search}
+            onSearchChange={(next) => void navigate({ search: (prev) => ({ ...prev, ...next }) })}
+        />
+    );
 }
