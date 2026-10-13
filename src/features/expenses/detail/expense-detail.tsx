@@ -147,7 +147,7 @@ export interface ExpenseDetailPageProps {
  * Detalhe de uma despesa (`/despesas/$despesaId`, spec 0012): os campos da resposta, o selo, a
  * conta ou o cartão por nome, os links da parcela e da fatura, e as ações. `404 EXPENSE_NOT_FOUND`
  * mostra o estado `nao-encontrado` (ERR-0009-02); outra falha, o estado `erro` (ERR-0009-01). Com
- * `entries.write`, **Alterar** abre o formulário (`?editar=1`).
+ * `entries.write`, **Alterar** abre o formulário (`?editar=1`); no celular ele some, porque **Editar** já está em **Mais ações**.
  */
 export function ExpenseDetailPage({
     expenseId,
@@ -195,7 +195,7 @@ export function ExpenseDetailPage({
                         size="valor-destaque"
                     />
                     {canWrite && (
-                        <div className="flex flex-wrap gap-3">
+                        <div className="hidden flex-wrap gap-3 md:flex">
                             <Button variant="outline" onClick={() => onSearchChange({ editar: 1 })}>
                                 <Pencil aria-hidden="true" />
                                 Alterar

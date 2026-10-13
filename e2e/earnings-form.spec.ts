@@ -28,6 +28,16 @@ const CREATED_SERIES: Earning[] = [
     { ...SALARY, id: '50000000-0000-4000-8000-000000000012', occurredOn: '2026-12-05' },
 ];
 
+/** Abre o formulário de edição: **Alterar** no cabeçalho, ou **Editar** em **Mais ações** no celular. */
+async function openEditForm(page: Page): Promise<void> {
+    if (test.info().project.name === 'celular') {
+        await page.getByRole('button', { name: 'Mais ações' }).click();
+        await page.getByRole('menuitem', { name: 'Editar' }).click();
+    } else {
+        await page.getByRole('button', { name: 'Alterar' }).click();
+    }
+}
+
 async function openAs(
     page: Page,
     user: E2EUser,
@@ -147,7 +157,7 @@ test('changes the account of an installment with the cascade note', async ({ pag
         'Projeto site',
     );
 
-    await page.getByRole('button', { name: 'Alterar' }).click();
+    await openEditForm(page);
     const dialog = page.getByRole('dialog', { name: 'Alterar receita' });
     await expect(dialog).toBeVisible();
     await expect(page).toHaveURL(/[?&]editar=1/);

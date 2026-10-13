@@ -1,7 +1,7 @@
 ---
 id: '0014'
 title: Receitas e tipos de receita
-status: approved
+status: implemented
 depends_on: ['0008', '0009', '0011']
 ---
 
