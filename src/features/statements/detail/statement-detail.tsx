@@ -8,6 +8,7 @@ import { EmptyState } from '@/ui/empty-state';
 import { Skeleton } from '@/ui/skeleton';
 
 import { asApiError, statementDetailQuery } from '../panel/statement-model';
+import { usePaymentActions } from '../payment/payment-actions';
 import { StatementBadge, StatementBody, StatementDates } from '../panel/statement-parts';
 import { RefundActions } from '../refunds/refund-actions';
 
@@ -29,6 +30,7 @@ export function StatementDetailPage({
 }) {
     const query = useQuery(statementDetailQuery(statementId));
     const cards = useCardLookup();
+    const payment = usePaymentActions(query.data);
     const cardHref = `/cartoes/${cardId}`;
 
     let content;
@@ -69,10 +71,12 @@ export function StatementDetailPage({
                                 <div className="flex flex-wrap gap-3">{refunds.newRefund}</div>
                             )}
                         </header>
+                        {payment.actions}
                         <StatementBody
                             statement={statement}
                             level={2}
                             refundActions={refunds.rowActions}
+                            paymentAction={payment.paymentAction}
                         />
                     </article>
                 )}
@@ -90,6 +94,7 @@ export function StatementDetailPage({
                 {cards.label(cardId) || 'Cartão'}
             </Link>
             {content}
+            {payment.dialogs}
         </div>
     );
 }

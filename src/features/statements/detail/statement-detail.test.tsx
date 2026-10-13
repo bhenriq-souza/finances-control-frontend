@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('@/api/client', () => ({ api: { GET: mocks.get } }));
 
+import { CURRENT_USER_QUERY_KEY } from '@/api/queries/current-user';
 import { queryKeys } from '@/api/queries/keys';
 import type { CreditCard } from '@/api/queries/reference';
 
@@ -42,6 +43,8 @@ const DETAIL = {
 
 async function renderDetail() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    // Leitor: as ações de pagamento (T-0013-02) leem o perfil do cache.
+    client.setQueryData(CURRENT_USER_QUERY_KEY, { profile: 'VIEWER' });
     client.setQueryData(queryKeys.bankAccounts.all, ACCOUNTS);
     client.setQueryData(queryKeys.creditCards.all, [CARD]);
     const root = createRootRoute();
