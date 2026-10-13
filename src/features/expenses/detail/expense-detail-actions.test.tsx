@@ -511,3 +511,47 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
         expect(screen.queryByRole('alertdialog')).toBeNull();
     });
 });
+
+// AC-0012-18: no celular, a primeira transição em largura total e o resto em **Mais ações**.
+describe('ExpenseActions on a phone (spec 0012)', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    function phone(matches: boolean) {
+        vi.stubGlobal('matchMedia', () => ({
+            matches,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+        }));
+    }
+
+    it('shows Pagar in full width and the rest under Mais ações', async () => {
+        phone(true);
+        await renderDetail(ACCOUNT_OPEN);
+
+        expect(screen.getByRole('button', { name: 'Pagar' })).toHaveClass('w-full');
+        expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Trocar forma de pagamento' }),
+        ).not.toBeInTheDocument();
+
+        fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais ações' }), {
+            button: 0,
+            ctrlKey: false,
+            pointerType: 'mouse',
+        });
+        const menu = await screen.findByRole('menu');
+        expect(
+            within(menu)
+                .getAllByRole('menuitem')
+                .map((item) => item.textContent),
+        ).toEqual(['Marcar para verificar', 'Editar', 'Trocar forma de pagamento', 'Excluir']);
+    });
+
+    it('keeps the buttons from md up', async () => {
+        phone(false);
+        await renderDetail(ACCOUNT_OPEN);
+
+        expect(screen.getByRole('button', { name: 'Excluir' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Mais ações' })).not.toBeInTheDocument();
+    });
+});

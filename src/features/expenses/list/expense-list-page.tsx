@@ -30,6 +30,7 @@ import {
     summaryCountsText,
     type Expense,
 } from './expense-model';
+import { useExpenseQuickActions } from './expense-quick-actions';
 
 export interface ExpenseListPageProps {
     search: ExpenseListSearch;
@@ -133,6 +134,7 @@ export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps
     const accounts = useAccountLookup();
     const cards = useCardLookup();
     const query = useExpenses(expenseListQuery(search));
+    const quick = useExpenseQuickActions(search, onSearchChange);
     const hasFilters = FILTER_KEYS.some((key) => key !== 'grupo' && search[key] !== undefined);
 
     let content;
@@ -151,6 +153,7 @@ export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps
         content = (
             <>
                 <Summary expenses={expenses} />
+                {quick.alert}
                 <EntryList
                     items={expenses}
                     getKey={(expense) => expense.id}
@@ -165,6 +168,7 @@ export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps
                         />
                     )}
                     href={(expense) => `/despesas/${expense.id}`}
+                    actions={quick.rowMenu}
                     empty={
                         <EmptyState
                             variant="vazio"
@@ -212,6 +216,7 @@ export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps
             <ExpenseFilters search={search} onSearchChange={onSearchChange} />
             <FilterTags search={search} onSearchChange={onSearchChange} />
             {content}
+            {quick.dialogs}
             {canWrite && search.novo === 1 && (
                 <ExpenseFormDialog
                     open

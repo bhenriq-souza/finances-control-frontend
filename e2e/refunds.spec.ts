@@ -241,7 +241,13 @@ async function refundFromDetail(page: Page, expense: Expense): Promise<void> {
         routes: [{ method: 'GET', path: `/expenses/${expense.id}`, body: { data: expense } }],
     });
     await expect(page.getByRole('heading', { name: expense.description })).toBeVisible();
-    await page.getByRole('link', { name: 'Estornar' }).click();
+    // AC-0012-18: no celular, **Estornar** fica em **Mais ações**.
+    if (test.info().project.name === 'celular') {
+        await page.getByRole('button', { name: 'Mais ações' }).click();
+        await page.getByRole('menuitem', { name: 'Estornar' }).click();
+    } else {
+        await page.getByRole('link', { name: 'Estornar' }).click();
+    }
     await expect(page).toHaveURL(`${CARD_PATH}?estorno=1&despesa=${expense.id}`);
 }
 

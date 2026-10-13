@@ -277,3 +277,122 @@ test('an unknown expense shows the not-found state with a way back', async ({ pa
         '/despesas',
     );
 });
+
+// Ações rápidas (spec 0012, T-0012-06).
+const byName = (description: string) =>
+    OCTOBER_EXPENSES.find((e) => e.description === description)!;
+const INTERNET = byName('Internet');
+const LUZ = byName('Conta de luz');
+const MERCADO = byName('Mercado');
+const menuItems = async (page: Page, description: string) => {
+    await page.getByRole('button', { name: `Ações de ${description}` }).click();
+    return page.getByRole('menu', { name: `Ações de ${description}` });
+};
+const detailRoute = (expense: { id: string }): StubRoute => ({
+    method: 'GET',
+    path: `/expenses/${expense.id}`,
+    body: { data: expense },
+});
+
+// AC-0012-16, INV-0012-06: o menu da conta OPEN, Pagar sobre a lista com mês e filtros mantidos.
+test('the row menu pays an account expense over the list, keeping month and filters', async ({
+    page,
+}) => {
+    const stub = await open(page, '/despesas?mes=2026-10&status=OPEN', {
+        user: 'lancador',
+        routes: [
+            detailRoute(INTERNET),
+            {
+                method: 'PATCH',
+                path: `/expenses/${INTERNET.id}/status`,
+                body: { data: { ...INTERNET, status: 'PAID', paidOn: '2026-10-20' } },
+            },
+        ],
+    });
+
+    const menu = await menuItems(page, 'Internet');
+    await expect(menu.getByRole('menuitem')).toHaveText([
+        'Pagar',
+        'Marcar para verificar',
+        'Editar',
+        'Excluir',
+    ]);
+    await menu.getByRole('menuitem', { name: 'Pagar' }).click();
+    await expect(page).toHaveURL(new RegExp(`pagar=${INTERNET.id}`));
+    const dialog = page.getByRole('dialog', { name: 'Pagar a despesa' });
+    await dialog.getByRole('button', { name: 'Pagar' }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Avisos' })).toContainText('Despesa paga.');
+    await expect(page).toHaveURL(/mes=2026-10/);
+    await expect(page).toHaveURL(/status=OPEN/);
+    await expect(page).not.toHaveURL(/pagar=/);
+    expect(
+        stub.requests.filter((r) => r.method === 'PATCH' && r.path.endsWith('/status'))[0]?.body,
+    ).toEqual({ status: 'PAID', paidOn: '2026-10-20' });
+});
+
+// AC-0012-16: o menu de uma despesa de cartão não tem Pagar.
+test('the row menu of a card expense has no Pagar', async ({ page }) => {
+    await open(page, '/despesas?mes=2026-10', { user: 'lancador' });
+
+    const menu = await menuItems(page, 'Mercado');
+    await expect(menu.getByRole('menuitem', { name: 'Pagar' })).toHaveCount(0);
+    await expect(menu.getByRole('menuitem', { name: 'Marcar para verificar' })).toBeVisible();
+});
+
+// AC-0012-17: Confirmar envia direto; um 409 vira alerta acima da lista com o nome.
+test('Confirmar sends the status at once and a 409 shows an alert with the name', async ({
+    page,
+}) => {
+    const stub = await open(page, '/despesas?mes=2026-10', {
+        user: 'lancador',
+        routes: [
+            {
+                method: 'PATCH',
+                path: `/expenses/${LUZ.id}/status`,
+                status: 409,
+                body: {
+                    error: { code: 'EXPENSE_STATUS_TRANSITION_NOT_ALLOWED', message: 'raw' },
+                },
+            },
+        ],
+    });
+
+    const menu = await menuItems(page, 'Conta de luz');
+    await menu.getByRole('menuitem', { name: 'Confirmar' }).click();
+
+    const alert = page.getByRole('alert');
+    await expect(alert).toContainText('Conta de luz');
+    await expect(alert).toContainText('Não é possível mudar a despesa para esse status.');
+    await expect(alert).not.toContainText('raw');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(
+        stub.requests.filter(
+            (r) => r.method === 'PATCH' && r.path === `/expenses/${LUZ.id}/status`,
+        )[0]?.body,
+    ).toEqual({ status: 'OPEN' });
+});
+
+// AC-0012-17: com `leitor`, nenhuma linha tem menu e `?pagar=<id>` não abre nada.
+test('a leitor has no row menu and ?pagar=<id> opens nothing', async ({ page }) => {
+    await open(page, `/despesas?mes=2026-10&pagar=${INTERNET.id}`, {
+        user: 'leitor',
+        routes: [detailRoute(INTERNET)],
+    });
+
+    await expect(page.getByText('Aluguel').filter({ visible: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Ações de/ })).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+// Um parâmetro de uma despesa que não pode ser paga pelo menu (cartão) é ignorado e removido.
+test('?pagar=<card expense> is ignored and removed from the URL', async ({ page }) => {
+    await open(page, `/despesas?mes=2026-10&pagar=${MERCADO.id}`, {
+        user: 'lancador',
+        routes: [detailRoute(MERCADO)],
+    });
+
+    await expect(page).not.toHaveURL(/pagar=/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});

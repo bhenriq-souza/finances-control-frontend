@@ -14,6 +14,7 @@ vi.mock('@/api/client', () => ({ api: { GET: mocks.get } }));
 
 import { CURRENT_USER_QUERY_KEY, type Profile } from '@/api/queries/current-user';
 import { queryKeys } from '@/api/queries/keys';
+import { createNoticeStore, NoticeProvider } from '@/ui/notice';
 
 import { ExpenseListPage } from './expense-list-page';
 import { expenseListQuery, type ExpenseListSearch } from './expense-list-search';
@@ -107,7 +108,9 @@ async function renderList({
     await act(async () => {
         render(
             <QueryClientProvider client={client}>
-                <RouterProvider router={router} />
+                <NoticeProvider store={createNoticeStore()}>
+                    <RouterProvider router={router} />
+                </NoticeProvider>
             </QueryClientProvider>,
         );
     });

@@ -51,6 +51,19 @@ async function openDetail(
     return stub;
 }
 
+/**
+ * Uma ação do detalhe: botão a partir de `md`; no celular, só a primeira transição é botão e as
+ * demais ficam no menu **Mais ações** (AC-0012-18).
+ */
+async function chooseAction(page: Page, name: string) {
+    if (test.info().project.name === 'celular') {
+        await page.getByRole('button', { name: 'Mais ações' }).click();
+        await page.getByRole('menuitem', { name }).click();
+    } else {
+        await page.getByRole('button', { name }).click();
+    }
+}
+
 const requestsTo = (stub: ApiStub, method: string, path: string) =>
     stub.requests.filter((request) => request.method === method && request.path === path);
 
@@ -96,7 +109,7 @@ test('deleting an installment shows the cascade and goes back to the list', asyn
         routes: [{ method: 'DELETE', path: `/expenses/${NOTEBOOK.id}` }],
     });
 
-    await page.getByRole('button', { name: 'Excluir' }).click();
+    await chooseAction(page, 'Excluir');
     const dialog = page.getByRole('alertdialog', { name: 'Excluir a despesa?' });
     await expect(dialog).toContainText(
         'Todas as parcelas não pagas deste parcelamento serão excluídas.',
@@ -123,7 +136,7 @@ test('moving to a card sends creditCardId and a closed statement marks Fatura de
         ],
     });
 
-    await page.getByRole('button', { name: 'Trocar forma de pagamento' }).click();
+    await chooseAction(page, 'Trocar forma de pagamento');
     await expect(page).toHaveURL(/meio=1/);
     const dialog = page.getByRole('dialog', { name: 'Trocar forma de pagamento' });
     await dialog.getByLabel('Pagar com').selectOption({ label: 'Nubank' });
@@ -177,4 +190,29 @@ test('a leitor sees no action and no dialog opens from the URL', async ({ page }
     }
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
+});
+
+// AC-0012-18: no celular, Pagar em largura total e o resto em Mais ações; de `md` em diante, botões.
+test('on a phone Pagar is full width and the rest is under Mais ações', async ({ page }) => {
+    await openDetail(page, INTERNET);
+
+    const pay = page.getByRole('button', { name: 'Pagar', exact: true });
+    await expect(pay).toBeVisible();
+    if (test.info().project.name === 'celular') {
+        const article = page.getByRole('article');
+        const [button, container] = await Promise.all([pay.boundingBox(), article.boundingBox()]);
+        expect(button!.width).toBeGreaterThan(container!.width - 2);
+        await expect(page.getByRole('button', { name: 'Excluir' })).toHaveCount(0);
+        await page.getByRole('button', { name: 'Mais ações' }).click();
+        await expect(page.getByRole('menuitem')).toHaveText([
+            'Marcar para verificar',
+            'Editar',
+            'Trocar forma de pagamento',
+            'Excluir',
+        ]);
+    } else {
+        await expect(page.getByRole('button', { name: 'Mais ações' })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: 'Excluir' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Trocar forma de pagamento' })).toBeVisible();
+    }
 });
