@@ -1,13 +1,16 @@
-import { CreditCard as CreditCardIcon } from 'lucide-react';
+import { CreditCard as CreditCardIcon, Plus } from 'lucide-react';
 
+import { useCan } from '@/api/permissions';
 import { useAccountLookup, type Lookup } from '@/api/queries/lookups';
 import { useCreditCards, type CreditCard } from '@/api/queries/reference';
+import { Button } from '@/ui/components/ui/button';
 import { EmptyState } from '@/ui/empty-state';
 import { EntryList, type EntryColumn } from '@/ui/entry-list';
 import { StatusBadge } from '@/ui/status-badge';
 import { DERIVED_BADGES } from '@/ui/status-labels';
 
 import { AvailableMoney, cycleText, UsedWithBar } from './card-parts';
+import { type AccountsFormSearch, CreditCardFormDialog } from './forms';
 import { ArchivedToggle, QueryContent, sortByText, visibleItems } from './list-parts';
 
 /** Rótulo da conta pagadora, ou "—" sem conta. */
@@ -72,15 +75,39 @@ export interface CreditCardsPageProps {
     /** `?arquivados=1`. */
     showArchived: boolean;
     onShowArchivedChange: (showArchived: boolean) => void;
+    /** `?novo=1` e `?editar=<id>`: o formulário aberto (só com `accounts.write`). */
+    form?: AccountsFormSearch;
+    onFormChange?: (form: AccountsFormSearch) => void;
 }
 
-/** `/cartoes` (spec 0011): os cartões, em ordem de nome; cada um leva ao seu resumo. */
-export function CreditCardsPage({ showArchived, onShowArchivedChange }: CreditCardsPageProps) {
+/**
+ * `/cartoes` (spec 0011): os cartões, em ordem de nome; cada um leva ao seu resumo, onde ficam
+ * **Editar** e **Arquivar**.
+ */
+export function CreditCardsPage({
+    showArchived,
+    onShowArchivedChange,
+    form = {},
+    onFormChange = () => undefined,
+}: CreditCardsPageProps) {
     const query = useCreditCards();
     const accounts = useAccountLookup();
+    const canWrite = useCan('accounts.write');
+    // Sem a permissão, `?novo` e `?editar` não têm efeito (INV-0011-01).
+    const editing =
+        canWrite && form.editar ? query.data?.find((c) => c.id === form.editar) : undefined;
+    const creating = canWrite && form.novo === 1 && editing === undefined;
     return (
         <div className="flex flex-col gap-6">
-            <h1 className="text-titulo-1">Cartões</h1>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <h1 className="text-titulo-1">Cartões</h1>
+                {canWrite && (
+                    <Button onClick={() => onFormChange({ novo: 1 })}>
+                        <Plus aria-hidden="true" />
+                        Novo cartão
+                    </Button>
+                )}
+            </div>
             <QueryContent query={query}>
                 {(cards) => (
                     <div className="flex flex-col gap-3">
@@ -111,6 +138,13 @@ export function CreditCardsPage({ showArchived, onShowArchivedChange }: CreditCa
                     </div>
                 )}
             </QueryContent>
+            {(creating || editing) && (
+                <CreditCardFormDialog
+                    key={editing?.id ?? 'novo'}
+                    card={editing}
+                    onClose={() => onFormChange({})}
+                />
+            )}
         </div>
     );
 }

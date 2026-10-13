@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { useCan } from '@/api/permissions';
 import { useAccountLookup } from '@/api/queries/lookups';
 import { useCreditCards } from '@/api/queries/reference';
 import { buttonVariants } from '@/ui/components/ui/button';
@@ -13,6 +14,7 @@ import { DERIVED_BADGES } from '@/ui/status-labels';
 
 import { AvailableMoney, cycleText, LimitBar, usedCents } from './card-parts';
 import { paymentAccountLabel } from './credit-cards-page';
+import { CreditCardFormDialog, WriteActions } from './forms';
 import { QueryContent } from './list-parts';
 
 function Item({ label, children }: { label: string; children: ReactNode }) {
@@ -30,9 +32,21 @@ function Item({ label, children }: { label: string; children: ReactNode }) {
  * arquivados); id ausente dela é o `nao-encontrado` (ERR-0011-03). `children` é o que a rota
  * compõe abaixo do resumo, só quando o cartão existe (o painel de faturas da spec 0013).
  */
-export function CreditCardPage({ cardId, children }: { cardId: string; children?: ReactNode }) {
+export function CreditCardPage({
+    cardId,
+    editing = false,
+    onEditingChange = () => undefined,
+    children,
+}: {
+    cardId: string;
+    /** `?editar=1`: o formulário de alterar aberto (só com `accounts.write`, T-0011-02). */
+    editing?: boolean;
+    onEditingChange?: (editing: boolean) => void;
+    children?: ReactNode;
+}) {
     const query = useCreditCards();
     const accounts = useAccountLookup();
+    const canWrite = useCan('accounts.write');
     return (
         <div className="flex flex-col gap-6">
             <Link
@@ -65,6 +79,20 @@ export function CreditCardPage({ cardId, children }: { cardId: string; children?
                                     <StatusBadge badge={DERIVED_BADGES.arquivado} />
                                 ) : null}
                             </div>
+                            {canWrite && (
+                                <WriteActions
+                                    kind="credit-card"
+                                    item={card}
+                                    label={card.name}
+                                    onEdit={() => onEditingChange(true)}
+                                />
+                            )}
+                            {canWrite && editing && (
+                                <CreditCardFormDialog
+                                    card={card}
+                                    onClose={() => onEditingChange(false)}
+                                />
+                            )}
                             <div className="flex flex-col gap-2">
                                 <span className="text-rotulo text-texto-apoio">Disponível</span>
                                 <AvailableMoney
