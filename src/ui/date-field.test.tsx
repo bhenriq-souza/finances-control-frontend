@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import { dateSchema, optionalDateSchema } from '@/shared/dates';
@@ -141,6 +141,12 @@ describe('DateField (AC-0009-12)', () => {
 });
 
 describe('DateField calendar (AC-0009-13)', () => {
+    // O calendário é carregado sob demanda (`React.lazy`, INV-0009-07). Carregue o módulo antes,
+    // para que a primeira abertura não dependa do tempo de transformação dele numa máquina lenta (CI).
+    beforeAll(async () => {
+        await import('./calendar/date-picker-surface');
+    });
+
     async function openCalendar(index = 0) {
         const button = screen.getAllByRole('button', { name: 'Escolher data' })[index]!;
         fireEvent.click(button);
