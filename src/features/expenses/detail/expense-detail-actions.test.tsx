@@ -243,6 +243,49 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
         expect(names).toEqual(['Alterar']);
     });
 
+    // AC-0012-13: **Estornar** leva ao **Novo estorno** do cartão com a despesa selecionada.
+    const refundLink = () => screen.queryByRole('link', { name: 'Estornar' });
+    const refundHref = `/cartoes/${CARD_ID}?estorno=1&despesa=${ID}`;
+
+    it.each(['OPEN', 'OVERDUE', 'VERIFYING', 'PAID'] as const)(
+        'links Estornar to the card refund on a %s card expense',
+        async (status) => {
+            await renderDetail({ ...CARD_OPEN, status });
+            expect(refundLink()).toHaveAttribute('href', refundHref);
+        },
+    );
+
+    it('places Estornar after the transitions', async () => {
+        await renderDetail(CARD_OPEN);
+        const group = screen.getByRole('button', { name: 'Marcar para verificar' }).parentElement!;
+        const names = [...group.children].map((element) => element.textContent);
+        expect(names).toEqual([
+            'Marcar para verificar',
+            'Estornar',
+            'Trocar forma de pagamento',
+            'Excluir',
+        ]);
+    });
+
+    it('does not offer Estornar on a forecast card expense', async () => {
+        await renderDetail({ ...CARD_OPEN, status: 'FORECAST' });
+        expect(button('Confirmar')).toBeInTheDocument();
+        expect(refundLink()).toBeNull();
+    });
+
+    it('does not offer Estornar on an account expense', async () => {
+        await renderDetail({ ...ACCOUNT_OPEN, status: 'PAID', paidOn: '2026-10-10' });
+        expect(button('Desfazer pagamento')).toBeInTheDocument();
+        expect(refundLink()).toBeNull();
+        expect(document.querySelector('a[href*="estorno"]')).toBeNull();
+    });
+
+    it('does not offer Estornar to a viewer', async () => {
+        await renderDetail(CARD_OPEN, {}, 'VIEWER');
+        expect(refundLink()).toBeNull();
+        expect(document.querySelector('a[href*="estorno"]')).toBeNull();
+    });
+
     // AC-0012-07, INV-0012-04: a cascata da parcela antes do `DELETE`, depois volta para a lista.
     it('deletes an installment after showing the cascade and goes back to the list', async () => {
         await renderDetail(CARD_OPEN);

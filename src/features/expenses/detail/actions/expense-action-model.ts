@@ -31,11 +31,14 @@ export interface ExpenseActionSet {
     remove: boolean;
     /** **Trocar forma de pagamento** (não paga). */
     changeMethod: boolean;
+    /** **Estornar** (despesa de cartão que não é `FORECAST`; AC-0012-13). */
+    refund: boolean;
 }
 
 /**
  * A tabela de transições do backend (INV-0012-03): despesa de cartão nunca tem **Pagar** nem
- * **Desfazer pagamento**, porque é paga pela fatura (INV-0012-02).
+ * **Desfazer pagamento**, porque é paga pela fatura (INV-0012-02). **Estornar** só existe em
+ * despesa de cartão já lançada, isto é, que não é `FORECAST` (AC-0012-13).
  */
 export function expenseActions(
     expense: Pick<Expense, 'status' | 'creditCardId'>,
@@ -58,7 +61,12 @@ export function expenseActions(
             status = card ? [] : ['undo-payment'];
             break;
     }
-    return { status, remove: unpaid, changeMethod: unpaid };
+    return {
+        status,
+        remove: unpaid,
+        changeMethod: unpaid,
+        refund: card && expense.status !== 'FORECAST',
+    };
 }
 
 /** O efeito da exclusão, mostrado antes de enviar (INV-0012-04). */
