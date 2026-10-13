@@ -241,7 +241,7 @@ Tarefas da [spec 0015](../specs/0015-dashboard-and-reports.md), da issue de entr
 
 Tarefas da [spec 0017](../specs/0017-recurrences.md), da issue de entrega [FCF-015](https://github.com/bhenriq-souza/finances-control-frontend/issues/56).
 
-- [ ] **T-0017-01 — Séries de despesas e receitas** · #80
+- [x] **T-0017-01 — Séries de despesas e receitas** · #80
     - What: `/series` com as duas abas, os detalhes com as ocorrências, encerrar série, **Ver série** nos detalhes de despesa e de receita, item **Séries fixas**
     - Where: `src/features/expenses/recurrences/`, `src/features/earnings/recurrences/`, os detalhes de despesa e de receita (link), `src/routes/_app/series*`, `src/app/shell/navigation.ts`, `e2e/recurrences.spec.ts`
     - Done when: `AC-0017-01` a `AC-0017-05` cobertos; `INV-0017-01` a `INV-0017-03` verificados

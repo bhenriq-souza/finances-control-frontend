@@ -1,4 +1,4 @@
-import { ArrowUp, ChartColumn, House } from 'lucide-react';
+import { ArrowUp, ChartColumn, House, Repeat } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -36,6 +36,7 @@ describe('navItemsFor', () => {
             'Cartões',
             'Contas',
             'Transferências',
+            'Séries fixas',
             'Relatórios',
         ];
         for (const profile of ['BILLER', 'VIEWER'] as const) {
@@ -49,6 +50,7 @@ describe('navItemsFor', () => {
             '/cartoes',
             '/contas',
             '/transferencias',
+            '/series',
             '/relatorios',
             '/usuarios',
         ]);
@@ -130,15 +132,25 @@ describe('navigation slots', () => {
         }
         // AC-0018-07: Transferências em Mais.
         expect(NAV_ITEMS.find(({ to }) => to === '/transferencias')?.slot).toBe('mais');
+        // AC-0017-05 (spec 0017, "Rotas e navegação"): Séries fixas em Mais, para todos os perfis.
+        expect(NAV_ITEMS.find(({ to }) => to === '/series')).toEqual({
+            to: '/series',
+            label: 'Séries fixas',
+            icon: Repeat,
+            profiles: ALL,
+            slot: 'mais',
+        });
         expect(labels(moreItems(navItemsFor('ADMIN')))).toEqual([
             'Contas',
             'Transferências',
+            'Séries fixas',
             'Relatórios',
             'Usuários',
         ]);
         expect(labels(moreItems(navItemsFor('BILLER')))).toEqual([
             'Contas',
             'Transferências',
+            'Séries fixas',
             'Relatórios',
         ]);
         expect(MORE_ENTRY.to).toBe('/mais');
