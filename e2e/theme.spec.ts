@@ -96,3 +96,37 @@ test.describe('theme selector in the user menu', () => {
         expect(await fundo(page)).toBe(FUNDO_ESCURO);
     });
 });
+
+const colorScheme = (page: Page) =>
+    page.evaluate(() => getComputedStyle(document.documentElement).colorScheme);
+
+// AC-0004-06.
+test.describe('color-scheme follows the theme in use', () => {
+    test.beforeEach(async ({ page }) => {
+        await stubRuntime(page);
+    });
+
+    test('escuro chosen gives dark, even with a light system', async ({ page }) => {
+        await page.addInitScript(() => localStorage.setItem('ftech.tema', 'escuro'));
+        await page.emulateMedia({ colorScheme: 'light' });
+        await page.goto('/');
+        expect(await colorScheme(page)).toBe('dark');
+    });
+
+    test('claro chosen gives light, even with a dark system', async ({ page }) => {
+        await page.addInitScript(() => localStorage.setItem('ftech.tema', 'claro'));
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await page.goto('/');
+        expect(await colorScheme(page)).toBe('light');
+    });
+
+    test('sistema follows the emulated prefers-color-scheme', async ({ page }) => {
+        await page.emulateMedia({ colorScheme: 'light' });
+        await page.goto('/');
+        await expect(page.locator('html')).not.toHaveAttribute('data-tema', /.+/);
+        expect(await colorScheme(page)).toBe('light');
+
+        await page.emulateMedia({ colorScheme: 'dark' });
+        expect(await colorScheme(page)).toBe('dark');
+    });
+});
