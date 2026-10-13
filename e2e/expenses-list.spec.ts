@@ -93,6 +93,14 @@ test('lists the month in date order with badge, account or card name and a negat
     const summary = page.getByRole('region', { name: 'Resumo' });
     await expect(summary).toContainText('−R$ 2.730,50');
     await expect(summary).toContainText('1 paga · 4 pendentes · 1 vencida');
+    // Rótulo, total e contagens um embaixo do outro em todos os tamanhos, como nas receitas.
+    const label = await summary.getByText('Total', { exact: true }).boundingBox();
+    const total = await summary.getByText('−R$ 2.730,50').boundingBox();
+    const counts = await summary.getByText('1 paga · 4 pendentes · 1 vencida').boundingBox();
+    expect(label!.y + label!.height).toBeLessThanOrEqual(total!.y + 1);
+    expect(total!.y + total!.height).toBeLessThanOrEqual(counts!.y + 1);
+    expect(Math.abs(label!.x - total!.x)).toBeLessThan(2);
+    expect(Math.abs(total!.x - counts!.x)).toBeLessThan(2);
 
     if (phone) {
         await expect(page.getByRole('table')).toBeHidden();
