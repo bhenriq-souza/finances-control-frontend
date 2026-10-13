@@ -1,5 +1,5 @@
 import { Archive, ArchiveRestore, Pencil, Plus, Tags } from 'lucide-react';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { ApiError } from '@/api/errors/api-error';
 import { CLIENT_ERROR_MESSAGES } from '@/api/errors/catalog';
@@ -43,6 +43,7 @@ export function ExpenseTypesPage({ search, onSearchChange }: ExpenseTypesPagePro
     const notify = useNotify();
     const query = useExpenseTypes();
     const archive = useArchiveExpenseType();
+    const toggleId = useId();
     const showArchived = search.arquivados === 1;
 
     const items = useMemo(
@@ -167,14 +168,19 @@ export function ExpenseTypesPage({ search, onSearchChange }: ExpenseTypesPagePro
                     </Button>
                 )}
             </div>
-            <div>
-                <Button
-                    variant="ghost"
-                    aria-pressed={showArchived}
-                    onClick={() => onSearchChange(showArchived ? {} : { arquivados: 1 })}
-                >
+            <div className="flex items-center gap-2">
+                <input
+                    id={toggleId}
+                    type="checkbox"
+                    checked={showArchived}
+                    onChange={(event) =>
+                        onSearchChange(event.target.checked ? { arquivados: 1 } : {})
+                    }
+                    className="size-5 accent-acento"
+                />
+                <label htmlFor={toggleId} className="text-corpo text-texto">
                     Mostrar arquivados
-                </Button>
+                </label>
             </div>
             {content()}
             {(creating || editing) && (
