@@ -1,20 +1,23 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { z } from 'zod';
 
 import { api } from '@/api/client';
 import { ApiError, unwrap } from '@/api/errors/api-error';
+import { useCan } from '@/api/permissions';
 import { ENTRY_STALE_TIME, queryKeys } from '@/api/queries/keys';
 import { useAccountLookup, useCardLookup } from '@/api/queries/lookups';
 import { formatDate } from '@/shared/dates';
+import { Button } from '@/ui/components/ui/button';
 import { EmptyState } from '@/ui/empty-state';
 import { Money } from '@/ui/money';
 import { Skeleton } from '@/ui/skeleton';
 import { StatusBadge } from '@/ui/status-badge';
 import { expenseBadge } from '@/ui/status-labels';
 
+import { ExpenseFormDialog } from '../form/expense-form';
 import { asApiError } from '../list/expense-list-search';
 import { EXPENSE_KIND_LABELS, type Expense } from '../list/expense-model';
 
@@ -116,13 +119,28 @@ function ExpenseFields({ expense }: { expense: Expense }) {
     );
 }
 
+export interface ExpenseDetailPageProps {
+    expenseId: string;
+    search: ExpenseDetailSearch;
+    onSearchChange: (next: Partial<ExpenseDetailSearch>) => void;
+    /** A despesa sumiu durante uma ação (`EXPENSE_NOT_FOUND`): volta para a lista. */
+    onGone: () => void;
+}
+
 /**
- * Detalhe de uma despesa (`/despesas/$despesaId`, spec 0012), só leitura: os campos da resposta,
- * o selo, a conta ou o cartão por nome e os links da parcela e da fatura. `404 EXPENSE_NOT_FOUND`
- * mostra o estado `nao-encontrado` (ERR-0009-02); outra falha, o estado `erro` (ERR-0009-01).
+ * Detalhe de uma despesa (`/despesas/$despesaId`, spec 0012): os campos da resposta, o selo, a
+ * conta ou o cartão por nome e os links da parcela e da fatura. `404 EXPENSE_NOT_FOUND` mostra o
+ * estado `nao-encontrado` (ERR-0009-02); outra falha, o estado `erro` (ERR-0009-01). Com
+ * `entries.write`, **Alterar** abre o formulário (`?editar=1`).
  */
-export function ExpenseDetailPage({ expenseId }: { expenseId: string }) {
+export function ExpenseDetailPage({
+    expenseId,
+    search,
+    onSearchChange,
+    onGone,
+}: ExpenseDetailPageProps) {
     const query = useQuery(expenseDetailQuery(expenseId));
+    const canWrite = useCan('entries.write');
 
     let content;
     if (query.isError) {
@@ -159,10 +177,28 @@ export function ExpenseDetailPage({ expenseId }: { expenseId: string }) {
                         tone="auto"
                         size="valor-destaque"
                     />
+                    {canWrite && (
+                        <div className="flex flex-wrap gap-3">
+                            <Button variant="outline" onClick={() => onSearchChange({ editar: 1 })}>
+                                <Pencil aria-hidden="true" />
+                                Alterar
+                            </Button>
+                        </div>
+                    )}
                 </header>
                 <section className="rounded-md border border-linha bg-superficie px-4 md:px-6">
                     <ExpenseFields expense={expense} />
                 </section>
+                {canWrite && search.editar === 1 && (
+                    <ExpenseFormDialog
+                        open
+                        expense={expense}
+                        onOpenChange={(open) => {
+                            if (!open) onSearchChange({ editar: undefined });
+                        }}
+                        onGone={onGone}
+                    />
+                )}
             </article>
         );
     }

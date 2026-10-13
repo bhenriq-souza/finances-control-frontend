@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Plus, Tags } from 'lucide-react';
 
 import { useCan } from '@/api/permissions';
@@ -11,6 +11,8 @@ import { Money } from '@/ui/money';
 import { EntryListSkeleton } from '@/ui/skeleton';
 import { StatusBadge } from '@/ui/status-badge';
 import { expenseBadge } from '@/ui/status-labels';
+
+import { ExpenseFormDialog } from '../form/expense-form';
 
 import { ExpenseFilters, FilterTags } from './expense-filters';
 import {
@@ -130,6 +132,7 @@ function Summary({ expenses }: { expenses: readonly Expense[] }) {
  */
 export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps) {
     const canWrite = useCan('entries.write');
+    const navigate = useNavigate();
     const accounts = useAccountLookup();
     const cards = useCardLookup();
     const query = useExpenses(expenseListQuery(search));
@@ -212,6 +215,21 @@ export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps
             <ExpenseFilters search={search} onSearchChange={onSearchChange} />
             <FilterTags search={search} onSearchChange={onSearchChange} />
             {content}
+            {canWrite && search.novo === 1 && (
+                <ExpenseFormDialog
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) onSearchChange({ ...search, novo: undefined });
+                    }}
+                    onCreated={(first) =>
+                        void navigate({
+                            to: '/despesas/$despesaId',
+                            params: { despesaId: first.id },
+                            replace: true,
+                        })
+                    }
+                />
+            )}
         </div>
     );
 }

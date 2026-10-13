@@ -10,5 +10,14 @@ export const Route = createFileRoute('/_app/despesas/$despesaId')({
 
 function ExpenseDetail() {
     const { despesaId } = Route.useParams();
-    return <ExpenseDetailPage expenseId={despesaId} />;
+    const search = Route.useSearch();
+    const navigate = Route.useNavigate();
+    return (
+        <ExpenseDetailPage
+            expenseId={despesaId}
+            search={search}
+            onSearchChange={(next) => void navigate({ search: (prev) => ({ ...prev, ...next }) })}
+            onGone={() => void navigate({ to: '/despesas', search: {} })}
+        />
+    );
 }
