@@ -333,7 +333,8 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
         );
     });
 
-    // AC-0012-08: troca para um cartão envia `creditCardId`; `STATEMENT_CLOSED` marca Fatura de.
+    // AC-0012-08 / AC-0012-15: troca para um cartão envia `creditCardId`; a fatura vem recolhida
+    // atrás de "Lançar em outra fatura"; `STATEMENT_CLOSED` marca Fatura de quando enviada.
     it('moves an account expense to a card and marks Fatura de on a closed statement', async () => {
         await renderDetail(ACCOUNT_OPEN, { meio: 1 });
         const dialog = screen.getByRole('dialog', { name: 'Trocar forma de pagamento' });
@@ -345,6 +346,13 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
         expect(within(dialog).queryByText('Aplicar a')).toBeNull();
 
         fireEvent.change(select, { target: { value: `cartao:${CARD_ID}` } });
+        // Recolhida: o texto com o fechamento da fatura atual e o link; sem o campo.
+        expect(
+            within(dialog).getByText(
+                'Entra na fatura da data da compra. A fatura atual fecha em 03/11.',
+            ),
+        ).toBeInTheDocument();
+        expect(within(dialog).queryByLabelText('Fatura de')).toBeNull();
         mocks.PATCH.mockResolvedValueOnce(fail(409, 'STATEMENT_CLOSED'));
         await click(within(dialog).getByRole('button', { name: 'Trocar' }));
 
@@ -352,18 +360,29 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
             params: { path: { id: ID } },
             body: { creditCardId: CARD_ID },
         });
+        // Sem `postedOn` enviado não há campo para marcar: o erro vai para o alerta.
+        expect(within(dialog).getByRole('alert')).toHaveTextContent('Essa fatura já está fechada');
+
+        await click(within(dialog).getByRole('button', { name: 'Lançar em outra fatura' }));
+        expect(within(dialog).queryByText(/A fatura atual fecha em/)).toBeNull();
         const posted = within(dialog).getByLabelText('Fatura de');
+        expect(posted).toHaveAccessibleDescription(
+            'A despesa entra na fatura que contém esta data.',
+        );
+        fireEvent.change(posted, { target: { value: '2026-11-04' } });
+        mocks.PATCH.mockResolvedValueOnce(fail(409, 'STATEMENT_CLOSED'));
+        await click(within(dialog).getByRole('button', { name: 'Trocar' }));
         expect(posted).toHaveAttribute('aria-invalid', 'true');
         expect(posted).toHaveAccessibleDescription(
             expect.stringContaining('Essa fatura já está fechada'),
         );
 
-        fireEvent.change(posted, { target: { value: '2026-11-04' } });
+        fireEvent.change(posted, { target: { value: '2026-12-04' } });
         mocks.PATCH.mockResolvedValueOnce(ok([ACCOUNT_OPEN]));
         await click(within(dialog).getByRole('button', { name: 'Trocar' }));
         expect(mocks.PATCH).toHaveBeenLastCalledWith('/expenses/{id}/payment-method', {
             params: { path: { id: ID } },
-            body: { creditCardId: CARD_ID, postedOn: '2026-11-04' },
+            body: { creditCardId: CARD_ID, postedOn: '2026-12-04' },
         });
         expect(await screen.findByText('Forma de pagamento trocada.')).toBeInTheDocument();
     });
@@ -379,6 +398,7 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
         fireEvent.change(within(dialog).getByLabelText('Pagar com'), {
             target: { value: `cartao:${CARD_ID}` },
         });
+        await click(within(dialog).getByRole('button', { name: 'Lançar em outra fatura' }));
         fireEvent.change(within(dialog).getByLabelText('Fatura de'), {
             target: { value: '2026-10-01' },
         });
@@ -387,6 +407,27 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
             expect.stringContaining('A fatura não pode ser anterior à data da compra.'),
         );
         expect(mocks.PATCH).not.toHaveBeenCalled();
+    });
+
+    // AC-0012-15: voltar para uma conta recolhe a fatura e descarta o valor digitado.
+    it('drops a typed statement date when the destination goes back to an account', async () => {
+        await renderDetail(ACCOUNT_OPEN, { meio: 1 });
+        const dialog = screen.getByRole('dialog', { name: 'Trocar forma de pagamento' });
+        const select = within(dialog).getByLabelText('Pagar com');
+        fireEvent.change(select, { target: { value: `cartao:${CARD_ID}` } });
+        await click(within(dialog).getByRole('button', { name: 'Lançar em outra fatura' }));
+        fireEvent.change(within(dialog).getByLabelText('Fatura de'), {
+            target: { value: '2026-12-04' },
+        });
+        fireEvent.change(select, { target: { value: '' } });
+        fireEvent.change(select, { target: { value: `cartao:${CARD_ID}` } });
+        expect(within(dialog).queryByLabelText('Fatura de')).toBeNull();
+        mocks.PATCH.mockResolvedValueOnce(ok([ACCOUNT_OPEN]));
+        await click(within(dialog).getByRole('button', { name: 'Trocar' }));
+        expect(mocks.PATCH).toHaveBeenCalledWith('/expenses/{id}/payment-method', {
+            params: { path: { id: ID } },
+            body: { creditCardId: CARD_ID },
+        });
     });
 
     // INV-0012-04: parcela mostra que vale para todas as não pagas; série pergunta o escopo.

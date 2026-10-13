@@ -271,7 +271,7 @@ Tarefas da revisão das specs [0004](../specs/0004-theme.md), [0006](../specs/00
     - What: botões `outline` com ícone em `/receitas/tipos`; **Mostrar arquivados** como caixa de seleção em `/despesas/tipos`
     - Where: `src/features/expenses/types/`, `src/features/earnings/types/`, `e2e/expense-types.spec.ts`, `e2e/earning-types.spec.ts`
     - Done when: `AC-0009-11` coberto
-- [ ] **T-0012-05 — Lista depois de criar e fatura recolhida** · #128
+- [x] **T-0012-05 — Lista depois de criar e fatura recolhida** · #128
     - What: criar despesa volta para a lista no mês da primeira criada, sem filtros; **Fatura de** recolhido atrás de **Lançar em outra fatura**, com o fechamento da fatura atual, no formulário e em **Trocar forma de pagamento**
     - Where: `src/features/expenses/form/`, `src/features/expenses/list/`, `src/features/expenses/detail/actions/`, `e2e/expenses-form.spec.ts`
     - Done when: `AC-0012-14` e `AC-0012-15` cobertos

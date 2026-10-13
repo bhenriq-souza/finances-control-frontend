@@ -127,6 +127,9 @@ test('moving to a card sends creditCardId and a closed statement marks Fatura de
     await expect(page).toHaveURL(/meio=1/);
     const dialog = page.getByRole('dialog', { name: 'Trocar forma de pagamento' });
     await dialog.getByLabel('Pagar com').selectOption({ label: 'Nubank' });
+    // AC-0012-15: a fatura vem recolhida; o erro só marca o campo quando ele foi enviado.
+    await dialog.getByRole('button', { name: 'Lançar em outra fatura' }).click();
+    await dialog.getByLabel('Fatura de').fill('2026-11-20');
     await dialog.getByRole('button', { name: 'Trocar' }).click();
 
     const posted = dialog.getByLabel('Fatura de');
@@ -135,7 +138,7 @@ test('moving to a card sends creditCardId and a closed statement marks Fatura de
     await expect(dialog).not.toContainText('raw');
     expect(requestsTo(stub, 'PATCH', `/expenses/${INTERNET.id}/payment-method`)[0]).toMatchObject({
         query: {},
-        body: { creditCardId: CARD_ID },
+        body: { creditCardId: CARD_ID, postedOn: '2026-11-20' },
     });
 });
 

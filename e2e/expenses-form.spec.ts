@@ -78,12 +78,10 @@ const writes = (stub: ApiStub, method: 'POST' | 'PATCH') =>
     stub.requests.filter((request) => request.method === method);
 
 // AC-0012-03, AC-0012-12: parcelada de 1.200,00 em 3 vezes num cartão, pelo `FormDialog`.
-test('creates an installment expense on a card and opens the first one', async ({ page }) => {
-    const first = NEW_INSTALLMENTS[0]!;
+test('creates an installment expense on a card and returns to the list', async ({ page }) => {
     const stub = await open(page, '/despesas?mes=2026-10', {
         routes: [
             { method: 'POST', path: '/expenses', status: 201, body: { data: NEW_INSTALLMENTS } },
-            { method: 'GET', path: `/expenses/${first.id}`, body: { data: first } },
         ],
     });
 
@@ -99,13 +97,19 @@ test('creates an installment expense on a card and opens the first one', async (
     await dialog.getByLabel('Valor total').fill('1.200,00');
     await dialog.getByLabel('Pagar com').selectOption({ label: 'Nubank' });
     await expect(dialog.getByLabel('Data da compra')).toHaveValue('2026-10-20');
-    await expect(dialog.getByLabel('Fatura de')).toBeVisible();
+    // AC-0012-15: a fatura vem recolhida, com o fechamento da fatura atual do cartão.
+    await expect(dialog.getByLabel('Fatura de')).toHaveCount(0);
+    await expect(
+        dialog.getByText('Entra na fatura da data da compra. A fatura atual fecha em 03/11.'),
+    ).toBeVisible();
     await dialog.getByLabel('Parcelas').fill('3');
     await dialog.getByRole('button', { name: 'Salvar' }).click();
 
     await expect(page.getByText('3 despesas criadas.')).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`/despesas/${first.id}$`));
-    await expect(page.getByRole('heading', { name: 'Geladeira', level: 1 })).toBeVisible();
+    // AC-0012-14: o diálogo fecha e a lista fica no mês da primeira criada, sem abrir o detalhe.
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/despesas\?mes=2026-10$/);
+    await expect(page.getByRole('heading', { name: 'Despesas', level: 1 })).toBeVisible();
 
     const [post] = writes(stub, 'POST');
     expect(post?.body).toEqual({
@@ -126,10 +130,7 @@ test('creates a fixed expense with an end date; the field only exists in Fixa', 
     page,
 }) => {
     const stub = await open(page, '/despesas?mes=2026-10&novo=1', {
-        routes: [
-            { method: 'POST', path: '/expenses', status: 201, body: { data: [SERIES] } },
-            { method: 'GET', path: `/expenses/${SERIES.id}`, body: { data: SERIES } },
-        ],
+        routes: [{ method: 'POST', path: '/expenses', status: 201, body: { data: [SERIES] } }],
     });
 
     const dialog = page.getByRole('dialog', { name: 'Nova despesa' });
@@ -150,7 +151,7 @@ test('creates a fixed expense with an end date; the field only exists in Fixa', 
     await dialog.getByRole('button', { name: 'Salvar' }).click();
 
     await expect(page.getByText('Despesa salva.')).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`/despesas/${SERIES.id}$`));
+    await expect(page).toHaveURL(/\/despesas\?mes=2026-11$/);
     expect(writes(stub, 'POST')[0]?.body).toEqual({
         kind: 'FIXED',
         description: 'Aluguel',
@@ -161,6 +162,57 @@ test('creates a fixed expense with an end date; the field only exists in Fixa', 
         status: 'FORECAST',
         recurrenceEndsOn: '2027-10-05',
     });
+});
+
+// AC-0012-14: criar com data em outro mês, a partir de uma lista filtrada, leva ao mês da data, sem
+// os filtros e sem abrir o detalhe.
+test('after creating, the list goes to the month of the date without the filters', async ({
+    page,
+}) => {
+    await open(page, '/despesas?mes=2026-10&status=PAID&novo=1', {
+        routes: [{ method: 'POST', path: '/expenses', status: 201, body: { data: [SERIES] } }],
+    });
+
+    const dialog = page.getByRole('dialog', { name: 'Nova despesa' });
+    await dialog.getByLabel('Descrição').fill('Aluguel');
+    await dialog.getByLabel('Tipo').selectOption({ label: 'Moradia' });
+    await dialog.getByLabel('Valor', { exact: true }).fill('1800');
+    await dialog.getByLabel('Pagar com').selectOption({ label: 'Conta corrente' });
+    await dialog.getByLabel('Vencimento').fill('2026-11-05');
+    await dialog.getByRole('button', { name: 'Salvar' }).click();
+
+    await expect(page.getByText('Despesa salva.')).toBeVisible();
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/despesas\?mes=2026-11$/);
+    await expect(page.getByRole('heading', { name: 'Novembro de 2026', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Despesas', level: 1 })).toBeVisible();
+});
+
+// AC-0012-15: Fatura de só aparece depois de "Lançar em outra fatura"; fechado, `postedOn` não vai.
+test('Fatura de stays collapsed until Lançar em outra fatura and is sent only then', async ({
+    page,
+}) => {
+    const stub = await open(page, '/despesas?mes=2026-10&novo=1', {
+        routes: [
+            { method: 'POST', path: '/expenses', status: 201, body: { data: NEW_INSTALLMENTS } },
+        ],
+    });
+
+    const dialog = page.getByRole('dialog', { name: 'Nova despesa' });
+    await dialog.getByLabel('Descrição').fill('Tênis');
+    await dialog.getByLabel('Tipo').selectOption({ label: 'Mercado' });
+    await dialog.getByLabel('Valor', { exact: true }).fill('300');
+    await dialog.getByLabel('Pagar com').selectOption({ label: 'Nubank' });
+    await expect(dialog.getByLabel('Fatura de')).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Lançar em outra fatura' }).click();
+    await expect(dialog.getByText(/A fatura atual fecha em/)).toHaveCount(0);
+    await expect(dialog.getByText('A despesa entra na fatura que contém esta data.')).toBeVisible();
+    await dialog.getByLabel('Fatura de').fill('2026-11-20');
+    await dialog.getByRole('button', { name: 'Salvar' }).click();
+
+    await expect(page.getByText(/despesas criadas|Despesa salva/)).toBeVisible();
+    const [post] = writes(stub, 'POST');
+    expect(post?.body).toMatchObject({ creditCardId: CARD_ID, postedOn: '2026-11-20' });
 });
 
 // AC-0012-05, INV-0012-05: ocorrência de série, **Esta e as próximas previstas**, só o alterado.

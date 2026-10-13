@@ -114,6 +114,13 @@ async function save(dialog: HTMLElement) {
     });
 }
 
+/** Abre o **Fatura de** recolhido (AC-0012-15). */
+async function openStatement(dialog: HTMLElement) {
+    await act(async () => {
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Lançar em outra fatura' }));
+    });
+}
+
 const bodyOf = (mock: typeof mocks.POST) =>
     (mock.mock.calls[0]?.[1] as { body: Record<string, unknown> }).body;
 
@@ -229,8 +236,11 @@ describe('ExpenseFormDialog — create (spec 0012)', () => {
         });
         expect(within(dialog).getByLabelText('Data da compra')).toBeInTheDocument();
         expect(
-            within(dialog).getByText('Deixe vazio para a fatura do dia da compra.'),
+            within(dialog).getByText(
+                'Entra na fatura da data da compra. A fatura atual fecha em 03/11.',
+            ),
         ).toBeInTheDocument();
+        expect(within(dialog).queryByLabelText('Fatura de')).toBeNull();
         await save(dialog);
 
         const body = bodyOf(mocks.POST);
@@ -251,7 +261,9 @@ describe('ExpenseFormDialog — create (spec 0012)', () => {
         );
     });
 
-    it('sends postedOn only on a card and only when given', async () => {
+    // AC-0012-15: Fatura de só aparece depois de "Lançar em outra fatura"; fechado, `postedOn` não
+    // vai; aberto e preenchido, vai.
+    it('sends postedOn only on a card, once opened and given', async () => {
         const { dialog } = await renderForm();
         fill(dialog, {
             Descrição: 'Tênis',
@@ -259,8 +271,23 @@ describe('ExpenseFormDialog — create (spec 0012)', () => {
             Valor: '300',
             'Pagar com': cardPayment(CARD_ID),
             'Data da compra': '2026-10-02',
-            'Fatura de': '2026-11-04',
         });
+        expect(within(dialog).queryByLabelText('Fatura de')).toBeNull();
+        expect(
+            within(dialog).getByText(
+                'Entra na fatura da data da compra. A fatura atual fecha em 03/11.',
+            ),
+        ).toBeInTheDocument();
+        await save(dialog);
+        expect(bodyOf(mocks.POST)).not.toHaveProperty('postedOn');
+
+        mocks.POST.mockClear();
+        await openStatement(dialog);
+        expect(within(dialog).queryByText(/A fatura atual fecha em/)).toBeNull();
+        expect(within(dialog).getByLabelText('Fatura de')).toHaveAccessibleDescription(
+            'A despesa entra na fatura que contém esta data.',
+        );
+        fill(dialog, { 'Fatura de': '2026-11-04' });
         fireEvent.change(within(dialog).getByLabelText('Situação inicial'), {
             target: { value: 'FORECAST' },
         });
@@ -272,6 +299,26 @@ describe('ExpenseFormDialog — create (spec 0012)', () => {
             postedOn: '2026-11-04',
             status: 'FORECAST',
         });
+    });
+
+    // AC-0012-15: sair do cartão recolhe a fatura e descarta o valor digitado; não vaza `postedOn`.
+    it('drops a typed postedOn when the payment goes to an account and back to a card', async () => {
+        const { dialog } = await renderForm();
+        fill(dialog, {
+            Descrição: 'Tênis',
+            Tipo: TYPE_ID,
+            Valor: '300',
+            'Pagar com': cardPayment(CARD_ID),
+        });
+        await openStatement(dialog);
+        fill(dialog, { 'Fatura de': '2026-11-04' });
+        fill(dialog, { 'Pagar com': accountPayment(ACCOUNT_ID) });
+        fill(dialog, { 'Pagar com': cardPayment(CARD_ID) });
+        expect(within(dialog).queryByLabelText('Fatura de')).toBeNull();
+        await save(dialog);
+
+        expect(bodyOf(mocks.POST)).toMatchObject({ creditCardId: CARD_ID });
+        expect(bodyOf(mocks.POST)).not.toHaveProperty('postedOn');
     });
 
     // AC-0012-04: **Repetir até** só existe na fixa e vai como `recurrenceEndsOn`.
@@ -339,6 +386,9 @@ describe('ExpenseFormDialog — create (spec 0012)', () => {
             Tipo: TYPE_ID,
             'Valor total': '1.200,00',
             'Pagar com': cardPayment(CARD_ID),
+        });
+        await openStatement(dialog);
+        fill(dialog, {
             'Data da compra': '2026-10-10',
             'Fatura de': '2026-10-01',
             Parcelas: '121',
@@ -349,7 +399,7 @@ describe('ExpenseFormDialog — create (spec 0012)', () => {
             'Informe de 2 a 120 parcelas.',
         );
         expect(within(dialog).getByLabelText('Fatura de')).toHaveAccessibleDescription(
-            'Deixe vazio para a fatura do dia da compra. A fatura não pode ser anterior à data da compra.',
+            'A despesa entra na fatura que contém esta data. A fatura não pode ser anterior à data da compra.',
         );
         expect(mocks.POST).not.toHaveBeenCalled();
 
@@ -379,8 +429,9 @@ describe('ExpenseFormDialog — create (spec 0012)', () => {
             Tipo: TYPE_ID,
             Valor: '300',
             'Pagar com': cardPayment(CARD_ID),
-            'Fatura de': '2026-11-04',
         });
+        await openStatement(dialog);
+        fill(dialog, { 'Fatura de': '2026-11-04' });
         await save(dialog);
 
         const field = within(dialog).getByLabelText(label);
@@ -548,6 +599,37 @@ describe('ExpenseFormDialog — edit (spec 0012)', () => {
             'Lazer',
         ]);
         expect(within(dialog).getByLabelText('Tipo')).toHaveValue(VIAGEM_ID);
+    });
+
+    // AC-0012-15: ao alterar, Fatura de vem aberto só quando difere da data da compra.
+    it('opens Fatura de on edit only when it differs from the purchase date', async () => {
+        const same = expenseFixture({
+            bankAccountId: null,
+            creditCardId: CARD_ID,
+            occurredOn: '2026-10-15',
+            postedOn: '2026-10-15',
+        });
+        const { dialog } = await renderForm(same);
+        expect(within(dialog).queryByLabelText('Fatura de')).toBeNull();
+        expect(
+            within(dialog).getByText(
+                'Entra na fatura da data da compra. A fatura atual fecha em 03/11.',
+            ),
+        ).toBeInTheDocument();
+        await openStatement(dialog);
+        expect(within(dialog).getByLabelText('Fatura de')).toHaveValue('2026-10-15');
+    });
+
+    it('opens Fatura de on edit when the statement differs from the purchase date', async () => {
+        const other = expenseFixture({
+            bankAccountId: null,
+            creditCardId: CARD_ID,
+            occurredOn: '2026-10-15',
+            postedOn: '2026-11-20',
+        });
+        const { dialog } = await renderForm(other);
+        expect(within(dialog).getByLabelText('Fatura de')).toHaveValue('2026-11-20');
+        expect(within(dialog).queryByRole('button', { name: 'Lançar em outra fatura' })).toBeNull();
     });
 
     it('does not change the amount of a paid expense and clears the notes with null', async () => {

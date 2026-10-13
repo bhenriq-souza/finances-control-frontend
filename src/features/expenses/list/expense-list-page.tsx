@@ -1,9 +1,9 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Plus, Tags } from 'lucide-react';
 
 import { useCan } from '@/api/permissions';
 import { useAccountLookup, useCardLookup, type Lookup } from '@/api/queries/lookups';
-import { addMonths, formatDate, formatMonth } from '@/shared/dates';
+import { addMonths, formatDate, formatMonth, monthOf } from '@/shared/dates';
 import { Button, buttonVariants } from '@/ui/components/ui/button';
 import { EmptyState } from '@/ui/empty-state';
 import { EntryList, type EntryColumn } from '@/ui/entry-list';
@@ -132,7 +132,6 @@ function Summary({ expenses }: { expenses: readonly Expense[] }) {
  */
 export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps) {
     const canWrite = useCan('entries.write');
-    const navigate = useNavigate();
     const accounts = useAccountLookup();
     const cards = useCardLookup();
     const query = useExpenses(expenseListQuery(search));
@@ -221,13 +220,9 @@ export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps
                     onOpenChange={(open) => {
                         if (!open) onSearchChange({ ...search, novo: undefined });
                     }}
-                    onCreated={(first) =>
-                        void navigate({
-                            to: '/despesas/$despesaId',
-                            params: { despesaId: first.id },
-                            replace: true,
-                        })
-                    }
+                    // Depois de criar: o mês da primeira criada, sem filtros nem `novo`, sem abrir
+                    // o detalhe (AC-0012-14).
+                    onCreated={(first) => onSearchChange({ mes: monthOf(first.occurredOn) })}
                 />
             )}
         </div>

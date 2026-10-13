@@ -38,7 +38,14 @@ export const ACCOUNTS = [
     },
 ];
 
-export const CARDS = [{ id: CARD_ID, name: 'Nubank', archivedAt: null }];
+export const CARDS = [
+    {
+        id: CARD_ID,
+        name: 'Nubank',
+        archivedAt: null,
+        currentCycle: { startsOn: '2026-10-04', closesOn: '2026-11-03', dueOn: '2026-11-10' },
+    },
+];
 
 export const TYPES = [
     { id: TYPE_ID, name: 'Mercado', archivedAt: null },
