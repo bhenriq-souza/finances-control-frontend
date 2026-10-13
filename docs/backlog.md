@@ -232,7 +232,7 @@ Tarefas da [spec 0015](../specs/0015-dashboard-and-reports.md), da issue de entr
     - What: o dashboard em `/` pelos artboards aprovados e a remoção da `HomePage` provisória
     - Where: `src/features/reporting/dashboard/`, `src/routes/_app/index.tsx`, `src/features/identity/pages/home-page.tsx` (remoção), `e2e/dashboard.spec.ts`, `e2e/fixtures/data/reports.ts`
     - Done when: `AC-0015-01` a `AC-0015-05` e `AC-0015-10` cobertos; `INV-0015-01`, `INV-0015-02` e `INV-0015-04` verificados
-- [ ] **T-0015-02 — Relatórios** · #79
+- [x] **T-0015-02 — Relatórios** · #79
     - What: `/relatorios` com as abas de saldo, por tipo e fluxo de caixa, `MonthColumns` e o item **Relatórios**
     - Where: `src/features/reporting/reports/`, `src/ui/charts/month-columns.tsx`, `src/routes/_app/relatorios.tsx`, `src/app/shell/navigation.ts`, `e2e/reports.spec.ts`
     - Done when: `AC-0015-06` a `AC-0015-09` cobertos; `INV-0015-03` verificado
