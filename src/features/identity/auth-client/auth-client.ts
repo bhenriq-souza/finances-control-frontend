@@ -13,7 +13,10 @@ export interface AuthClient {
     signOut(): Promise<void>;
     getIdToken(forceRefresh?: boolean): Promise<string | null>;
     // spec 0006
-    /** Cria a conta, grava o nome e envia o email de verificação, nessa ordem. */
+    /**
+     * Cria a conta, grava o nome e envia o email de verificação, nessa ordem. Só a falha da
+     * criação rejeita; as dos passos seguintes não (AC-0006-11).
+     */
     signUpWithEmail(name: string, email: string, password: string): Promise<void>;
     sendEmailVerification(): Promise<void>;
     sendPasswordReset(email: string): Promise<void>;

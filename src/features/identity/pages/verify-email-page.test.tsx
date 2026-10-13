@@ -15,7 +15,8 @@ vi.mock('@/api/client', () => ({
 
 import { fakeSession, renderPage } from '../test-utils';
 
-import { RESEND_COOLDOWN_SECONDS, VerifyEmailPage } from './verify-email-page';
+import { RESEND_COOLDOWN_SECONDS } from './use-resend-verification';
+import { VerifyEmailPage } from './verify-email-page';
 
 const USER = { uid: 'u1', email: 'nova@example.com', emailVerified: false };
 

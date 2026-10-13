@@ -50,9 +50,16 @@ export function createFirebaseAuthClient(): AuthClient {
         async signUpWithEmail(name, email, password) {
             await ready;
             const { user } = await createUserWithEmailAndPassword(auth, email, password);
-            await updateProfile(user, { displayName: name });
+            // Daqui em diante a conta existe e a sessão está aberta: uma falha não volta ao
+            // formulário (uma nova tentativa daria `auth/email-already-in-use`) e o cadastro
+            // segue para a guarda de `_app`, onde o email pode ser reenviado (AC-0006-11).
+            await updateProfile(user, { displayName: name }).catch((error: unknown) => {
+                console.warn('Cadastro: falha ao gravar o nome da conta.', error);
+            });
             // Exigência do ADR-0009: o cadastro sempre envia o email de verificação.
-            await sendEmailVerification(user);
+            await sendEmailVerification(user).catch((error: unknown) => {
+                console.warn('Cadastro: falha ao enviar o email de verificação.', error);
+            });
         },
         async sendEmailVerification() {
             if (auth.currentUser) await sendEmailVerification(auth.currentUser);

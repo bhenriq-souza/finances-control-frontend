@@ -12,6 +12,12 @@ export const E2E_GOOGLE_ERROR_STORAGE_KEY = 'ftech.e2e.erro-google';
 /** Com `sim` aqui, `reloadUser` devolve o usuário atual com o email já verificado. */
 export const E2E_EMAIL_VERIFIED_STORAGE_KEY = 'ftech.e2e.email-verificado';
 
+/**
+ * Com um `code` do Firebase aqui, o envio do email de verificação dentro de `signUpWithEmail`
+ * falha com ele; como no SDK real, a conta já existe e o cadastro conclui mesmo assim (AC-0006-11).
+ */
+export const E2E_SIGN_UP_EMAIL_ERROR_STORAGE_KEY = 'ftech.e2e.erro-email-cadastro';
+
 const FIXED_USERS: Record<string, AuthUser> = {
     ativo: { uid: 'e2e-ativo', email: 'ativo@example.com', emailVerified: true },
     lancador: { uid: 'e2e-lancador', email: 'lancador@example.com', emailVerified: true },
@@ -79,9 +85,12 @@ export function createFakeAuthClient(): AuthClient {
             return Promise.resolve();
         },
         getIdToken: () => Promise.resolve(current ? `fake-token-${current.uid}` : null),
-        signUpWithEmail(_name, email) {
+        async signUpWithEmail(_name, email) {
             set({ uid: 'e2e-novo', email, emailVerified: false });
-            return Promise.resolve();
+            const code = globalThis.localStorage.getItem(E2E_SIGN_UP_EMAIL_ERROR_STORAGE_KEY);
+            await (code ? fail(code) : Promise.resolve()).catch((error: unknown) => {
+                console.warn('Cadastro: falha ao enviar o email de verificação.', error);
+            });
         },
         sendEmailVerification: () => Promise.resolve(),
         sendPasswordReset: () => Promise.resolve(),

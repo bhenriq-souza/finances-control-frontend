@@ -5,6 +5,7 @@ import {
     createFakeAuthClient,
     E2E_EMAIL_VERIFIED_STORAGE_KEY,
     E2E_GOOGLE_ERROR_STORAGE_KEY,
+    E2E_SIGN_UP_EMAIL_ERROR_STORAGE_KEY,
     E2E_USER_STORAGE_KEY,
 } from './fake-auth-client';
 
@@ -105,6 +106,20 @@ describe('fake auth client', () => {
             emailVerified: false,
         });
         await expect(client.reloadUser()).resolves.toMatchObject({ emailVerified: false });
+    });
+
+    it('still signs up when the test makes the verification email fail (AC-0006-11)', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        localStorage.setItem(E2E_SIGN_UP_EMAIL_ERROR_STORAGE_KEY, 'auth/too-many-requests');
+        const client = createFakeAuthClient();
+        const listener = vi.fn();
+        client.onAuthStateChanged(listener);
+
+        await client.signUpWithEmail('Nova', 'nova@example.com', '12345678');
+
+        expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ uid: 'e2e-novo' }));
+        expect(warn).toHaveBeenCalledTimes(1);
+        warn.mockRestore();
     });
 
     it('reloads the user as verified when the test says so', async () => {
