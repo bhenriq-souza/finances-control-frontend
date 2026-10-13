@@ -17,7 +17,7 @@ function ExpenseDetail() {
             expenseId={despesaId}
             search={search}
             onSearchChange={(next) => void navigate({ search: (prev) => ({ ...prev, ...next }) })}
-            onGone={() => void navigate({ to: '/despesas', search: {} })}
+            onBackToList={() => void navigate({ to: '/despesas', search: {} })}
         />
     );
 }

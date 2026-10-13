@@ -66,7 +66,7 @@ async function renderDetail({
                 expenseId={ID}
                 search={search}
                 onSearchChange={onSearchChange}
-                onGone={() => undefined}
+                onBackToList={() => undefined}
             />
         ),
     });
