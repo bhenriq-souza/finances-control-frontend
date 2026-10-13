@@ -17,6 +17,7 @@ Dar às telas de domínio (specs 0010+) tudo o que elas têm em comum, para que 
 - **Fora de escopo:** qualquer tela de domínio (specs 0010–0018); gráficos de série temporal (spec 0015); tabela com ordenação, paginação ou busca (a API não oferece nenhuma delas: as listas são sempre de um período).
 - **Depende do backend:** contrato na tag `v1.1.0` — rotas de leitura de [0011](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0011-accounts.md), [0012](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0012-expenses.md) e [0014](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0014-earnings.md) e a matriz de perfis de [0010](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0010-identity.md) e do hub ([perfis](https://github.com/bhenriq-souza/finances-control/blob/main/docs/user-profiles.md)). Toda resposta de sucesso vem envelopada em `{ data }`.
 - **Decisões de 2026-10-12 (aprovação):** páginas de prova `/_e2e/lista` e `/_e2e/formulario` só no build `--mode e2e`, eliminadas no de produção como o fake de autenticação; selo **Previsto** e **Em aberto** na família `info`, **Verificando** na neutra e **Aguardando** em `atencao`; as peças que o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) (versão `1791836639-e596`) desenha e o Design System ainda não define (diálogo, folha, select, controle segmentado, etiquetas de filtro, abas, menu da linha, campo de data, estado vazio, interruptor, barra de limite, erro de validação, véu, botão destrutivo, cores de gráfico) são construídas só com os tokens existentes e voltam ao Design System do hub numa revisão futura; cores de gráfico: realizado em `acento`, previsto em `info-fundo` com contorno `info`.
+- **Revisão de 2026-10-13 (seletor de data):** o `DateField` deixa de ser o `<input type="date">` nativo e passa a ser um campo de texto com máscara e calendário próprio, pelo [ADR 0001 local](adr/0001-seletor-de-data-proprio.md) (decisão do responsável, depois dos testes em `dev` no Firefox para Android); dependências novas `react-day-picker` e `@radix-ui/react-popover`.
 - **Forma visual:** componentes do [Design System](https://claude.ai/artifact/DxDnUbE9sSQdJbxTPh6WPQ) e o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) (lista, formulário em diálogo, confirmação, estados).
 
 ## Contracts
@@ -175,7 +176,12 @@ interface EntryColumn<T> {
 - **Véu dos diálogos e folhas:** `color-mix(in oklab, var(--ft-fundo) 72%, transparent)` no tema escuro e `48%` no claro — derivado do token `fundo`, sem token novo nem cor literal.
 - **`ConfirmDialog`** (`src/ui/confirm-dialog.tsx`), sobre o mesmo pacote, com `role="alertdialog"`: título, texto que diz **o que vai acontecer** (inclusive cascatas), botão de confirmar com o verbo da ação ("Excluir", "Revogar") e **Cancelar** com o foco inicial. Ação destrutiva usa a variante de botão `negativo` (fundo `negativo`, texto `sobre-acento`).
 - **`SelectField`** (`src/ui/select-field.tsx`): `<select>` nativo estilizado (melhor no celular que um menu próprio), com `<optgroup>` opcional (ex.: "Contas" e "Cartões"), rótulo, ajuda e erro.
-- **`DateField`** (`src/ui/date-field.tsx`): `<input type="date">` nativo; o valor já é `YYYY-MM-DD`, o formato da API.
+- **`DateField`** (`src/ui/date-field.tsx`), próprio ([ADR 0001 local](adr/0001-seletor-de-data-proprio.md)):
+    - **API:** controlado pelo react-hook-form com `useController` — `<DateField control={form.control} name="occurredOn" label="…" help? min? max? disabled? />`. O valor no formulário é `YYYY-MM-DD` ou `''` (vazio), o formato da API.
+    - **Digitação:** campo de texto com `inputMode="numeric"`, `placeholder` "dd/mm/aaaa" e máscara: só dígitos, com as barras postas ao digitar. Colar `aaaa-mm-dd` também vale. Data completa e existente vai para o formulário como `YYYY-MM-DD` e aparece como `dd/mm/aaaa`; texto incompleto ou data inexistente (`31/02/2026`) vai para o formulário como está e é recusado pela validação.
+    - **Validação:** `src/shared/dates/` exporta `dateSchema(mensagemObrigatória)` e `optionalDateSchema()` (zod), que aceitam só `YYYY-MM-DD` existente (e `''` no opcional) e recusam o resto com "Data inválida."; todo schema de formulário com data os usa.
+    - **Calendário:** um botão com ícone (`CalendarDays`, `aria-label` "Escolher data") abre o calendário de `react-day-picker` em pt-BR: abaixo de `md`, numa folha presa à base da tela (`@radix-ui/react-dialog`); a partir de `md`, num balão ancorado ao campo (`@radix-ui/react-popover`). Abre no mês da data do campo (ou de `today()`), marca hoje e a data escolhida, desabilita os dias fora de `min`/`max`, navega por mês e por teclado (setas, `PageUp`/`PageDown`, `Home`/`End`). Escolher um dia preenche o campo, fecha e devolve o foco ao campo; `Esc` fecha sem mudar o valor e devolve o foco ao botão.
+    - **Desenho:** só tokens do tema, nos dois temas; alvo de toque de 44px no botão e nos dias; o campo ocupa a largura do formulário em todos os tamanhos.
 - **Campos e erros:** todo campo tem `<label>` visível, mensagem de erro ligada por `aria-describedby` e `aria-invalid`. Os formulários usam `react-hook-form` com `zodResolver`; valores monetários usam `MoneyInput` e `moneySchema` (spec 0008).
 - **Erros da API num formulário** — `applyApiError(error, form, fieldMap)` em `src/api/errors/form-errors.ts`:
     - `VALIDATION_ERROR`: cada `details[].path` cujo primeiro segmento está em `fieldMap` vira erro do campo (com a mensagem geral do catálogo para o código do campo); o que não casar vai para o alerta do formulário;
@@ -229,6 +235,7 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 - **INV-0009-04:** todo status mostrado ao usuário passa por `StatusBadge`, com rótulo e família da tabela desta spec.
 - **INV-0009-05:** datas de negócio circulam como `YYYY-MM-DD` e "hoje" é sempre `today()` no fuso `America/Sao_Paulo`.
 - **INV-0009-06:** erro de API num formulário nunca fecha o formulário nem apaga o que foi digitado.
+- **INV-0009-07:** nenhum `<input type="date">` resta em `src/`, e o código do calendário (`react-day-picker`, `date-fns`) não entra no JS inicial nem no chunk de rota nenhuma: é carregado quando o calendário abre.
 
 ## Error cases
 
@@ -255,6 +262,9 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 - **AC-0009-09:** um `AUTH_UNAVAILABLE` numa consulta mostra o aviso global com a mensagem do catálogo.
 - **AC-0009-10:** `useAccountLookup` devolve o rótulo de uma conta arquivada e "Conta removida" para um id desconhecido.
 - **AC-0009-11:** em `/despesas/tipos` e `/receitas/tipos`, **Renomear** e **Arquivar** são botões `outline` com ícone, e **Mostrar arquivados** é uma caixa de seleção que liga e desliga `?arquivados=1`.
+- **AC-0009-12:** na página de prova, digitar `05112026` no `DateField` mostra `05/11/2026` e envia `2026-11-05`; colar `2026-11-05` dá o mesmo; `31/02/2026` e `05/11/20` mostram "Data inválida." no envio e nada é enviado; num campo opcional, apagar o texto envia `''`.
+- **AC-0009-13:** o botão **Escolher data** abre o calendário em pt-BR (folha no `celular`, balão no `tablet` e no `desktop`) no mês da data do campo; escolher um dia preenche o campo, fecha o calendário e devolve o foco ao campo; `Esc` fecha sem mudar o valor; um dia fora de `min`/`max` não pode ser escolhido.
+- **AC-0009-14:** os formulários de despesa, receita, transferência, pagamento e estorno de fatura, encerramento de série e os diálogos de pagar e receber usam o `DateField` próprio, e os seus fluxos de e2e passam digitando a data.
 
 ## Test mapping
 
@@ -271,6 +281,8 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 | AC-0009-09              | `src/app/notices.test.tsx`                                                                                                                                                      |
 | AC-0009-10, INV-0009-01 | `src/api/queries/lookups.test.tsx` e o gate `boundaries`                                                                                                                        |
 | AC-0009-11              | `src/features/expenses/types/expense-types-page.test.tsx`, `src/features/earnings/types/earning-types-page.test.tsx`, `e2e/expense-types.spec.ts` e `e2e/earning-types.spec.ts` |
+| AC-0009-12, AC-0009-13  | `src/ui/date-field.test.tsx`, `src/shared/dates/dates.test.ts` e `e2e/date-field.spec.ts` (página de prova `/_e2e/formulario`)                                                  |
+| AC-0009-14, INV-0009-07 | os e2e de cada formulário, `src/ui/date-field-usage.test.ts` (varredura de `src/`) e o gate `build` (o calendário fora do JS inicial)                                           |
 
 ## Open questions
 
