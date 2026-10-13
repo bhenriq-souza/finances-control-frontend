@@ -19,6 +19,11 @@ export const earningListSearchSchema = z.object({
     natureza: optional(z.enum(EARNING_KINDS)),
     grupo: optional(id),
     novo: optional(z.literal(1)),
+    // Ações rápidas da linha: o id da receita cujo diálogo está aberto sobre a lista.
+    receber: optional(id),
+    editar: optional(id),
+    excluir: optional(id),
+    desfazer: optional(id),
 });
 
 /** Query de `GET /earnings`, pelo contrato. */
@@ -26,7 +31,7 @@ export type EarningListQuery = NonNullable<operations['listEarnings']['parameter
 
 export type EarningListSearch = z.infer<typeof earningListSearchSchema>;
 
-/** Parâmetros de busca de `/receitas/$receitaId`; as ações são das tarefas seguintes. */
+/** Parâmetros de busca de `/receitas/$receitaId`. */
 export const earningDetailSearchSchema = z.object({
     editar: optional(z.literal(1)),
     receber: optional(z.literal(1)),

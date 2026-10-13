@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Plus, Tags } from 'lucide-react';
+import { useState } from 'react';
 
 import { useCan } from '@/api/permissions';
 import { useAccountLookup } from '@/api/queries/lookups';
@@ -8,11 +9,22 @@ import { formatDate } from '@/shared/dates';
 import { Button, buttonVariants } from '@/ui/components/ui/button';
 import { EmptyState } from '@/ui/empty-state';
 import { EntryList, type EntryColumn } from '@/ui/entry-list';
+import { FormAlert } from '@/ui/form-alert';
 import { Money } from '@/ui/money';
+import { useNotify } from '@/ui/notice';
+import { RowMenu } from '@/ui/row-menu';
 import { EntryListSkeleton } from '@/ui/skeleton';
 import { StatusBadge } from '@/ui/status-badge';
 import { earningBadge } from '@/ui/status-labels';
 
+import { useChangeEarningStatus } from '../detail/actions/api';
+import { menuItems } from '../detail/actions/menu-items';
+import {
+    ACTION_NOTICES,
+    ACTION_TARGET,
+    menuActions,
+    type MenuAction,
+} from '../detail/actions/transitions';
 import { EarningFormDialog } from '../form/earning-form';
 
 import { EarningFilters, MonthNavigation } from './earning-filters';
@@ -25,6 +37,7 @@ import {
     summarizeEarnings,
     type EarningSummary,
 } from './earnings-query';
+import { isRowDialog, RowDialogs } from './row-actions';
 
 export interface EarningListPageProps {
     search: EarningListSearch;
@@ -81,6 +94,24 @@ export function EarningListPage({ search, onSearchChange }: EarningListPageProps
     const accounts = useAccountLookup();
     const query = useQuery(earningsListQuery(earningListParams(search)));
     const earnings = query.data ? sortEarnings(query.data) : undefined;
+    const notify = useNotify();
+    const change = useChangeEarningStatus();
+    const [dialogError, setDialogError] = useState<string | null>(null);
+
+    // Receber, Editar, Excluir e Desfazer recebimento abrem o diálogo sobre a lista; as demais
+    // transições enviam direto (spec 0014, "Ações rápidas na lista").
+    const runAction = (earning: Earning, action: MenuAction) => {
+        setDialogError(null);
+        if (isRowDialog(action)) {
+            onSearchChange({ ...search, [action]: earning.id });
+        } else {
+            change.mutate(
+                { id: earning.id, body: { status: ACTION_TARGET[action] } },
+                { onSuccess: () => notify({ tone: 'sucesso', message: ACTION_NOTICES[action] }) },
+            );
+        }
+    };
+    const actionError = change.error ? asApiError(change.error).userMessage : dialogError;
 
     const columns: readonly EntryColumn<Earning>[] = [
         { header: 'Data', cell: (earning) => formatDate(earning.occurredOn, 'relativa') },
@@ -153,6 +184,7 @@ export function EarningListPage({ search, onSearchChange }: EarningListPageProps
                 <EntryListSkeleton />
             ) : (
                 <>
+                    <FormAlert message={actionError} />
                     <Summary summary={summarizeEarnings(earnings)} />
                     <EntryList
                         items={earnings}
@@ -161,6 +193,20 @@ export function EarningListPage({ search, onSearchChange }: EarningListPageProps
                         columns={columns}
                         renderCard={renderCard}
                         href={(earning) => `/receitas/${earning.id}`}
+                        actions={
+                            canWrite
+                                ? (earning) => (
+                                      <RowMenu
+                                          label={`Ações de ${earning.description}`}
+                                          items={menuItems(
+                                              menuActions(earning),
+                                              (action) => runAction(earning, action),
+                                              change.isPending,
+                                          )}
+                                      />
+                                  )
+                                : undefined
+                        }
                         empty={
                             hasFilters(search) ? (
                                 <EmptyState
@@ -178,6 +224,13 @@ export function EarningListPage({ search, onSearchChange }: EarningListPageProps
                         }
                     />
                 </>
+            )}
+            {canWrite && (
+                <RowDialogs
+                    search={search}
+                    onSearchChange={onSearchChange}
+                    onFail={setDialogError}
+                />
             )}
             {canWrite && search.novo === 1 && (
                 <EarningFormDialog

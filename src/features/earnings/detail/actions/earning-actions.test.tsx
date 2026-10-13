@@ -119,9 +119,40 @@ function detailFetches() {
 }
 
 beforeEach(() => {
+    vi.unstubAllGlobals();
     mocks.get.mockReset();
     mocks.patch.mockReset();
     mocks.del.mockReset();
+});
+
+describe('EarningActions on a narrow screen (spec 0014)', () => {
+    // AC-0014-13, INV-0014-05: abaixo de `md`, a primeira transição em largura total e as demais
+    // (mais Excluir) em Mais ações.
+    it('shows Receber full width and the rest, with Editar, under Mais ações', async () => {
+        vi.stubGlobal('matchMedia', () => ({
+            matches: false,
+            addEventListener: () => undefined,
+            removeEventListener: () => undefined,
+        }));
+        mocks.patch.mockResolvedValue(ok(RECEIVED));
+        await renderDetail(OPEN);
+
+        expect(actionNames()).toEqual(['Receber', 'Mais ações']);
+        expect(screen.getByRole('button', { name: 'Receber' })).toHaveClass('w-full');
+
+        await act(async () => {
+            const trigger = screen.getByRole('button', { name: 'Mais ações' });
+            fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false, pointerType: 'mouse' });
+            fireEvent.pointerUp(trigger, { button: 0, pointerType: 'mouse' });
+            fireEvent.click(trigger);
+        });
+        const menu = await screen.findByRole('menu');
+        expect(
+            within(menu)
+                .getAllByRole('menuitem')
+                .map((item) => item.textContent),
+        ).toEqual(['Marcar para verificar', 'Editar', 'Excluir']);
+    });
 });
 
 describe('EarningActions (spec 0014)', () => {

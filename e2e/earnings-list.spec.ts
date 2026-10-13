@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { stubApi, type ApiStub } from './fixtures/api';
+import { stubApi, type ApiStub, type StubRoute } from './fixtures/api';
 import { chooseUser, signInWithEmail, stubUsersMe, type E2EUser } from './fixtures/auth';
 import {
     BANK_ACCOUNTS,
@@ -8,6 +8,8 @@ import {
     FREELANCE_TYPE,
     OCTOBER_EARNINGS,
     PROJECT_INSTALLMENT,
+    ROOM_RENT,
+    SALARY,
     SAVINGS_ACCOUNT,
 } from './fixtures/data/earnings';
 import { stubRuntime } from './fixtures/runtime-config';
@@ -15,15 +17,27 @@ import { stubRuntime } from './fixtures/runtime-config';
 // Lista e detalhe de receitas (spec 0014): AC-0014-01, AC-0014-02, AC-0014-07 (lista),
 // AC-0014-09 (lista) e INV-0014-01.
 
-async function openAs(page: Page, user: E2EUser, path: string): Promise<ApiStub> {
+async function openAs(
+    page: Page,
+    user: E2EUser,
+    path: string,
+    routes: StubRoute[] = [],
+): Promise<ApiStub> {
+    await page.clock.setFixedTime(new Date('2026-10-12T12:00:00-03:00'));
     await stubRuntime(page);
     const stub = await stubApi(page, [
+        ...routes,
         { method: 'GET', path: '/earnings', body: { data: OCTOBER_EARNINGS } },
         {
             method: 'GET',
             path: `/earnings/${PROJECT_INSTALLMENT.id}`,
             body: { data: PROJECT_INSTALLMENT },
         },
+        ...[ROOM_RENT, SALARY].map((item): StubRoute => ({
+            method: 'GET',
+            path: `/earnings/${item.id}`,
+            body: { data: item },
+        })),
         { method: 'GET', path: '/bank-accounts', body: { data: BANK_ACCOUNTS } },
         { method: 'GET', path: '/earning-types', body: { data: EARNING_TYPES } },
     ]);
@@ -203,4 +217,127 @@ test('Receitas is in the main navigation and the detail is read-only', async ({ 
         `/receitas?grupo=${PROJECT_INSTALLMENT.installment?.groupId}`,
     );
     await expect(page.getByRole('button', { name: /Receber|Excluir/ })).toHaveCount(0);
+});
+
+// Ações rápidas da linha (spec 0014): AC-0014-11, AC-0014-12 e INV-0014-05.
+
+/** O menu da linha visível neste tamanho de tela (a tabela e os cartões repetem o menu). */
+function rowMenu(page: Page, description: string) {
+    return page
+        .getByRole('button', { name: `Ações de ${description}` })
+        .and(page.locator(':visible'));
+}
+
+function statusRequests(stub: ApiStub, id: string) {
+    return stub.requests.filter((r) => r.method === 'PATCH' && r.path === `/earnings/${id}/status`);
+}
+
+// AC-0014-11, INV-0014-05: o menu de uma pendente tem as ações do detalhe; Receber abre o diálogo
+// sobre a lista e, depois de enviar, o mês e os filtros continuam.
+test('the row menu of a pending earning receives it over the list, keeping month and filters', async ({
+    page,
+}) => {
+    const stub = await openAs(page, 'lancador', '/receitas?mes=2026-10&status=OVERDUE', [
+        {
+            method: 'PATCH',
+            path: `/earnings/${PROJECT_INSTALLMENT.id}/status`,
+            body: {
+                data: { ...PROJECT_INSTALLMENT, status: 'RECEIVED', receivedOn: '2026-10-12' },
+            },
+        },
+    ]);
+
+    await rowMenu(page, 'Projeto site').click();
+    const menu = page.getByRole('menu', { name: 'Ações de Projeto site' });
+    await expect(menu.getByRole('menuitem')).toHaveText([
+        'Receber',
+        'Marcar para verificar',
+        'Editar',
+        'Excluir',
+    ]);
+    await menu.getByRole('menuitem', { name: 'Receber' }).click();
+
+    await expect(page).toHaveURL(new RegExp(`receber=${PROJECT_INSTALLMENT.id}`));
+    const dialog = page.getByRole('dialog', { name: 'Receber receita' });
+    await expect(dialog.getByLabel('Recebida em')).toHaveValue('12/10/2026');
+    await dialog.getByRole('button', { name: 'Receber' }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('Receita recebida.')).toBeVisible();
+    expect(statusRequests(stub, PROJECT_INSTALLMENT.id).map((r) => r.body)).toEqual([
+        { status: 'RECEIVED', receivedOn: '2026-10-12' },
+    ]);
+    await expect(page).toHaveURL(/mes=2026-10/);
+    await expect(page).toHaveURL(/status=OVERDUE/);
+    await expect(page).not.toHaveURL(/receber=/);
+});
+
+// AC-0014-12: Confirmar numa previsão envia direto; um 409 vira alerta acima da lista.
+test('Confirmar in the row menu sends OPEN without a dialog, and a 409 shows an alert', async ({
+    page,
+}) => {
+    const stub = await openAs(page, 'lancador', '/receitas?mes=2026-10', [
+        {
+            method: 'PATCH',
+            path: `/earnings/${ROOM_RENT.id}/status`,
+            status: 409,
+            body: {
+                error: {
+                    code: 'EARNING_STATUS_TRANSITION_NOT_ALLOWED',
+                    message: 'Transition not allowed',
+                },
+            },
+        },
+    ]);
+
+    await rowMenu(page, 'Aluguel da sala').click();
+    await page.getByRole('menuitem', { name: 'Confirmar' }).click();
+
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const alert = page.getByRole('alert');
+    await expect(alert).toBeVisible();
+    await expect(alert).not.toContainText('Transition not allowed');
+    expect(statusRequests(stub, ROOM_RENT.id).map((r) => r.body)).toEqual([{ status: 'OPEN' }]);
+    await expect(page.getByText('Receita confirmada.')).toHaveCount(0);
+});
+
+// AC-0014-12: com `leitor`, nenhuma linha tem menu e os parâmetros não abrem diálogo.
+test('a viewer has no row menu', async ({ page }) => {
+    await openAs(page, 'leitor', `/receitas?mes=2026-10&receber=${PROJECT_INSTALLMENT.id}`);
+
+    await expect(page.getByRole('region', { name: 'Resumo' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Ações de/ })).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+// INV-0014-05: Excluir e Desfazer recebimento abrem os mesmos diálogos sobre a lista.
+test('Excluir and Desfazer recebimento open their dialogs over the list', async ({ page }) => {
+    const stub = await openAs(page, 'lancador', '/receitas?mes=2026-10', [
+        { method: 'DELETE', path: `/earnings/${ROOM_RENT.id}` },
+        {
+            method: 'PATCH',
+            path: `/earnings/${SALARY.id}/status`,
+            body: { data: { ...SALARY, status: 'OPEN', receivedOn: null } },
+        },
+    ]);
+
+    await rowMenu(page, 'Salário').click();
+    await page.getByRole('menuitem', { name: 'Desfazer recebimento' }).click();
+    const undo = page.getByRole('alertdialog', { name: 'Desfazer recebimento?' });
+    await expect(undo).toContainText('O valor sai do saldo da conta.');
+    expect(statusRequests(stub, SALARY.id)).toHaveLength(0);
+    await undo.getByRole('button', { name: 'Desfazer recebimento' }).click();
+    await expect(undo).toBeHidden();
+    expect(statusRequests(stub, SALARY.id).map((r) => r.body)).toEqual([{ status: 'OPEN' }]);
+
+    await rowMenu(page, 'Aluguel da sala').click();
+    await page.getByRole('menuitem', { name: 'Excluir' }).click();
+    const remove = page.getByRole('alertdialog', { name: 'Excluir receita?' });
+    await expect(remove).toContainText('A receita será excluída.');
+    await remove.getByRole('button', { name: 'Excluir' }).click();
+    await expect(remove).toBeHidden();
+    await expect(page).toHaveURL(/\/receitas\?mes=2026-10$/);
+    expect(stub.requests.filter((r) => r.method === 'DELETE').map((r) => r.path)).toEqual([
+        `/earnings/${ROOM_RENT.id}`,
+    ]);
 });
