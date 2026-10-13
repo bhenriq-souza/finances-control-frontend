@@ -111,7 +111,7 @@ test('signs the amount from the point of view of the account filter', async ({
 // AC-0018-07: **Transferências** aparece em **Mais** no celular; a lateral a lista no desktop.
 test('Transferências is reachable from the navigation', async ({ page }, testInfo) => {
     await open(page, '/');
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
     const nav = page.getByRole('navigation', { name: 'Principal' });
 
     if (testInfo.project.name === 'desktop') {

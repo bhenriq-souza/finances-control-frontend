@@ -25,8 +25,11 @@ test('without a session / leads to /entrar?redirect=%2F, and the active user rea
     await signInWithEmail(page);
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
-    await expect(page.getByText('Administrador')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
+    await page.getByRole('button', { name: 'Menu do usuário' }).click();
+    await expect(
+        page.getByRole('region', { name: 'Conta do usuário' }).getByText('Administrador'),
+    ).toBeVisible();
     expect(authorization).toBe('Bearer fake-token-e2e-ativo');
 });
 
@@ -46,10 +49,13 @@ test('no _app route renders before /users/me answers with a profile', async ({ p
     await signInWithEmail(page);
 
     await expect(page.getByRole('status', { name: 'Carregando' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Olá/ })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toHaveCount(0);
     release();
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
-    await expect(page.getByText('Leitor')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
+    await page.getByRole('button', { name: 'Menu do usuário' }).click();
+    await expect(
+        page.getByRole('region', { name: 'Conta do usuário' }).getByText('Leitor'),
+    ).toBeVisible();
 });
 
 // AC-0006-03, INV-0006-02.
@@ -75,7 +81,10 @@ test('the user without a profile only sees /aguardando-aprovacao; "Verificar de 
     profile = 'BILLER';
     await page.getByRole('button', { name: 'Verificar de novo' }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText('Lançador')).toBeVisible();
+    await page.getByRole('button', { name: 'Menu do usuário' }).click();
+    await expect(
+        page.getByRole('region', { name: 'Conta do usuário' }).getByText('Lançador'),
+    ).toBeVisible();
 });
 
 // AC-0006-04, INV-0006-02, ERR-0006-06.

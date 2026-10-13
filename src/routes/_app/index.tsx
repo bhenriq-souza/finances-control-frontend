@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { HomePage } from '@/features/identity';
+import { Dashboard } from '@/features/reporting';
 
+/** Tela inicial: o dashboard de saldo (spec 0015). */
 export const Route = createFileRoute('/_app/')({
-    component: HomePage,
+    component: Dashboard,
 });

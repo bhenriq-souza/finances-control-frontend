@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
     await stubUsersMe(page, 'ativo');
     await page.goto('/entrar');
     await signInWithEmail(page);
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
 });
 
 // AC-0006-07: barra inferior no celular e no tablet, barra lateral no desktop.

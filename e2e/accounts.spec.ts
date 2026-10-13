@@ -186,7 +186,7 @@ test('Cartões is in the bottom bar and Contas is under Mais, or both in the sid
     page,
 }, testInfo) => {
     await openAs(page, '/');
-    await expect(page.getByRole('heading', { name: 'Olá, Ana Souza' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Início', level: 1 })).toBeVisible();
     const nav = page.getByRole('navigation', { name: 'Principal' });
 
     await expect(nav.getByRole('link', { name: 'Cartões' })).toBeVisible();

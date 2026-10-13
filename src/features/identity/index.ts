@@ -15,7 +15,6 @@ export {
     type Profile,
 } from '@/api/queries/current-user';
 export { safeRedirect } from './redirect';
-export { HomePage } from './pages/home-page';
 export { PasswordResetPage } from './pages/password-reset-page';
 export { PendingApprovalPage } from './pages/pending-approval-page';
 export { SignInPage } from './pages/sign-in-page';

@@ -15,13 +15,17 @@ import { ThemeProvider } from '@/ui/theme/theme-provider';
 
 const mocks = vi.hoisted(() => ({ queryFn: vi.fn() }));
 
-// `GET /users/me` simulado no cliente da API: `queryFn` devolve o `UserResponse` ou falha.
+// `GET /users/me` simulado no cliente da API: `queryFn` devolve o `UserResponse` ou falha. As
+// consultas do dashboard de `/` (spec 0015) ficam pendentes: aqui só importa a rota.
 vi.mock('@/api/client', () => ({
     api: {
-        GET: async () => ({
-            data: { data: (await mocks.queryFn()) as unknown },
-            response: new Response(null, { status: 200 }),
-        }),
+        GET: async (path: string) =>
+            path === '/users/me'
+                ? {
+                      data: { data: (await mocks.queryFn()) as unknown },
+                      response: new Response(null, { status: 200 }),
+                  }
+                : new Promise(() => undefined),
     },
 }));
 
@@ -100,6 +104,12 @@ function renderAt(path: string, user: AuthUser | null) {
 
 const heading = (name: string | RegExp) => screen.findByRole('heading', { name });
 
+/** O perfil do usuário atual, no menu do usuário do shell. */
+async function profileInMenu(label: string) {
+    fireEvent.click(await screen.findByRole('button', { name: 'Menu do usuário' }));
+    return screen.findByText(label);
+}
+
 beforeEach(() => {
     mocks.queryFn.mockReset();
 });
@@ -114,8 +124,8 @@ describe('routes (spec 0006)', () => {
         fireEvent.input(screen.getByLabelText('Senha'), { target: { value: 'segredo' } });
         fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
-        expect(await heading('Olá, Ana')).toBeInTheDocument();
-        expect(screen.getByText('Administrador')).toBeInTheDocument();
+        expect(await heading('Início')).toBeInTheDocument();
+        expect(await profileInMenu('Administrador')).toBeInTheDocument();
         expect(router.state.location.pathname).toBe('/');
     });
 
@@ -126,7 +136,8 @@ describe('routes (spec 0006)', () => {
         await heading('Entrar no FTech Finance');
         fireEvent.click(screen.getByRole('button', { name: 'Entrar com Google' }));
 
-        expect(await screen.findByText('Lançador')).toBeInTheDocument();
+        expect(await heading('Início')).toBeInTheDocument();
+        expect(await profileInMenu('Lançador')).toBeInTheDocument();
         expect(router.state.location.href).toBe('/');
     });
 
@@ -159,7 +170,8 @@ describe('routes (spec 0006)', () => {
 
         await heading('Verifique seu email');
         fireEvent.click(screen.getByRole('button', { name: 'Já verifiquei' }));
-        expect(await screen.findByText('Leitor')).toBeInTheDocument();
+        expect(await heading('Início')).toBeInTheDocument();
+        expect(await profileInMenu('Leitor')).toBeInTheDocument();
 
         await router.navigate({ to: '/verificar-email' });
         fireEvent.click(await screen.findByRole('button', { name: 'Sair' }));
@@ -172,7 +184,7 @@ describe('routes (spec 0006)', () => {
 
         await heading('Aguardando aprovação');
         fireEvent.click(screen.getByRole('button', { name: 'Verificar de novo' }));
-        expect(await heading('Olá, Ana')).toBeInTheDocument();
+        expect(await heading('Início')).toBeInTheDocument();
 
         await router.navigate({ to: '/aguardando-aprovacao' });
         fireEvent.click(await screen.findByRole('button', { name: 'Sair' }));
@@ -189,7 +201,7 @@ describe('routes (spec 0006)', () => {
         );
         fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
 
-        expect(await heading('Olá, Ana')).toBeInTheDocument();
+        expect(await heading('Início')).toBeInTheDocument();
         expect(client.signOut).not.toHaveBeenCalled();
     });
 
@@ -208,6 +220,6 @@ describe('routes (spec 0006)', () => {
         renderAt('/', USER);
 
         expect(await screen.findByRole('status', { name: 'Carregando' })).toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: /Olá/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Início' })).not.toBeInTheDocument();
     });
 });
