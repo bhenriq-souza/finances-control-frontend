@@ -76,7 +76,7 @@ Na fatura persistida, **Informar mínimo** (com `entries.write`): `FormDialog` c
 ### Estornos
 
 - **Novo estorno** (com `entries.write`) no painel e no detalhe, e por `?estorno=1[&despesa=<id>]` (a tela da despesa leva até aqui):
-    - `description` (até 200), `amountCents` (`moneySchema()`), `occurredOn` (padrão `today()`), `postedOn` (opcional; ajuda "Deixe vazio para a fatura do dia."), despesa de origem (opcional: `SelectField` com as despesas da fatura atual e da última fechada; pré-selecionada por `despesa`), `notes` (até 1000);
+    - `description` (até 200), `amountCents` (`moneySchema()`), `occurredOn` (padrão `today()`), `postedOn` (opcional; ajuda "Deixe vazio para a fatura do dia."), despesa de origem (opcional: `SelectField` com as despesas da fatura atual e da última fechada; pré-selecionada por `despesa`; se essa despesa não está nessas duas faturas, ela é lida por `GET /expenses/{id}` e entra num grupo próprio quando é deste cartão, senão `despesa` é ignorada), `notes` (até 1000);
     - `POST /credit-card-refunds` com `creditCardId`.
 - **Editar:** só `description` e `notes` → `PATCH /credit-card-refunds/{id}`.
 - **Excluir:** `ConfirmDialog` → `DELETE /credit-card-refunds/{id}`.
@@ -123,6 +123,7 @@ Na fatura persistida, **Informar mínimo** (com `entries.write`): `FormDialog` c
 - **AC-0013-08:** **Novo estorno** a partir de `?estorno=1&despesa=<id>` vem com a despesa selecionada e envia `expenseId`; `409 REFUND_EXCEEDS_EXPENSE` marca o valor.
 - **AC-0013-09:** com `leitor`, nenhuma ação de escrita aparece.
 - **AC-0013-10:** nos três projetos, o painel e o detalhe seguem o `EntryList` e os diálogos o `FormDialog`.
+- **AC-0013-11:** **Estornar** no detalhe de uma despesa de cartão de uma fatura mais antiga que a última fechada abre o **Novo estorno** com essa despesa selecionada; uma `despesa` de outro cartão é ignorada.
 
 ## Test mapping
 
@@ -130,7 +131,7 @@ Na fatura persistida, **Informar mínimo** (com `entries.write`): `FormDialog` c
 | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | AC-0013-01, AC-0013-02, INV-0013-01, INV-0013-03                                     | `e2e/statements.spec.ts` e `src/features/statements/panel/*.test.tsx`           |
 | AC-0013-03, AC-0013-04, AC-0013-05, AC-0013-06, AC-0013-07, INV-0013-02, INV-0013-04 | `src/features/statements/payment/*.test.tsx` e `e2e/statement-payments.spec.ts` |
-| AC-0013-08                                                                           | `src/features/statements/refunds/*.test.tsx` e `e2e/refunds.spec.ts`            |
+| AC-0013-08, AC-0013-11                                                               | `src/features/statements/refunds/*.test.tsx` e `e2e/refunds.spec.ts`            |
 | AC-0013-09, AC-0013-10                                                               | `e2e/statements.spec.ts` (com `leitor`)                                         |
 
 ## Open questions
