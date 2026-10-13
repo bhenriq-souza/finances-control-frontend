@@ -46,7 +46,9 @@ function NavEntry({ entry, className }: { entry: BottomBarEntry; className: stri
  * a marca e o menu do usuário no topo do conteúdo. A navegação é uma só, reposicionada por
  * tamanho, e mostra só os itens do perfil (INV-0006-03): a barra inferior, os itens de
  * `slot: 'barra'` (até quatro) e o **Mais**; a lateral, todos os itens e nunca o **Mais** (spec
- * 0009). `items` existe para os testes; a rota usa `NAV_ITEMS`.
+ * 0009). Camadas: o cabeçalho (z-30, que contém o painel do menu do usuário) e a navegação
+ * (z-20) ficam acima do botão flutuante das listas (z-10); diálogos e folhas (z-40 e z-50)
+ * ficam acima de tudo. `items` existe para os testes; a rota usa `NAV_ITEMS`.
  */
 export function AppShell({ items = NAV_ITEMS }: { items?: readonly NavItem[] }) {
     const user = useCurrentUser();
@@ -77,7 +79,7 @@ export function AppShell({ items = NAV_ITEMS }: { items?: readonly NavItem[] }) 
                     </ul>
                 </nav>
             </aside>
-            <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-linha bg-superficie px-4 md:px-6 lg:justify-end lg:border-b-0 lg:bg-fundo lg:px-8">
+            <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-linha bg-superficie px-4 md:px-6 lg:justify-end lg:border-b-0 lg:bg-fundo lg:px-8">
                 <BrandRow className="flex items-center gap-2 lg:hidden" />
                 <UserMenu user={user} />
             </header>
