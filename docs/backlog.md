@@ -296,7 +296,7 @@ Tarefas da revisão das specs [0009](../specs/0009-lists-and-reference-data.md),
     - What: `RowMenu` sobre `@radix-ui/react-dropdown-menu` e a coluna `actions` do `EntryList`, com a página de prova
     - Where: `package.json`, `src/ui/row-menu.tsx`, `src/ui/entry-list.tsx`, `src/routes/[_]e2e/`, `e2e/entry-list.spec.ts`
     - Done when: `AC-0009-15` coberto; `INV-0009-08` verificado
-- [ ] **T-0012-06 — Ações rápidas de despesas** · #143
+- [x] **T-0012-06 — Ações rápidas de despesas** · #143
     - What: o menu de cada linha de `/despesas` com os diálogos sobre a lista, e **Mais ações** no detalhe pelo celular; depende da T-0009-08
     - Where: `src/features/expenses/list/`, `src/features/expenses/detail/`, `e2e/expenses-list.spec.ts`, `e2e/expenses-detail.spec.ts`
     - Done when: `AC-0012-16` a `AC-0012-18` cobertos; `INV-0012-06` verificado

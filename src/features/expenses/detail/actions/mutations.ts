@@ -31,6 +31,13 @@ export function useChangeExpenseStatus(id: string) {
     });
 }
 
+/** A mesma transição, com o id na chamada: a lista envia a de qualquer linha (T-0012-06). */
+export function useChangeAnyExpenseStatus() {
+    return useExpenseMutation(async ({ id, body }: { id: string; body: ChangeExpenseStatus }) => {
+        unwrap(await api.PATCH('/expenses/{id}/status', { params: { path: { id } }, body }));
+    });
+}
+
 /** `DELETE /expenses/{id}`: a cascata (parcelas, série) é decidida pelo backend. */
 export function useDeleteExpense(id: string) {
     return useExpenseMutation(async () => {

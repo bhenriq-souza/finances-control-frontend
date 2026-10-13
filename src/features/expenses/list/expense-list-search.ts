@@ -35,6 +35,11 @@ export const expenseListSearchSchema = z.object({
     grupo: uuid,
     /** Abre o formulário de nova despesa (T-0012-02). */
     novo: flag,
+    /** Ações rápidas de uma linha: o id da despesa; abrem o diálogo sobre a lista (T-0012-06). */
+    pagar: uuid,
+    editar: uuid,
+    excluir: uuid,
+    desfazer: uuid,
 });
 
 export type ExpenseListSearch = z.infer<typeof expenseListSearchSchema>;

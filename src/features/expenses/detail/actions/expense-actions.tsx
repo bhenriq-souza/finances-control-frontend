@@ -1,9 +1,11 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 import { useCan } from '@/api/permissions';
 import { Button, buttonVariants } from '@/ui/components/ui/button';
 import { useNotify } from '@/ui/notice';
+import { RowMenu, type RowMenuItem } from '@/ui/row-menu';
 
 import type { Expense } from '../../list/expense-model';
 
@@ -17,9 +19,11 @@ import {
 import { useActionErrorEffects, useChangeExpenseStatus } from './mutations';
 import { PaymentMethodDialog } from './payment-method-dialog';
 import { DeleteExpenseDialog, PayExpenseDialog, UndoPaymentDialog } from './status-dialogs';
+import { useIsPhone } from './use-is-phone';
 
 /** Os parâmetros de busca das ações (`?pagar`, `?excluir`, `?meio`). */
 export interface ExpenseActionSearch {
+    editar?: 1;
     pagar?: 1;
     excluir?: 1;
     meio?: 1;
@@ -44,7 +48,7 @@ const DIRECT_NOTICES: Partial<Record<StatusAction, string>> = {
  * Um diálogo aberto pela URL só abre se a ação existe no status atual; aberto, fica aberto mesmo
  * que um recarregamento mude o status (o erro continua à vista, ERR-0012-01).
  */
-function useLatchedOpen(requested: boolean, allowed: boolean): boolean {
+export function useLatchedOpen(requested: boolean, allowed: boolean): boolean {
     const [latched, setLatched] = useState(false);
     const open = requested && (allowed || latched);
     if (open !== latched) setLatched(open);
@@ -69,6 +73,8 @@ function WriterActions({ expense, search, onSearchChange, onBackToList }: Expens
     const [undoOpen, setUndoOpen] = useState(false);
     const actions = expenseActions(expense);
     const accountExpense = expense.creditCardId === null;
+    const phone = useIsPhone();
+    const navigate = useNavigate();
 
     const payOpen = useLatchedOpen(search.pagar === 1, actions.status.includes('pay'));
     const deleteOpen = useLatchedOpen(search.excluir === 1, actions.remove);
@@ -96,45 +102,92 @@ function WriterActions({ expense, search, onSearchChange, onBackToList }: Expens
         );
     }
 
+    const buttons = phone ? (
+        <PhoneButtons
+            first={actions.status[0]}
+            menu={[
+                ...actions.status.slice(1).map((action): RowMenuItem => ({
+                    label: STATUS_ACTION_LABELS[action],
+                    onSelect: () => run(action),
+                    disabled: change.isPending,
+                })),
+                { label: 'Editar', icon: Pencil, onSelect: () => onSearchChange({ editar: 1 }) },
+                ...(actions.changeMethod
+                    ? [
+                          {
+                              label: 'Trocar forma de pagamento',
+                              onSelect: () => onSearchChange({ meio: 1 }),
+                          },
+                      ]
+                    : []),
+                ...(actions.refund && cardId
+                    ? [
+                          {
+                              label: 'Estornar',
+                              onSelect: () =>
+                                  void navigate({
+                                      to: '/cartoes/$cartaoId',
+                                      params: { cartaoId: cardId },
+                                      search: { estorno: 1, despesa: expense.id },
+                                  }),
+                          },
+                      ]
+                    : []),
+                ...(actions.remove
+                    ? [
+                          {
+                              label: 'Excluir',
+                              tone: 'negativo' as const,
+                              onSelect: () => onSearchChange({ excluir: 1 }),
+                          },
+                      ]
+                    : []),
+            ]}
+            description={expense.description}
+            pending={change.isPending}
+            onFirst={run}
+        />
+    ) : (
+        hasButtons && (
+            <div className="flex flex-wrap gap-3">
+                {actions.status.map((action, index) => (
+                    <Button
+                        key={action}
+                        variant={index === 0 && action !== 'undo-payment' ? 'default' : 'outline'}
+                        disabled={change.isPending}
+                        onClick={() => run(action)}
+                    >
+                        {STATUS_ACTION_LABELS[action]}
+                    </Button>
+                ))}
+                {/* AC-0012-13: abre o **Novo estorno** do cartão com esta despesa selecionada. */}
+                {actions.refund && cardId && (
+                    <Link
+                        to="/cartoes/$cartaoId"
+                        params={{ cartaoId: cardId }}
+                        search={{ estorno: 1, despesa: expense.id }}
+                        className={buttonVariants({ variant: 'outline' })}
+                    >
+                        Estornar
+                    </Link>
+                )}
+                {actions.changeMethod && (
+                    <Button variant="outline" onClick={() => onSearchChange({ meio: 1 })}>
+                        Trocar forma de pagamento
+                    </Button>
+                )}
+                {actions.remove && (
+                    <Button variant="outline" onClick={() => onSearchChange({ excluir: 1 })}>
+                        Excluir
+                    </Button>
+                )}
+            </div>
+        )
+    );
+
     return (
         <div className="flex flex-col gap-3 empty:hidden">
-            {hasButtons && (
-                <div className="flex flex-wrap gap-3">
-                    {actions.status.map((action, index) => (
-                        <Button
-                            key={action}
-                            variant={
-                                index === 0 && action !== 'undo-payment' ? 'default' : 'outline'
-                            }
-                            disabled={change.isPending}
-                            onClick={() => run(action)}
-                        >
-                            {STATUS_ACTION_LABELS[action]}
-                        </Button>
-                    ))}
-                    {/* AC-0012-13: abre o **Novo estorno** do cartão com esta despesa selecionada. */}
-                    {actions.refund && cardId && (
-                        <Link
-                            to="/cartoes/$cartaoId"
-                            params={{ cartaoId: cardId }}
-                            search={{ estorno: 1, despesa: expense.id }}
-                            className={buttonVariants({ variant: 'outline' })}
-                        >
-                            Estornar
-                        </Link>
-                    )}
-                    {actions.changeMethod && (
-                        <Button variant="outline" onClick={() => onSearchChange({ meio: 1 })}>
-                            Trocar forma de pagamento
-                        </Button>
-                    )}
-                    {actions.remove && (
-                        <Button variant="outline" onClick={() => onSearchChange({ excluir: 1 })}>
-                            Excluir
-                        </Button>
-                    )}
-                </div>
-            )}
+            {buttons}
             <ActionAlert
                 message={failure?.message}
                 code={failure?.code}
@@ -176,6 +229,40 @@ function WriterActions({ expense, search, onSearchChange, onBackToList }: Expens
                 onOpenChange={(open) => onSearchChange({ excluir: open ? 1 : undefined })}
                 onBackToList={onBackToList}
             />
+        </div>
+    );
+}
+
+/**
+ * No celular (abaixo de `md`): a primeira transição em largura total e o resto no menu
+ * **Mais ações** (spec 0012, "Detalhe e ações").
+ */
+function PhoneButtons({
+    first,
+    menu,
+    description,
+    pending,
+    onFirst,
+}: {
+    first: StatusAction | undefined;
+    menu: readonly RowMenuItem[];
+    description: string;
+    pending: boolean;
+    onFirst: (action: StatusAction) => void;
+}) {
+    return (
+        <div className="flex flex-col gap-3">
+            {first && (
+                <Button
+                    className="w-full"
+                    variant={first === 'undo-payment' ? 'outline' : 'default'}
+                    disabled={pending}
+                    onClick={() => onFirst(first)}
+                >
+                    {STATUS_ACTION_LABELS[first]}
+                </Button>
+            )}
+            <RowMenu label={`Mais ações de ${description}`} trigger="texto" items={menu} />
         </div>
     );
 }
