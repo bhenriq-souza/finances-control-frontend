@@ -142,7 +142,7 @@ Tarefas da [spec 0009](../specs/0009-lists-and-reference-data.md), da issue de e
     - What: `slot` nos itens, barra inferior com no máximo quatro itens e **Mais**, rota `/mais` e o redirecionamento no desktop
     - Where: `src/app/shell/`, `src/routes/_app/mais.tsx`, `e2e/more.spec.ts`
     - Done when: `AC-0009-08` coberto
-- [ ] **T-0009-07 — Seletor de data próprio** · #137
+- [x] **T-0009-07 — Seletor de data próprio** · #137
     - What: `DateField` com máscara e calendário (ADR 0001 local), validação de datas em `src/shared/dates/` e a migração de todos os formulários e e2e que preenchem datas (revisão de 2026-10-13, FCF-018)
     - Where: `package.json`, `src/ui/date-field.tsx`, `src/ui/calendar*`, `src/shared/dates/`, os formulários com data em `src/features/`, `src/routes/[_]e2e/`, `e2e/`
     - Done when: `AC-0009-12` a `AC-0009-14` cobertos; `INV-0009-07` verificado

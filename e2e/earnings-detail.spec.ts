@@ -83,7 +83,7 @@ test('Receber sends RECEIVED with today as receivedOn', async ({ page }) => {
     await expect(page).toHaveURL(/receber=1/);
 
     const dialog = page.getByRole('dialog', { name: 'Receber receita' });
-    await expect(dialog.getByLabel('Recebida em')).toHaveValue(TODAY);
+    await expect(dialog.getByLabel('Recebida em')).toHaveValue('12/10/2026');
     await dialog.getByRole('button', { name: 'Receber' }).click();
 
     await expect(dialog).toBeHidden();

@@ -161,7 +161,7 @@ describe('ExpenseDetailPage actions (spec 0012)', () => {
         expect(searches.at(-1)).toEqual({ pagar: 1 });
 
         const dialog = await screen.findByRole('dialog', { name: 'Pagar a despesa' });
-        expect(within(dialog).getByLabelText('Pago em')).toHaveValue('2026-10-20');
+        expect(within(dialog).getByLabelText('Pago em')).toHaveValue('20/10/2026');
         mocks.PATCH.mockResolvedValueOnce(ok({ ...ACCOUNT_OPEN, status: 'PAID' }));
         await click(within(dialog).getByRole('button', { name: 'Pagar' }));
 

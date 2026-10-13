@@ -211,16 +211,12 @@ function NewRefundForm({
                     />
                 )}
             />
-            <DateField
-                label="Data do estorno"
-                error={errors.occurredOn?.message}
-                {...register('occurredOn')}
-            />
+            <DateField label="Data do estorno" control={form.control} name="occurredOn" />
             <DateField
                 label="Lançado em"
                 help={POSTED_ON_HELP}
-                error={errors.postedOn?.message}
-                {...register('postedOn')}
+                control={form.control}
+                name="postedOn"
             />
             <SelectField
                 label="Despesa de origem"

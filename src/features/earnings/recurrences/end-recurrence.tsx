@@ -41,7 +41,6 @@ export function EndEarningRecurrenceDialog({
         defaultValues: { endsOn: defaultEndsOn(recurrence) },
     });
     const {
-        register,
         handleSubmit,
         formState: { errors },
     } = form;
@@ -78,8 +77,8 @@ export function EndEarningRecurrenceDialog({
                 <DateField
                     label="Último mês"
                     min={recurrence.startsOn}
-                    error={errors.endsOn?.message}
-                    {...register('endsOn')}
+                    control={form.control}
+                    name="endsOn"
                 />
             </form>
         </FormDialog>

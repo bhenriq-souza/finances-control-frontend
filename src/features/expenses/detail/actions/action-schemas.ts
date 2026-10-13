@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
+import { dateSchema, optionalDateSchema } from '@/shared/dates';
+
 import { parsePaymentMethod } from './expense-action-model';
 
 /** **Pagar**: a data do pagamento, padrão `today()`. */
 export const paySchema = z.object({
-    paidOn: z.string().min(1, 'Informe a data do pagamento.'),
+    paidOn: dateSchema('Informe a data do pagamento.'),
 });
 
 export type PayValues = z.infer<typeof paySchema>;
@@ -22,7 +24,7 @@ export function paymentMethodSchema(occurredOn: string) {
             method: z
                 .string()
                 .refine((value) => parsePaymentMethod(value) !== null, METHOD_REQUIRED_MESSAGE),
-            postedOn: z.string(),
+            postedOn: optionalDateSchema(),
             scope: z.enum(['single', 'following']),
         })
         .refine(

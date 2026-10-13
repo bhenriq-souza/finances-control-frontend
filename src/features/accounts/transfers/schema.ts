@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { dateSchema, optionalDateSchema } from '@/shared/dates';
 import { moneySchema } from '@/shared/money';
 
 export const SAME_ACCOUNT_MESSAGE = 'Escolha contas diferentes.';
@@ -23,9 +24,9 @@ export const transferSchema = transferDetailsSchema
         fromBankAccountId: required('Escolha a conta de origem.'),
         toBankAccountId: required('Escolha a conta de destino.'),
         amount: moneySchema(),
-        occurredOn: required('Informe a data.'),
+        occurredOn: dateSchema('Informe a data.'),
         status: z.enum(['COMPLETED', 'SCHEDULED']),
-        completedOn: z.string(),
+        completedOn: optionalDateSchema(),
     })
     // INV-0018-03: origem igual ao destino nunca é enviada.
     .refine((values) => values.fromBankAccountId !== values.toBankAccountId, {
@@ -39,7 +40,7 @@ export type TransferOutput = z.output<typeof transferSchema>;
 
 /** Concluir: a data de conclusão, padrão `today()`. */
 export const completeTransferSchema = z.object({
-    completedOn: required('Informe a data de conclusão.'),
+    completedOn: dateSchema('Informe a data de conclusão.'),
 });
 
 export type CompleteTransferValues = z.input<typeof completeTransferSchema>;

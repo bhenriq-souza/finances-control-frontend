@@ -62,7 +62,7 @@ describe('TransferFormDialog — create (spec 0018)', () => {
         const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
 
         expect(within(dialog).getByRole('heading', { name: 'Nova transferência' })).toBeVisible();
-        expect(within(dialog).getByLabelText('Data')).toHaveValue('2026-10-12');
+        expect(within(dialog).getByLabelText('Data')).toHaveValue('12/10/2026');
         expect(within(dialog).getByLabelText('Concluída agora')).toBeChecked();
         expect(within(dialog).getByText('Vazio usa a data da transferência.')).toBeInTheDocument();
         // Só as contas ativas.

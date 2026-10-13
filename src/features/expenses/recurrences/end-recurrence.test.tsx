@@ -60,7 +60,7 @@ describe('EndExpenseRecurrenceDialog (spec 0017)', () => {
         const dialog = await openDialog();
 
         expect(within(dialog).getByText(END_EFFECT_TEXT)).toBeInTheDocument();
-        expect(within(dialog).getByLabelText('Último mês')).toHaveValue('2026-10-31');
+        expect(within(dialog).getByLabelText('Último mês')).toHaveValue('31/10/2026');
         expect(mocks.PATCH).not.toHaveBeenCalled();
     });
 

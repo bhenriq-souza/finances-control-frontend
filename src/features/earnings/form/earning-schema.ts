@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { isIsoDate } from '@/shared/dates';
+import { dateSchema, optionalDateSchema } from '@/shared/dates';
 import { moneySchema } from '@/shared/money';
 
 import { EARNING_KINDS } from '../list/earning-model';
@@ -37,9 +37,9 @@ const base = z.object({
     earningTypeId: required(EARNING_FORM_MESSAGES.type),
     amount: moneySchema(),
     bankAccountId: required(EARNING_FORM_MESSAGES.account),
-    occurredOn: z.string().refine(isIsoDate, EARNING_FORM_MESSAGES.date),
+    occurredOn: dateSchema(EARNING_FORM_MESSAGES.date),
     installmentTotal: z.string(),
-    recurrenceEndsOn: z.string(),
+    recurrenceEndsOn: optionalDateSchema(),
     status: z.enum(INITIAL_STATUSES),
     notes: z.string().trim().max(NOTES_MAX, EARNING_FORM_MESSAGES.notesMax),
     scope: z.enum(['one', 'following']),
@@ -69,7 +69,7 @@ export function earningFormSchema(mode: 'create' | 'edit') {
         if (
             values.kind === 'FIXED' &&
             values.recurrenceEndsOn !== '' &&
-            (!isIsoDate(values.recurrenceEndsOn) || values.recurrenceEndsOn < values.occurredOn)
+            values.recurrenceEndsOn < values.occurredOn
         ) {
             ctx.addIssue({
                 code: 'custom',

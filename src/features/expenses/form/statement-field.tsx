@@ -1,4 +1,5 @@
-import { useState, type ComponentProps } from 'react';
+import { useState } from 'react';
+import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 
 import { Button } from '@/ui/components/ui/button';
 import { DateField } from '@/ui/date-field';
@@ -9,14 +10,14 @@ export function closingText(closesOn: string): string {
     return `${day}/${month}`;
 }
 
-export interface StatementFieldProps {
+export interface StatementFieldProps<T extends FieldValues, N extends FieldPath<T>, O = T> {
     /** `currentCycle.closesOn` do cartão escolhido; sem ele, o texto fica só com a primeira frase. */
     closesOn: string | undefined;
     /** Já abre o campo **Fatura de** (alterar uma despesa com a fatura em outra data). */
     initiallyOpen?: boolean;
-    error?: string;
-    /** `register('postedOn')`. */
-    field: Omit<ComponentProps<'input'>, 'id' | 'type'>;
+    control: Control<T, unknown, O>;
+    /** O campo da data da fatura (`postedOn`). */
+    name: N;
 }
 
 /**
@@ -24,12 +25,12 @@ export interface StatementFieldProps {
  * link **Lançar em outra fatura**; aberto, o `DateField` opcional. Compartilhado pelo formulário e
  * por **Trocar forma de pagamento**.
  */
-export function StatementField({
+export function StatementField<T extends FieldValues, N extends FieldPath<T>, O = T>({
     closesOn,
     initiallyOpen = false,
-    error,
-    field,
-}: StatementFieldProps) {
+    control,
+    name,
+}: StatementFieldProps<T, N, O>) {
     // Desmontar o componente (sair do cartão) recolhe o campo de novo.
     const [open, setOpen] = useState(initiallyOpen);
     if (open) {
@@ -37,8 +38,8 @@ export function StatementField({
             <DateField
                 label="Fatura de"
                 help="A despesa entra na fatura que contém esta data."
-                error={error}
-                {...field}
+                control={control}
+                name={name}
             />
         );
     }

@@ -71,7 +71,7 @@ test('a new refund from ?estorno=1&despesa comes with the expense selected and s
     const dialog = page.getByRole('dialog', { name: 'Novo estorno' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByLabel('Despesa de origem')).toHaveValue(NOTEBOOK.id);
-    await expect(dialog.getByLabel('Data do estorno')).toHaveValue('2026-10-20');
+    await expect(dialog.getByLabel('Data do estorno')).toHaveValue('20/10/2026');
     await expect(dialog.getByText('Deixe vazio para a fatura do dia.')).toBeVisible();
 
     await dialog.getByLabel('Descrição').fill('Devolução do notebook');

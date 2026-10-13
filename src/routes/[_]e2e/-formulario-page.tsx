@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { dateSchema, optionalDateSchema } from '@/shared/dates';
 import { Button } from '@/ui/components/ui/button';
 import { Input } from '@/ui/components/ui/input';
 import { ConfirmDialog } from '@/ui/confirm-dialog';
@@ -23,7 +24,8 @@ const FORM_ID = 'prova-formulario';
 const schema = z.object({
     name: z.string().trim().min(1, 'Informe o nome.'),
     paidWith: z.string().min(1, 'Escolha a conta ou o cartão.'),
-    occurredOn: z.string().min(1, 'Informe a data.'),
+    occurredOn: dateSchema('Informe a data.'),
+    dueOn: optionalDateSchema(),
 });
 
 type Values = z.infer<typeof schema>;
@@ -43,18 +45,21 @@ const PAID_WITH = [
 function ExpenseFormDialog({
     open,
     onOpenChange,
+    onSaved,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onSaved: (values: Values) => void;
 }) {
     const notify = useNotify();
     const {
         register,
+        control,
         handleSubmit,
         formState: { errors },
     } = useForm<Values>({
         resolver: zodResolver(schema),
-        defaultValues: { name: '', paidWith: '', occurredOn: '2026-10-12' },
+        defaultValues: { name: '', paidWith: '', occurredOn: '2026-10-12', dueOn: '' },
     });
 
     return (
@@ -78,7 +83,8 @@ function ExpenseFormDialog({
                 id={FORM_ID}
                 noValidate
                 className="flex flex-col gap-4"
-                onSubmit={handleSubmit(() => {
+                onSubmit={handleSubmit((values) => {
+                    onSaved(values);
                     onOpenChange(false);
                     notify({ tone: 'sucesso', message: 'Despesa salva.' });
                 })}
@@ -93,12 +99,16 @@ function ExpenseFormDialog({
                     error={errors.paidWith?.message}
                     {...register('paidWith')}
                 />
+                {/* Calendário limitado a outubro e novembro de 2026 (AC-0009-13). */}
                 <DateField
+                    control={control}
+                    name="occurredOn"
                     label="Data"
                     help="A data em que a despesa aconteceu."
-                    error={errors.occurredOn?.message}
-                    {...register('occurredOn')}
+                    min="2026-10-01"
+                    max="2026-11-30"
                 />
+                <DateField control={control} name="dueOn" label="Vencimento" help="Opcional." />
             </form>
         </FormDialog>
     );
@@ -108,6 +118,8 @@ export function FormProofPage() {
     const notify = useNotify();
     const [formOpen, setFormOpen] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    // O que o último envio mandou, para o e2e conferir o valor (AC-0009-12).
+    const [saved, setSaved] = useState<Values | null>(null);
 
     return (
         <main
@@ -122,7 +134,22 @@ export function FormProofPage() {
                 </Button>
             </div>
             {/* Desmontado ao fechar: abrir de novo começa com o formulário limpo. */}
-            {formOpen && <ExpenseFormDialog open={formOpen} onOpenChange={setFormOpen} />}
+            {formOpen && (
+                <ExpenseFormDialog open={formOpen} onOpenChange={setFormOpen} onSaved={setSaved} />
+            )}
+            {saved && (
+                <section aria-labelledby="ultimo-envio" className="flex flex-col gap-2">
+                    <h2 id="ultimo-envio" className="text-titulo-3">
+                        Último envio
+                    </h2>
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-corpo">
+                        <dt className="text-texto-apoio">Data</dt>
+                        <dd className="font-mono">{JSON.stringify(saved.occurredOn)}</dd>
+                        <dt className="text-texto-apoio">Vencimento</dt>
+                        <dd className="font-mono">{JSON.stringify(saved.dueOn)}</dd>
+                    </dl>
+                </section>
+            )}
             <ConfirmDialog
                 open={confirmOpen}
                 onOpenChange={setConfirmOpen}

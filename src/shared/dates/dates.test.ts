@@ -4,13 +4,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     addDays,
     addMonths,
+    dateInputToValue,
+    dateSchema,
     formatDate,
     formatMonth,
     isIsoDate,
     isIsoMonth,
+    maskDateInput,
     monthOf,
     monthRange,
+    optionalDateSchema,
     today,
+    valueToDateInput,
 } from './index';
 
 function at(instant: string) {
@@ -174,4 +179,88 @@ describe('formatMonth', () => {
     ] as const)('formatMonth(%s) = %s', (month, expected) => {
         expect(formatMonth(month)).toBe(expected);
     });
+});
+
+describe('DateField mask (AC-0009-12)', () => {
+    it.each([
+        ['', ''],
+        ['0', '0'],
+        ['05', '05'],
+        ['051', '05/1'],
+        ['0511', '05/11'],
+        ['05112', '05/11/2'],
+        ['05112026', '05/11/2026'],
+        ['051120269', '05/11/2026'],
+        ['05/11/2026', '05/11/2026'],
+        ['05/', '05'],
+        ['ab05-1x1', '05/11'],
+        ['2026-11-05', '05/11/2026'],
+        [' 2026-11-05 ', '05/11/2026'],
+    ])('maskDateInput(%j) = %j', (raw, expected) => {
+        expect(maskDateInput(raw)).toBe(expected);
+    });
+
+    it.each([
+        ['05/11/2026', '2026-11-05'],
+        ['29/02/2024', '2024-02-29'],
+        ['', ''],
+        ['31/02/2026', '31/02/2026'],
+        ['05/11/20', '05/11/20'],
+        ['05/13/2026', '05/13/2026'],
+    ])('dateInputToValue(%j) = %j', (text, expected) => {
+        expect(dateInputToValue(text)).toBe(expected);
+    });
+
+    it.each([
+        ['2026-11-05', '05/11/2026'],
+        ['', ''],
+        [undefined, ''],
+        [null, ''],
+        ['05/11/20', '05/11/20'],
+    ])('valueToDateInput(%j) = %j', (value, expected) => {
+        expect(valueToDateInput(value)).toBe(expected);
+    });
+
+    it('round-trips every existing date through the mask', () => {
+        fc.assert(
+            fc.property(
+                fc.date({
+                    min: new Date('1900-01-01'),
+                    max: new Date('2999-12-31'),
+                    noInvalidDate: true,
+                }),
+                (date) => {
+                    const iso = date.toISOString().slice(0, 10);
+                    const typed = valueToDateInput(iso).replace(/\D/g, '');
+                    expect(dateInputToValue(maskDateInput(typed))).toBe(iso);
+                    expect(dateInputToValue(maskDateInput(iso))).toBe(iso);
+                },
+            ),
+        );
+    });
+});
+
+describe('dateSchema / optionalDateSchema (AC-0009-12)', () => {
+    const required = dateSchema('Informe a data.');
+    const optional = optionalDateSchema();
+    const message = (result: { success: boolean; error?: { issues: { message: string }[] } }) =>
+        result.error?.issues.map((issue) => issue.message);
+
+    it('accepts an existing YYYY-MM-DD', () => {
+        expect(required.parse('2026-11-05')).toBe('2026-11-05');
+        expect(optional.parse('2024-02-29')).toBe('2024-02-29');
+    });
+
+    it('asks for the date when empty, and only the optional accepts empty', () => {
+        expect(message(required.safeParse(''))).toEqual(['Informe a data.']);
+        expect(optional.parse('')).toBe('');
+    });
+
+    it.each(['31/02/2026', '05/11/20', '2026-02-29', '2026-13-01', '05/11/2026', 'x'])(
+        'rejects %j with "Data inválida."',
+        (value) => {
+            expect(message(required.safeParse(value))).toEqual(['Data inválida.']);
+            expect(message(optional.safeParse(value))).toEqual(['Data inválida.']);
+        },
+    );
 });

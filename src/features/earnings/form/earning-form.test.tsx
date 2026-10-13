@@ -205,7 +205,7 @@ describe('EarningFormDialog — create (spec 0014)', () => {
 
         expect(within(dialog).getByRole('heading', { name: 'Nova receita' })).toBeVisible();
         expect(within(dialog).getByLabelText('Variável')).toBeChecked();
-        expect(within(dialog).getByLabelText('Data prevista')).toHaveValue('2026-10-12');
+        expect(within(dialog).getByLabelText('Data prevista')).toHaveValue('12/10/2026');
         expect(within(dialog).getByLabelText('Situação inicial')).toHaveValue('OPEN');
         expect(within(dialog).queryByLabelText('Parcelas')).not.toBeInTheDocument();
         expect(within(dialog).queryByLabelText('Repetir até')).not.toBeInTheDocument();

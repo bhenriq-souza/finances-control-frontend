@@ -332,11 +332,7 @@ export function EarningFormDialog({ open, onOpenChange, earning }: EarningFormDi
                     error={errors.bankAccountId?.message}
                     {...register('bankAccountId')}
                 />
-                <DateField
-                    label="Data prevista"
-                    error={errors.occurredOn?.message}
-                    {...register('occurredOn')}
-                />
+                <DateField label="Data prevista" control={form.control} name="occurredOn" />
                 {!editing && kind === 'INSTALLMENT' && (
                     <Field label="Parcelas" error={errors.installmentTotal?.message}>
                         {(control) => (
@@ -356,8 +352,8 @@ export function EarningFormDialog({ open, onOpenChange, earning }: EarningFormDi
                     <DateField
                         label="Repetir até"
                         help="Sem data, a série segue mês a mês."
-                        error={errors.recurrenceEndsOn?.message}
-                        {...register('recurrenceEndsOn')}
+                        control={form.control}
+                        name="recurrenceEndsOn"
                     />
                 )}
                 {!editing && (

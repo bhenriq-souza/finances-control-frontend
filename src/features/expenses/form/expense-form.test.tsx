@@ -148,7 +148,7 @@ describe('ExpenseFormDialog — create (spec 0012)', () => {
 
         expect(within(dialog).getByRole('heading', { name: 'Nova despesa' })).toBeVisible();
         expect(within(dialog).getByLabelText('Variável')).toBeChecked();
-        expect(within(dialog).getByLabelText('Data')).toHaveValue('2026-10-12');
+        expect(within(dialog).getByLabelText('Data')).toHaveValue('12/10/2026');
         expect(within(dialog).getByLabelText('Situação inicial')).toHaveValue('OPEN');
         expect(optionLabels(within(dialog).getByLabelText('Situação inicial'))).toEqual([
             'Pendente',
@@ -617,7 +617,7 @@ describe('ExpenseFormDialog — edit (spec 0012)', () => {
             ),
         ).toBeInTheDocument();
         await openStatement(dialog);
-        expect(within(dialog).getByLabelText('Fatura de')).toHaveValue('2026-10-15');
+        expect(within(dialog).getByLabelText('Fatura de')).toHaveValue('15/10/2026');
     });
 
     it('opens Fatura de on edit when the statement differs from the purchase date', async () => {
@@ -628,7 +628,7 @@ describe('ExpenseFormDialog — edit (spec 0012)', () => {
             postedOn: '2026-11-20',
         });
         const { dialog } = await renderForm(other);
-        expect(within(dialog).getByLabelText('Fatura de')).toHaveValue('2026-11-20');
+        expect(within(dialog).getByLabelText('Fatura de')).toHaveValue('20/11/2026');
         expect(within(dialog).queryByRole('button', { name: 'Lançar em outra fatura' })).toBeNull();
     });
 

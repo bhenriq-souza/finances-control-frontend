@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { dateSchema, optionalDateSchema } from '@/shared/dates';
 import { type Cents, moneySchema } from '@/shared/money';
 
 import { EXPENSE_KINDS } from './list/expense-model';
@@ -67,10 +68,10 @@ export const expenseCreateSchema = z
         payment: z
             .string()
             .refine((value) => parsePayment(value) !== null, EXPENSE_FORM_MESSAGES.payment),
-        occurredOn: required(EXPENSE_FORM_MESSAGES.occurredOn),
-        postedOn: z.string(),
+        occurredOn: dateSchema(EXPENSE_FORM_MESSAGES.occurredOn),
+        postedOn: optionalDateSchema(),
         installmentTotal: z.string(),
-        recurrenceEndsOn: z.string(),
+        recurrenceEndsOn: optionalDateSchema(),
         status: z.enum(INITIAL_STATUSES),
         notes: z.string(),
     })
@@ -125,8 +126,8 @@ export function expenseEditSchema({
             description: required(EXPENSE_FORM_MESSAGES.description),
             expenseTypeId: required(EXPENSE_FORM_MESSAGES.expenseType),
             amount,
-            occurredOn: required(EXPENSE_FORM_MESSAGES.occurredOn),
-            postedOn: z.string(),
+            occurredOn: dateSchema(EXPENSE_FORM_MESSAGES.occurredOn),
+            postedOn: optionalDateSchema(),
             notes: z.string(),
             scope: z.enum(EDIT_SCOPES),
         })

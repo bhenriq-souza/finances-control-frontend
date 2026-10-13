@@ -17,7 +17,7 @@ vi.mock('@/api/client', () => ({
 
 import { CURRENT_USER_QUERY_KEY, type Profile } from '@/api/queries/current-user';
 import { queryKeys } from '@/api/queries/keys';
-import { today } from '@/shared/dates';
+import { today, valueToDateInput } from '@/shared/dates';
 import { createNoticeStore, NoticeProvider } from '@/ui/notice';
 
 import type { Earning } from '../../list/earning-model';
@@ -160,7 +160,7 @@ describe('EarningActions (spec 0014)', () => {
         });
         expect(router.state.location.search).toEqual({ receber: 1 });
         const dialog = await screen.findByRole('dialog', { name: 'Receber receita' });
-        expect(within(dialog).getByLabelText('Recebida em')).toHaveValue(today());
+        expect(within(dialog).getByLabelText('Recebida em')).toHaveValue(valueToDateInput(today()));
 
         await act(async () => {
             fireEvent.click(within(dialog).getByRole('button', { name: 'Receber' }));

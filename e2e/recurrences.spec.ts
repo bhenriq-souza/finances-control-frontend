@@ -193,7 +193,7 @@ test('ends a series showing the effect first and sending only { endsOn }', async
             'As ocorrências previstas depois desta data serão excluídas. As já confirmadas, pagas ou recebidas ficam.',
         ),
     ).toBeVisible();
-    await expect(dialog.getByLabel('Último mês')).toHaveValue('2026-10-31');
+    await expect(dialog.getByLabel('Último mês')).toHaveValue('31/10/2026');
     expect(api.requests.some((request) => request.method === 'PATCH')).toBe(false);
 
     await dialog.getByRole('button', { name: 'Encerrar série' }).click();
