@@ -190,7 +190,7 @@ Tarefas da [spec 0012](../specs/0012-expenses.md), da issue de entrega [FCF-011]
 
 Tarefas da [spec 0013](../specs/0013-statements.md), da issue de entrega [FCF-012](https://github.com/bhenriq-souza/finances-control-frontend/issues/53).
 
-- [ ] **T-0013-01 — Painel e detalhe de faturas** · #71
+- [x] **T-0013-01 — Painel e detalhe de faturas** · #71
     - What: fatura atual, anteriores e próximas em `/cartoes/$cartaoId`, e `/cartoes/$cartaoId/faturas/$faturaId`, só leitura
     - Where: `src/features/statements/panel/`, `src/features/statements/detail/`, `src/routes/_app/cartoes.$cartaoId*`, `e2e/statements.spec.ts`, `e2e/fixtures/data/statements.ts`
     - Done when: `AC-0013-01`, `AC-0013-02` e `AC-0013-10` cobertos; `INV-0013-01` e `INV-0013-03` verificados
