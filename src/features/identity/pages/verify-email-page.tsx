@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { ApiError } from '@/api/errors/api-error';
 import { Alert } from '@/ui/components/ui/alert';
@@ -11,35 +11,9 @@ import { AuthLayout } from '../components/auth-layout';
 import { FormAlert } from '../components/form-alert';
 import { currentUserQueryOptions } from '@/api/queries/current-user';
 
-/** Um reenvio por minuto (spec 0006, ERR-0006-06). */
-export const RESEND_COOLDOWN_SECONDS = 60;
+import { useResendVerification } from './use-resend-verification';
 
 type Notice = { kind: 'enviado' | 'pendente'; text: string } | null;
-
-function useCountdown(): [number, () => void] {
-    const [until, setUntil] = useState(0);
-    const [now, setNow] = useState(() => Date.now());
-    const remaining = Math.max(0, Math.ceil((until - now) / 1000));
-
-    useEffect(() => {
-        if (until === 0) return;
-        const timer = setInterval(() => {
-            const current = Date.now();
-            setNow(current);
-            if (current >= until) {
-                setUntil(0);
-            }
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [until]);
-
-    const start = () => {
-        const current = Date.now();
-        setNow(current);
-        setUntil(current + RESEND_COOLDOWN_SECONDS * 1000);
-    };
-    return [remaining, start];
-}
 
 interface VerifyEmailPageProps {
     /** O backend aceitou o email: a rota leva à guarda de `_app`. */
@@ -52,7 +26,7 @@ export function VerifyEmailPage({ onVerified, onSignedOut }: VerifyEmailPageProp
     const session = useAuthSession();
     const queryClient = useQueryClient();
     const email = session.currentUser()?.email;
-    const [remaining, startCooldown] = useCountdown();
+    const resendVerification = useResendVerification();
     const [notice, setNotice] = useState<Notice>(null);
     const [error, setError] = useState<string | null>(null);
     const [checking, setChecking] = useState(false);
@@ -61,12 +35,11 @@ export function VerifyEmailPage({ onVerified, onSignedOut }: VerifyEmailPageProp
         setError(null);
         setNotice(null);
         try {
-            await session.sendEmailVerification();
+            await resendVerification.resend();
         } catch (cause) {
             setError(authErrorMessage(cause));
             return;
         }
-        startCooldown();
         setNotice({ kind: 'enviado', text: 'Enviamos um novo email de verificação.' });
     }
 
@@ -118,8 +91,12 @@ export function VerifyEmailPage({ onVerified, onSignedOut }: VerifyEmailPageProp
                 <Button disabled={checking} onClick={() => void check()}>
                     Já verifiquei
                 </Button>
-                <Button variant="outline" disabled={remaining > 0} onClick={() => void resend()}>
-                    {remaining > 0 ? `Reenviar email (${remaining} s)` : 'Reenviar email'}
+                <Button
+                    variant="outline"
+                    disabled={resendVerification.remaining > 0}
+                    onClick={() => void resend()}
+                >
+                    {resendVerification.label}
                 </Button>
                 <Button variant="ghost" onClick={() => void signOut()}>
                     Sair

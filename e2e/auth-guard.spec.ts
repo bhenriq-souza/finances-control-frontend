@@ -72,6 +72,11 @@ test('the user without a profile only sees /aguardando-aprovacao; "Verificar de 
     await signInWithEmail(page);
     await expect(page).toHaveURL(/\/aguardando-aprovacao$/);
     await expect(page.getByRole('heading', { name: 'Aguardando aprovação' })).toBeVisible();
+    // Email verificado: nem o aviso nem "Reenviar email" (AC-0006-12).
+    await expect(
+        page.getByText('Seu email ainda não foi verificado.', { exact: false }),
+    ).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Reenviar email/ })).toHaveCount(0);
 
     // Ainda sem perfil: continua na tela.
     await page.getByRole('button', { name: 'Verificar de novo' }).click();
@@ -145,4 +150,53 @@ test('"Sair" on an account-state page goes back to /entrar', async ({ page }) =>
     // Sem sessão, `/` volta a pedir login.
     await page.goto('/');
     await expect(page).toHaveURL(/\/entrar\?redirect=%2F$/);
+});
+
+// AC-0006-11, AC-0006-12, ERR-0006-06.
+test('sign-up with a failed verification email still reaches the guard; /aguardando-aprovacao offers "Reenviar email" while unverified', async ({
+    page,
+}) => {
+    await page.clock.install();
+    await chooseUser(page, 'nenhum', { 'ftech.e2e.erro-email-cadastro': 'auth/too-many-requests' });
+    let emailVerified = false;
+    let authorizations: (string | undefined)[] = [];
+    await page.route('**/api/users/me', (route) => {
+        authorizations.push(route.request().headers()['authorization']);
+        const body = userResponse(null);
+        return route.fulfill({ status: 200, json: { data: { ...body.data, emailVerified } } });
+    });
+
+    await page.goto('/criar-conta');
+    await page.getByLabel('Nome').fill('Nova Pessoa');
+    await page.getByLabel('Email').fill('nova@example.com');
+    await page.getByLabel('Senha', { exact: true }).fill('12345678');
+    await page.getByLabel('Confirme a senha').fill('12345678');
+    await page.getByRole('button', { name: 'Criar conta' }).click();
+
+    // A falha do email não fica no formulário: o cadastro segue para a guarda de `_app`.
+    await expect(page).toHaveURL(/\/aguardando-aprovacao$/);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(
+        page.getByText('Seu email ainda não foi verificado.', { exact: false }),
+    ).toBeVisible();
+
+    const resend = page.getByRole('button', { name: /Reenviar email/ });
+    await resend.click();
+    await expect(page.getByText('Enviamos um novo email de verificação.')).toBeVisible();
+    await expect(resend).toBeDisabled();
+    await expect(resend).toHaveText('Reenviar email (60 s)');
+    await page.clock.runFor(60_000);
+    await expect(resend).toBeEnabled();
+    await expect(resend).toHaveText('Reenviar email');
+
+    // Verificado pelo link: "Verificar de novo" consulta `/users/me` de novo e o aviso some.
+    emailVerified = true;
+    authorizations = [];
+    await page.getByRole('button', { name: 'Verificar de novo' }).click();
+    await expect(page.getByText('Seu acesso ainda não foi liberado.')).toBeVisible();
+    await expect(
+        page.getByText('Seu email ainda não foi verificado.', { exact: false }),
+    ).toHaveCount(0);
+    await expect(resend).toHaveCount(0);
+    expect(authorizations).toEqual(['Bearer fake-token-e2e-novo']);
 });
