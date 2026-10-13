@@ -301,7 +301,9 @@ describe.each<Profile>(['BILLER', 'VIEWER'])('without accounts.write (%s)', (pro
         );
 
         expect(screen.queryAllByRole('button', { name: WRITE })).toHaveLength(0);
-        expect(screen.queryByRole('columnheader', { name: 'Ações' })).not.toBeInTheDocument();
+        // Só a lista de contas tem a coluna de ações, e só com o link Extrato (spec 0015).
+        expect(screen.getAllByRole('columnheader', { name: 'Ações' })).toHaveLength(1);
+        expect(screen.queryAllByRole('link', { name: /^Extrato de / }).length).toBeGreaterThan(0);
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
 

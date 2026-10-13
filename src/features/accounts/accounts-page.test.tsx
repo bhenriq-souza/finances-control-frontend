@@ -113,7 +113,13 @@ async function renderAt(node: ReactNode, seed: (client: QueryClient) => void = (
     seed(client);
     const root = createRootRoute();
     const page = createRoute({ getParentRoute: () => root, path: '/', component: () => node });
-    const others = ['/contas', '/contas/bancos', '/cartoes', '/cartoes/$cartaoId'].map((path) =>
+    const others = [
+        '/contas',
+        '/contas/bancos',
+        '/contas/$contaId',
+        '/cartoes',
+        '/cartoes/$cartaoId',
+    ].map((path) =>
         createRoute({ getParentRoute: () => root, path, component: () => <p>outra</p> }),
     );
     const router = createRouter({
@@ -166,6 +172,22 @@ describe('BankAccountsPage', () => {
         expect(rows[1]).toContain('Poupança');
         expect(rows[1]).toContain('R$ 5.000,00');
         expect(screen.queryByText('Antiga')).toBeNull();
+    });
+
+    // AC-0015-13: o link Extrato aparece em cada linha, também para o perfil só de leitura.
+    it('links each account to its statement, even for the read-only profile', async () => {
+        await renderAt(
+            <BankAccountsPage showArchived={false} onShowArchivedChange={vi.fn()} />,
+            seedAll,
+        );
+
+        const table = screen.getByRole('table', { name: 'Contas bancárias' });
+        const links = within(table).getAllByRole('link', { name: /^Extrato de / });
+        expect(links.map((link) => link.getAttribute('href'))).toEqual([
+            '/contas/a2',
+            '/contas/a1',
+        ]);
+        expect(within(table).queryByRole('button', { name: /^Editar / })).toBeNull();
     });
 
     it('shows Saldo em contas as the sum of the active balances only', async () => {

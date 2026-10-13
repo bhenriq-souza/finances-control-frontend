@@ -37,7 +37,8 @@ export type QueryRoot =
     | 'earning-recurrences'
     | 'reports';
 
-export type ReportKind = 'balance' | 'expenses-by-type' | 'earnings-by-type' | 'cash-flow';
+export type ReportKind =
+    'balance' | 'expenses-by-type' | 'earnings-by-type' | 'cash-flow' | 'account-movements';
 
 function entryKeys<const R extends QueryRoot>(root: R) {
     return {
