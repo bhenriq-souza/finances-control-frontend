@@ -12,11 +12,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('@/api/client', () => ({ api: { GET: mocks.get } }));
 
+import { CURRENT_USER_QUERY_KEY, type Profile } from '@/api/queries/current-user';
 import { queryKeys } from '@/api/queries/keys';
+import { createNoticeStore, NoticeProvider } from '@/ui/notice';
 
 import { ACCOUNTS, CARD_ID, CARDS, expenseFixture, GROUP_ID } from '../list/expense-test-data';
 
-import { expenseDetailQuery, expenseDetailSearchSchema, ExpenseDetailPage } from './expense-detail';
+import {
+    expenseDetailQuery,
+    expenseDetailSearchSchema,
+    ExpenseDetailPage,
+    type ExpenseDetailSearch,
+} from './expense-detail';
 
 const ID = '60000000-0000-4000-8000-000000000001';
 
@@ -31,8 +38,22 @@ const fail = (status: number, code: string) => ({
     response: { ok: false, status },
 });
 
-async function renderDetail() {
+async function renderDetail({
+    profile = 'VIEWER' as Profile,
+    search = {} as ExpenseDetailSearch,
+    onSearchChange = vi.fn(),
+} = {}) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    // Padrão, leitor: o detalhe só leitura, sem as ações de escrita.
+    client.setQueryData(CURRENT_USER_QUERY_KEY, {
+        id: 'u',
+        email: 'ana@example.com',
+        emailVerified: true,
+        name: 'Ana',
+        profile,
+        profileGrantedAt: null,
+        createdAt: '2026-10-01T00:00:00Z',
+    });
     client.setQueryData(queryKeys.bankAccounts.all, ACCOUNTS);
     client.setQueryData(queryKeys.creditCards.all, CARDS);
 
@@ -40,7 +61,14 @@ async function renderDetail() {
     const page = createRoute({
         getParentRoute: () => root,
         path: '/',
-        component: () => <ExpenseDetailPage expenseId={ID} />,
+        component: () => (
+            <ExpenseDetailPage
+                expenseId={ID}
+                search={search}
+                onSearchChange={onSearchChange}
+                onGone={() => undefined}
+            />
+        ),
     });
     const router = createRouter({
         routeTree: root.addChildren([page]),
@@ -50,7 +78,9 @@ async function renderDetail() {
     await act(async () => {
         render(
             <QueryClientProvider client={client}>
-                <RouterProvider router={router} />
+                <NoticeProvider store={createNoticeStore()}>
+                    <RouterProvider router={router} />
+                </NoticeProvider>
             </QueryClientProvider>,
         );
     });
@@ -135,6 +165,36 @@ describe('ExpenseDetailPage (spec 0012)', () => {
         expect(field('Pago em')).toHaveTextContent('19 de out. de 2026');
         expect(field('Repetição')).toHaveTextContent('Fixa, mês a mês');
         expect(screen.queryByText('Fatura de', { selector: 'dt' })).toBeNull();
+    });
+
+    // T-0012-02: **Alterar** com `entries.write` abre o formulário por `?editar=1`.
+    it('offers Alterar to a biller and opens the form through the search', async () => {
+        mocks.get.mockResolvedValue(ok({ data: expenseFixture({ id: ID }) }));
+        const onSearchChange = vi.fn();
+        await renderDetail({ profile: 'BILLER', onSearchChange });
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Alterar' }));
+        expect(onSearchChange).toHaveBeenCalledWith({ editar: 1 });
+        expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('opens the edit form with ?editar=1 and clears it on cancel', async () => {
+        mocks.get.mockResolvedValue(ok({ data: expenseFixture({ id: ID }) }));
+        const onSearchChange = vi.fn();
+        await renderDetail({ profile: 'ADMIN', search: { editar: 1 }, onSearchChange });
+
+        const dialog = await screen.findByRole('dialog', { name: 'Alterar despesa' });
+        expect(within(dialog).getByLabelText('Descrição')).toHaveValue('Mercado');
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+        expect(onSearchChange).toHaveBeenCalledWith({ editar: undefined });
+    });
+
+    it('ignores ?editar=1 without entries.write', async () => {
+        mocks.get.mockResolvedValue(ok({ data: expenseFixture({ id: ID }) }));
+        await renderDetail({ search: { editar: 1 } });
+
+        expect(await screen.findByRole('heading', { name: 'Mercado', level: 1 })).toBeVisible();
+        expect(screen.queryByRole('dialog')).toBeNull();
     });
 
     // ERR-0012-02 / ERR-0009-02.

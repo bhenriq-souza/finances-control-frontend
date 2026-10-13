@@ -173,7 +173,7 @@ Tarefas da [spec 0012](../specs/0012-expenses.md), da issue de entrega [FCF-011]
     - What: `/despesas` com filtros e resumo, `/despesas/$despesaId` só leitura, item **Despesas**
     - Where: `src/features/expenses/list/`, `src/features/expenses/detail/expense-detail.tsx`, `src/routes/_app/despesas*`, `src/app/shell/navigation.ts`, `e2e/expenses-list.spec.ts`, `e2e/fixtures/data/expenses.ts`
     - Done when: `AC-0012-01`, `AC-0012-02` e `AC-0012-12` cobertos; `INV-0012-01` verificado
-- [ ] **T-0012-02 — Formulário de despesa** · #68
+- [x] **T-0012-02 — Formulário de despesa** · #68
     - What: criar (variável, parcelada, fixa) e alterar com escopo de série; depende de T-0012-01
     - Where: `src/features/expenses/form/`, `e2e/expenses-form.spec.ts`
     - Done when: `AC-0012-03`, `AC-0012-04` e `AC-0012-05` cobertos; `INV-0012-05` verificado
