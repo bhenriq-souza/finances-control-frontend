@@ -27,10 +27,10 @@ function Item({ label, children }: { label: string; children: ReactNode }) {
 /**
  * `/cartoes/$cartaoId` (spec 0011): o resumo do cartão em `Card` — limite total, usado,
  * disponível, ciclo atual e conta pagadora. O cartão vem da consulta de referência (com os
- * arquivados); id ausente dela é o `nao-encontrado` (ERR-0011-03). A spec 0013 acrescenta as
- * faturas nesta rota.
+ * arquivados); id ausente dela é o `nao-encontrado` (ERR-0011-03). `children` é o que a rota
+ * compõe abaixo do resumo, só quando o cartão existe (o painel de faturas da spec 0013).
  */
-export function CreditCardPage({ cardId }: { cardId: string }) {
+export function CreditCardPage({ cardId, children }: { cardId: string; children?: ReactNode }) {
     const query = useCreditCards();
     const accounts = useAccountLookup();
     return (
@@ -89,6 +89,7 @@ export function CreditCardPage({ cardId }: { cardId: string }) {
                     );
                 }}
             </QueryContent>
+            {query.data?.some((item) => item.id === cardId) ? children : null}
         </div>
     );
 }
