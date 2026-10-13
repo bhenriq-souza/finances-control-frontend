@@ -162,11 +162,12 @@ test('EARNING_ALREADY_RECEIVED shows the catalog message and reloads the detail'
     const before = detailReads();
     await dialog.getByRole('button', { name: 'Receber' }).click();
 
-    const notices = page.getByRole('region', { name: 'Avisos' });
-    await expect(notices).toContainText('Essa receita já foi recebida');
-    await expect(notices).not.toContainText('Earning already received');
-    await expect(dialog).toBeHidden();
+    // Alerta no diálogo, que continua aberto enquanto o detalhe é recarregado (spec 0014).
+    const alert = dialog.getByRole('alert');
+    await expect(alert).toContainText('Essa receita já foi recebida');
+    await expect(alert).not.toContainText('Earning already received');
     await expect.poll(detailReads).toBeGreaterThan(before);
+    await expect(dialog).toBeVisible();
 });
 
 // INV-0014-03: a exclusão de uma parcela mostra a cascata antes de enviar e volta para a lista.

@@ -211,14 +211,15 @@ describe('EarningActions (spec 0014)', () => {
         await act(async () => {
             fireEvent.click(within(dialog).getByRole('button', { name: 'Receber' }));
         });
-        const notices = screen.getByRole('region', { name: 'Avisos' });
-        await waitFor(() =>
-            expect(notices).toHaveTextContent('Essa receita já foi recebida e não pode mais'),
-        );
-        expect(notices).not.toHaveTextContent('raw');
-        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-        // O detalhe recarregado mostra o novo status e as ações dele.
-        expect(await screen.findByRole('button', { name: 'Desfazer recebimento' })).toBeVisible();
+        // Alerta no diálogo, que continua aberto mesmo com o detalhe recarregado (spec 0014).
+        const alert = await within(dialog).findByRole('alert');
+        expect(alert).toHaveTextContent('Essa receita já foi recebida e não pode mais');
+        expect(alert).not.toHaveTextContent('raw');
+        await waitFor(() => expect(detailFetches()).toBeGreaterThan(1));
+        expect(screen.getByRole('dialog', { name: 'Receber receita' })).toBeVisible();
+        expect(
+            screen.getByRole('region', { name: 'Avisos' }).querySelector('[data-tone="erro"]'),
+        ).toBeNull();
     });
 
     it('keeps the receive dialog open with the alert on any other error', async () => {
@@ -265,7 +266,7 @@ describe('EarningActions (spec 0014)', () => {
         expect(await screen.findByText('Recebimento desfeito.')).toBeInTheDocument();
     });
 
-    it('closes the undo dialog and reloads the detail on a status conflict', async () => {
+    it('keeps the undo dialog open with the alert and reloads the detail on a status conflict', async () => {
         mocks.patch.mockResolvedValue(failure(409, 'EARNING_STATUS_TRANSITION_NOT_ALLOWED'));
         await renderDetail(RECEIVED);
         const before = detailFetches();
@@ -277,11 +278,10 @@ describe('EarningActions (spec 0014)', () => {
         await act(async () => {
             fireEvent.click(within(dialog).getByRole('button', { name: 'Desfazer recebimento' }));
         });
-        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
-        const notices = screen.getByRole('region', { name: 'Avisos' });
-        expect(notices.querySelector('[data-tone="erro"]')).not.toBeNull();
-        expect(notices).not.toHaveTextContent('raw');
+        const alert = await within(dialog).findByRole('alert');
+        expect(alert).not.toHaveTextContent('raw');
         await waitFor(() => expect(detailFetches()).toBeGreaterThan(before));
+        expect(screen.getByRole('alertdialog')).toBeVisible();
     });
 
     it('keeps the undo dialog open with the alert on any other error', async () => {
@@ -332,7 +332,7 @@ describe('EarningActions (spec 0014)', () => {
         expect(await screen.findByText(notice)).toBeInTheDocument();
     });
 
-    it('shows a direct transition error as an error notice and reloads the detail', async () => {
+    it('shows a direct transition error in an alert below the buttons and reloads the detail', async () => {
         mocks.patch.mockResolvedValue(failure(409, 'EARNING_STATUS_TRANSITION_NOT_ALLOWED'));
         await renderDetail(earning({ id: 'r1', description: 'Projeto', status: 'FORECAST' }));
         const before = detailFetches();
@@ -340,9 +340,11 @@ describe('EarningActions (spec 0014)', () => {
         await act(async () => {
             fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
         });
+        const alert = await screen.findByRole('alert');
+        expect(alert).not.toHaveTextContent('raw');
+        expect(screen.getByRole('group', { name: 'Ações' }).nextElementSibling).toBe(alert);
         const notices = screen.getByRole('region', { name: 'Avisos' });
-        await waitFor(() => expect(notices.querySelector('[data-tone="erro"]')).not.toBeNull());
-        expect(notices).not.toHaveTextContent('raw');
+        expect(notices.querySelector('[data-tone="erro"]')).toBeNull();
         await waitFor(() => expect(detailFetches()).toBeGreaterThan(before));
     });
 
@@ -401,7 +403,7 @@ describe('EarningActions (spec 0014)', () => {
         expect(router.state.location.search).toEqual({ excluir: 1 });
     });
 
-    it('closes the delete dialog and reloads the detail when it was received elsewhere', async () => {
+    it('keeps the delete dialog open with the alert when it was received elsewhere', async () => {
         mocks.del.mockResolvedValue(failure(409, 'EARNING_ALREADY_RECEIVED'));
         const { router } = await renderDetail(OPEN, { path: '?excluir=1' });
         served = RECEIVED;
@@ -410,10 +412,12 @@ describe('EarningActions (spec 0014)', () => {
         await act(async () => {
             fireEvent.click(within(dialog).getByRole('button', { name: 'Excluir' }));
         });
-        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+            'Essa receita já foi recebida e não pode mais',
+        );
+        await waitFor(() => expect(detailFetches()).toBeGreaterThan(1));
+        expect(screen.getByRole('alertdialog')).toBeVisible();
         expect(router.state.location.pathname).toBe('/receitas/r1');
-        expect(await screen.findByRole('button', { name: 'Desfazer recebimento' })).toBeVisible();
-        expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument();
     });
 
     it('closes the delete dialog on Cancelar and drops ?excluir', async () => {
