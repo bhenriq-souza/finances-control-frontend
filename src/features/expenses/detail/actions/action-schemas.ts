@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { dateSchema, optionalDateSchema } from '@/shared/dates';
+import { dateSchema, refineOptionalDate } from '@/shared/dates';
 
 import { parsePaymentMethod } from './expense-action-model';
 
@@ -24,8 +24,14 @@ export function paymentMethodSchema(occurredOn: string) {
             method: z
                 .string()
                 .refine((value) => parsePaymentMethod(value) !== null, METHOD_REQUIRED_MESSAGE),
-            postedOn: optionalDateSchema(),
+            // Só validada com cartão no destino, quando o campo aparece.
+            postedOn: z.string(),
             scope: z.enum(['single', 'following']),
+        })
+        .superRefine(({ method, postedOn }, ctx) => {
+            if (parsePaymentMethod(method)?.kind === 'cartao') {
+                refineOptionalDate(ctx, 'postedOn', postedOn);
+            }
         })
         .refine(
             ({ method, postedOn }) =>

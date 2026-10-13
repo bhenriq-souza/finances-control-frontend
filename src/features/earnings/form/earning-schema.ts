@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { dateSchema, optionalDateSchema } from '@/shared/dates';
+import { dateSchema, refineOptionalDate } from '@/shared/dates';
 import { moneySchema } from '@/shared/money';
 
 import { EARNING_KINDS } from '../list/earning-model';
@@ -39,7 +39,8 @@ const base = z.object({
     bankAccountId: required(EARNING_FORM_MESSAGES.account),
     occurredOn: dateSchema(EARNING_FORM_MESSAGES.date),
     installmentTotal: z.string(),
-    recurrenceEndsOn: optionalDateSchema(),
+    // Só validada em Fixa, quando o campo aparece (no `superRefine`).
+    recurrenceEndsOn: z.string(),
     status: z.enum(INITIAL_STATUSES),
     notes: z.string().trim().max(NOTES_MAX, EARNING_FORM_MESSAGES.notesMax),
     scope: z.enum(['one', 'following']),
@@ -65,6 +66,9 @@ export function earningFormSchema(mode: 'create' | 'edit') {
                 message: EARNING_FORM_MESSAGES.installments,
                 path: ['installmentTotal'],
             });
+        }
+        if (values.kind === 'FIXED') {
+            refineOptionalDate(ctx, 'recurrenceEndsOn', values.recurrenceEndsOn);
         }
         if (
             values.kind === 'FIXED' &&

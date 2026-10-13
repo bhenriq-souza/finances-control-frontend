@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { dateSchema, optionalDateSchema } from '@/shared/dates';
+import { dateSchema, refineOptionalDate } from '@/shared/dates';
 import { moneySchema } from '@/shared/money';
 
 export const SAME_ACCOUNT_MESSAGE = 'Escolha contas diferentes.';
@@ -26,7 +26,12 @@ export const transferSchema = transferDetailsSchema
         amount: moneySchema(),
         occurredOn: dateSchema('Informe a data.'),
         status: z.enum(['COMPLETED', 'SCHEDULED']),
-        completedOn: optionalDateSchema(),
+        // Só validada na transferência concluída, quando o campo aparece.
+        completedOn: z.string(),
+    })
+    .superRefine((values, ctx) => {
+        if (values.status === 'COMPLETED')
+            refineOptionalDate(ctx, 'completedOn', values.completedOn);
     })
     // INV-0018-03: origem igual ao destino nunca é enviada.
     .refine((values) => values.fromBankAccountId !== values.toBankAccountId, {
