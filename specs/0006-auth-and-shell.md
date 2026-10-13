@@ -51,24 +51,24 @@ interface AuthClient {
 - **Persistência:** `browserLocalPersistence` (a sessão sobrevive a fechar o navegador).
 - **Idioma:** `auth.languageCode = 'pt'`, para os emails do Firebase saírem em português.
 - **Google:** `signInWithPopup`. Popup fechado pelo usuário não é erro visível.
-- **Cadastro:** `createUserWithEmailAndPassword`, `updateProfile({ displayName: name })` e `sendEmailVerification`, nessa ordem; o envio do email de verificação no cadastro é exigência do [ADR-0009](https://github.com/bhenriq-souza/finances-control/blob/main/docs/adr/ADR-0009-firebase-project.md).
+- **Cadastro:** `createUserWithEmailAndPassword`, `updateProfile({ displayName: name })` e `sendEmailVerification`, nessa ordem; o envio do email de verificação no cadastro é exigência do [ADR-0009](https://github.com/bhenriq-souza/finances-control/blob/main/docs/adr/ADR-0009-firebase-project.md). Depois que `createUserWithEmailAndPassword` dá certo, a conta já existe e a sessão já está aberta: uma falha em `updateProfile` ou em `sendEmailVerification` não volta ao formulário (uma nova tentativa daria `auth/email-already-in-use`) e o cadastro segue para a guarda de `_app`, onde o email pode ser reenviado. Só uma falha da criação aparece no formulário (decisão do responsável, 2026-10-13).
 - **Erros do Firebase** viram mensagens pt-BR por `code` do Firebase em `src/features/identity/auth-errors.ts` (ex.: `auth/invalid-credential` → "Email ou senha incorretos."; `auth/email-already-in-use` → "Já existe uma conta com este email. Entre ou redefina a senha."; `auth/too-many-requests`; `auth/network-request-failed`; `auth/popup-blocked`; `auth/weak-password`). Código sem entrada cai numa mensagem genérica; o texto do Firebase nunca aparece.
 
 ### Rotas
 
-| Rota                    | Acesso                 | Conteúdo                                                                                                    |
-| ----------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `/entrar`               | só sem sessão          | email e senha, **Entrar com Google**, links para criar conta e redefinir senha; logo horizontal da FarmTech |
-| `/criar-conta`          | só sem sessão          | nome, email, senha (mínimo 8 caracteres) e confirmação                                                      |
-| `/redefinir-senha`      | só sem sessão          | email; confirma o envio sem revelar se a conta existe                                                       |
-| `/verificar-email`      | com sessão             | o email da conta, **Reenviar email** (limite de um envio por minuto), **Já verifiquei**, **Sair**           |
-| `/aguardando-aprovacao` | com sessão, sem perfil | explica que um Admin precisa liberar o acesso; **Verificar de novo**, **Sair**                              |
-| `/`                     | com sessão e perfil    | tela inicial provisória dentro do shell: "Olá, <nome>" e o perfil, até o dashboard (spec 0015)              |
+| Rota                    | Acesso                 | Conteúdo                                                                                                                                                                                                                           |
+| ----------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/entrar`               | só sem sessão          | email e senha, **Entrar com Google**, links para criar conta e redefinir senha; logo horizontal da FarmTech                                                                                                                        |
+| `/criar-conta`          | só sem sessão          | nome, email, senha (mínimo 8 caracteres) e confirmação                                                                                                                                                                             |
+| `/redefinir-senha`      | só sem sessão          | email; confirma o envio sem revelar se a conta existe                                                                                                                                                                              |
+| `/verificar-email`      | com sessão             | o email da conta, **Reenviar email** (limite de um envio por minuto), **Já verifiquei**, **Sair**                                                                                                                                  |
+| `/aguardando-aprovacao` | com sessão, sem perfil | explica que um Admin precisa liberar o acesso; com `emailVerified: false` em `/users/me`, avisa que o email ainda não foi verificado e oferece **Reenviar email** (limite de um envio por minuto); **Verificar de novo**, **Sair** |
+| `/`                     | com sessão e perfil    | tela inicial provisória dentro do shell: "Olá, <nome>" e o perfil, até o dashboard (spec 0015)                                                                                                                                     |
 
 - Com sessão, `/entrar`, `/criar-conta` e `/redefinir-senha` redirecionam para `/`.
 - `/entrar?redirect=<rota>` volta à rota de origem depois do login; só aceita caminhos internos (começam com `/` e não com `//`).
 - **Já verifiquei:** `reloadUser`, `getIdToken(true)` e nova consulta a `/users/me`; continua na tela se o email ainda não estiver verificado, com aviso.
-- **Verificar de novo:** nova consulta a `/users/me`.
+- **Verificar de novo:** `reloadUser`, `getIdToken(true)` e nova consulta a `/users/me`. O token novo é o que leva ao backend a verificação feita pelo link do email; sem ele, `emailVerified` só muda na renovação automática do token, em até uma hora.
 
 ### Guarda das rotas autenticadas
 
@@ -138,6 +138,8 @@ Segue o componente `AppShell` do [Design System](https://claude.ai/artifact/DxDn
 - **AC-0006-08:** o seletor de tema do menu muda o tema na hora e a escolha sobrevive a recarregar.
 - **AC-0006-09:** os casos ERR-0006-01, ERR-0006-02, ERR-0006-04 e ERR-0006-07 mostram o comportamento da tabela.
 - **AC-0006-10:** a página do spike da spec 0003 e o `fetch` direto dela não existem mais.
+- **AC-0006-11:** no cadastro, uma falha de `sendEmailVerification` depois de criada a conta leva à guarda de `_app` mesmo assim, sem erro no formulário; uma falha de `createUserWithEmailAndPassword` fica no formulário.
+- **AC-0006-12:** em `/aguardando-aprovacao`, com `emailVerified: false`, aparecem o aviso e **Reenviar email**, que chama `sendEmailVerification` e fica desabilitado por um minuto; com `emailVerified: true`, nenhum dos dois. **Verificar de novo** chama `reloadUser` e `getIdToken(true)` antes da nova consulta a `/users/me`.
 
 ## Test mapping
 
@@ -151,6 +153,7 @@ Segue o componente `AppShell` do [Design System](https://claude.ai/artifact/DxDn
 | AC-0006-08                                                   | `e2e/theme.spec.ts`                                                 |
 | AC-0006-09, INV-0006-05, INV-0006-06                         | `src/features/identity/auth-errors.test.ts` e `e2e/sign-in.spec.ts` |
 | AC-0006-10                                                   | revisão do PR da T-0006-02 e o gate `boundaries`                    |
+| AC-0006-11, AC-0006-12                                       | `src/features/identity/**/*.test.tsx` e `e2e/auth-guard.spec.ts`    |
 
 ## Open questions
 
