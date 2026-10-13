@@ -100,7 +100,7 @@ Mostrar a todo perfil onde o dinheiro está — saldo de cada conta, limite e ci
 - **INV-0011-01:** só `ADMIN` vê controles de criar, alterar, arquivar e desarquivar; `BILLER` e `VIEWER` veem as mesmas listas, só leitura.
 - **INV-0011-02:** nenhum formulário envia `openingBalanceCents`, `currentBalanceCents` ou `bankId` num `PATCH` de conta, nem `bankId` num `PATCH` de cartão.
 - **INV-0011-03:** saldos e limites mostrados vêm da resposta da API, em centavos, por `Money`; o cliente só soma (total em contas) e subtrai (limite usado).
-- **INV-0011-04:** selects de banco, conta pagadora e (nas demais specs) de conta e cartão oferecem só itens ativos.
+- **INV-0011-04:** selects de banco, conta pagadora e (nas demais specs) de conta e cartão oferecem só itens ativos. Única exceção (decisão do responsável, 2026-10-13): ao alterar um cartão cuja conta pagadora atual está arquivada, ela continua no select como item marcado "(arquivada)", para que salvar não troque a conta por "nenhuma" sem o usuário pedir.
 
 ## Error cases
 
