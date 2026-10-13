@@ -215,7 +215,7 @@ Tarefas da [spec 0014](../specs/0014-earnings.md), da issue de entrega [FCF-013]
     - What: criar (variável, parcelada, fixa) e alterar com escopo de série e troca de conta; depende de T-0014-01
     - Where: `src/features/earnings/form/`, `e2e/earnings-form.spec.ts`
     - Done when: `AC-0014-03` e `AC-0014-04` cobertos; `INV-0014-04` verificado
-- [ ] **T-0014-03 — Ações de status e exclusão** · #76
+- [x] **T-0014-03 — Ações de status e exclusão** · #76
     - What: receber, verificar, desfazer recebimento, excluir com cascata, `?receber` e `?excluir`; depende de T-0014-01
     - Where: `src/features/earnings/detail/actions/`, `e2e/earnings-detail.spec.ts`
     - Done when: `AC-0014-05`, `AC-0014-06` e `AC-0014-07` cobertos; `INV-0014-02` e `INV-0014-03` verificados

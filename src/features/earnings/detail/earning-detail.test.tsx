@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('@/api/client', () => ({ api: { GET: mocks.get } }));
 
+import { CURRENT_USER_QUERY_KEY } from '@/api/queries/current-user';
 import { queryKeys } from '@/api/queries/keys';
 
 import type { Earning } from '../list/earning-model';
@@ -34,6 +35,16 @@ function failure(status: number, code: string) {
 async function renderDetail(id: string) {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(queryKeys.bankAccounts.all, [CHECKING, SAVINGS, OLD_ACCOUNT]);
+    // As ações (T-0014-03) leem o perfil; aqui, leitor, sem ações de escrita.
+    queryClient.setQueryData(CURRENT_USER_QUERY_KEY, {
+        id: 'u',
+        email: 'a@b.c',
+        emailVerified: true,
+        name: 'Ana',
+        profile: 'VIEWER',
+        profileGrantedAt: null,
+        createdAt: '2026-10-01T00:00:00Z',
+    });
 
     const root = createRootRoute();
     const list = createRoute({
