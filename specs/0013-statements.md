@@ -1,7 +1,7 @@
 ---
 id: '0013'
 title: Faturas de cartão, pagamentos e estornos
-status: approved
+status: implemented
 depends_on: ['0008', '0009', '0011', '0012']
 ---
 
