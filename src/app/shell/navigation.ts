@@ -9,6 +9,7 @@ import {
     House,
     Landmark,
     type LucideIcon,
+    Repeat,
     Users,
 } from 'lucide-react';
 
@@ -49,6 +50,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
         profiles: ALL_PROFILES,
         slot: 'mais',
     },
+    { to: '/series', label: 'Séries fixas', icon: Repeat, profiles: ALL_PROFILES, slot: 'mais' },
     {
         to: '/relatorios',
         label: 'Relatórios',

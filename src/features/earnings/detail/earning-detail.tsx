@@ -59,6 +59,20 @@ function Fields({ earning }: { earning: Earning }) {
                     </span>
                 </Row>
             )}
+            {earning.recurrenceId && (
+                <Row term="Repetição">
+                    <span className="flex flex-col gap-1 md:flex-row md:gap-3">
+                        <span>Fixa, mês a mês</span>
+                        <Link
+                            to="/series/receitas/$serieId"
+                            params={{ serieId: earning.recurrenceId }}
+                            className={LINK_CLASS}
+                        >
+                            Ver série
+                        </Link>
+                    </span>
+                </Row>
+            )}
             <Row term="Observações">
                 <span className="whitespace-pre-line">{earning.notes ?? '—'}</span>
             </Row>

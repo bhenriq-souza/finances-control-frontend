@@ -111,7 +111,20 @@ function ExpenseFields({ expense }: { expense: Expense }) {
                     </span>
                 </Item>
             )}
-            {expense.recurrenceId && <Item term="Repetição">Fixa, mês a mês</Item>}
+            {expense.recurrenceId && (
+                <Item term="Repetição">
+                    <span className="flex flex-col gap-1">
+                        <span>Fixa, mês a mês</span>
+                        <Link
+                            to="/series/despesas/$serieId"
+                            params={{ serieId: expense.recurrenceId }}
+                            className={LINK_CLASS}
+                        >
+                            Ver série
+                        </Link>
+                    </span>
+                </Item>
+            )}
             {expense.notes && (
                 <Item term="Observações">
                     <span className="whitespace-pre-line">{expense.notes}</span>
