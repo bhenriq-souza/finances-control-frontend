@@ -1,7 +1,7 @@
 ---
 id: '0015'
 title: Dashboard de saldo e relatórios
-status: implemented
+status: approved
 depends_on: ['0009', '0011', '0012', '0013', '0014']
 ---
 
@@ -13,8 +13,8 @@ Trocar a tela inicial provisória pelo dashboard de saldo aprovado no [Design](h
 
 ## Scope / Non-goals
 
-- **Em escopo:** o dashboard em `/` (substitui a `HomePage` de `identity`, que é removida), `/relatorios` com as abas de saldo, por tipo e fluxo de caixa, o componente de colunas mensais e o item **Relatórios** da navegação; o extrato de uma conta em `/contas/$contaId` (revisão de 2026-10-13, FCF-021).
-- **Fora de escopo:** orçamentos, alertas e exportação (a API não tem); saldo diário (os relatórios são mensais); um endpoint agregado para o dashboard (a API não tem: o dashboard compõe consultas existentes, abaixo).
+- **Em escopo:** o dashboard em `/` (substitui a `HomePage` de `identity`, que é removida), `/relatorios` com as abas de saldo, por tipo e fluxo de caixa, o componente de colunas mensais e o item **Relatórios** da navegação; o extrato de uma conta em `/contas/$contaId` (revisão de 2026-10-13, FCF-021); o fluxo de caixa do mês em `/fluxo-de-caixa`, com as ações rápidas (revisão de 2026-10-13, FCF-020).
+- **Fora de escopo:** orçamentos, alertas e exportação (a API não tem); saldo diário (os relatórios são mensais); filtro por conta e transferências no fluxo de caixa (o extrato da conta mostra os dois); um endpoint agregado para o dashboard (a API não tem: o dashboard compõe consultas existentes, abaixo).
 - **Depende do backend:** [spec 0015](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0015-reporting.md) (`/reports/*`, todo perfil) e as listas das specs 0011–0014 do backend, na tag `v1.1.0`; o extrato usa `/reports/account-movements`, da tag `v1.2.0`, para a qual o contrato fixado em `sources.json` passa.
 - **Decisões de 2026-10-12 (aprovação):** "Previsto" mostra o saldo previsto (`accountsTotalCents` do ponto `FORECAST`) com a variação ao lado; "Receitas do mês" e "Despesas do mês" somam todos os status, inclusive previstos. **Limite aceito:** sem rota agregada, o dashboard faz 4 consultas fixas e mais uma por cartão ativo.
 - **Forma visual:** os seis artboards do [dashboard](https://claude.ai/artifact/HEj1d1jqqwAPMBVYZdMsyy) (celular, tablet e desktop, nos dois temas) e, para os relatórios, o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC).
@@ -77,6 +77,44 @@ Pedido do responsável nos testes em `dev` (2026-10-13). Código em `src/feature
 - **Vazio:** "Nenhum movimento neste mês.", com os dois saldos.
 - **Entrada:** na lista de contas (spec 0011), cada linha ganha o link **Extrato**, para todos os perfis.
 
+### Fluxo de caixa — `/fluxo-de-caixa`
+
+Pedido do responsável nos testes em `dev` (2026-10-13, FCF-020): o fluxo de caixa é "de extrema importância" e ficava espremido na aba de Relatórios. Esta é uma tela própria, por mês, com o que entra e sai das contas e as ações rápidas sobre a lista. O código fica em `src/features/reporting/cash-flow/`, e a rota `src/routes/_app/fluxo-de-caixa.tsx` compõe `reporting` com as ações que `expenses`, `earnings` e `statements` exportam (INV-0015-06). Qualquer perfil lê.
+
+- **Rota:** `?mes=YYYY-MM` (padrão: o mês de `today()`; valor inválido é descartado), com navegação de mês (‹ outubro de 2026 ›) como nas listas, e os parâmetros das ações (abaixo).
+- **Lista do mês:** um `EntryList` em ordem de data, com:
+
+| Linha            | Origem                                                                                                                                                            | Data         | Valor                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------------------------- |
+| Receita          | `GET /earnings?from&to` do mês, todos os status                                                                                                                   | `occurredOn` | `amountCents` com `+R$`    |
+| Despesa de conta | `GET /expenses?from&to` do mês, só as com `bankAccountId`, todos os status                                                                                        | `occurredOn` | `amountCents` com `−R$`    |
+| Fatura de cartão | por cartão ativo, `GET /statements?creditCardId&from=<1º dia de mes−2>&to=<último dia de mes>`, só as faturas com `dueOn` no mês (fechadas, pagas ou a projetada) | `dueOn`      | `amountDueCents` com `−R$` |
+
+- **Mês corrente:** entram também as despesas de conta e as receitas `OVERDUE` de meses anteriores (`GET /expenses?status=OVERDUE`, `GET /earnings?status=OVERDUE`, sem repetir id), as mesmas que o saldo previsto do backend leva para o mês corrente.
+- **Fica de fora:** despesa de cartão, porque quem sai da conta é a fatura (decisão do responsável em 2026-10-13); e transferência entre contas, que não muda o total das contas.
+- **Colunas:**
+    - **Data:** `formatDate(…, 'relativa')`.
+    - **Descrição:** em receita ou despesa, `description`, com o tipo e a conta no apoio; em fatura, "Fatura <cartão>", com a conta pagadora no apoio.
+    - **Situação:** `StatusBadge` do lançamento ou da fatura.
+    - **Valor:** `Money` com sinal.
+- **Destino de cada linha:** a receita leva a `/receitas/$receitaId`, a despesa a `/despesas/$despesaId`, e a fatura a `/cartoes/$cartaoId/faturas/$faturaId` (a projetada, sem `id`, a `/cartoes/$cartaoId`).
+- **Resumo** (acima da lista; no celular, uma grade 2 × 2): **Saldo no início**, **Entradas**, **Saídas** e **Saldo no fim**, com o selo **Realizado** ou **Previsto**.
+    - **Entradas** é a soma das receitas da lista, e **Saídas** a soma das despesas e faturas da lista, cada uma com o apoio "n realizadas · n pendentes".
+    - **Saldos:** vêm de `GET /reports/balance?from=<min(mes, corrente) − 1>&to=<mes>`, sem `bankAccountId`.
+        - **Mês passado:** o início é o `accountsTotalCents` do ponto `mes − 1`, e o fim o do ponto `mes` (os dois `REALIZED`).
+        - **Mês corrente e seguintes:** o fim de `M` é `accountsTotalCents(M) − Σ cardDueCents` dos pontos do corrente até `M`. O ponto `FORECAST` não desconta as faturas, e assim cada fatura sai no mês em que vence. O início do mês corrente é o `accountsTotalCents` do ponto `corrente − 1`; o de um mês seguinte é o fim do mês anterior.
+- **Ações** (com `entries.write`; o `leitor` não vê menu): um `RowMenu` por linha (`actions` do `EntryList`).
+    - **Despesa:** as mesmas ações da lista de despesas (INV-0012-06).
+    - **Receita:** as mesmas da lista de receitas (INV-0014-05).
+    - **Fatura `CLOSED` com `remainingCents > 0`:** **Pagar fatura**, o mesmo diálogo de pagamento do detalhe da fatura (spec 0013). A fatura paga e a projetada não têm menu.
+    - **Diálogos:** abrem sobre a tela, endereçáveis por `?acao=<pagar|receber|editar|excluir|desfazer>&despesa=<id>`, `?acao=<…>&receita=<id>` e `?acao=pagar&fatura=<id>&cartao=<id>`. A rota traduz esses parâmetros para os das ações de cada feature, e o mês se mantém. Ação que o status não permite, ou id desconhecido, é ignorada e os parâmetros são removidos.
+    - **Erro** de uma transição sem diálogo: em alerta acima da lista, como nas listas.
+    - **API pública:** `expenses`, `earnings` e `statements` exportam pelo `index.ts` as ações da lista (ou o pagamento da fatura), parametrizadas pelos parâmetros de busca da rota que as usa.
+- **Vazio:** "Nada entra nem sai neste mês.", com o resumo.
+- **Entradas para a tela:**
+    - **Navegação:** `{ to: '/fluxo-de-caixa', label: 'Fluxo de caixa', icon: Wallet, profiles: [todos], slot: 'mais' }`, logo depois de **Cartões** (spec 0009).
+    - **Relatórios:** na aba **Fluxo de caixa**, cada mês da tabela leva a `/fluxo-de-caixa?mes=<mês>`.
+
 ### Mapa de erros
 
 | Código                   | Onde                                                                                                                              |
@@ -91,6 +129,8 @@ Pedido do responsável nos testes em `dev` (2026-10-13). Código em `src/feature
 - **INV-0015-03:** todo gráfico tem a tabela com os mesmos números ao lado.
 - **INV-0015-04:** a falha de uma consulta do dashboard afeta só a sua seção.
 - **INV-0015-05:** o extrato não calcula saldo: os saldos inicial, final e de cada linha são os da resposta.
+- **INV-0015-06:** as ações do fluxo de caixa são as das listas de despesas e de receitas e a do detalhe da fatura, com os mesmos diálogos e mutações; `reporting` não importa outra feature, e quem as compõe é a rota.
+- **INV-0015-07:** no fluxo de caixa, despesa de cartão nunca aparece, só a fatura; os saldos só somam e subtraem números da API (INV-0015-02).
 
 ## Error cases
 
@@ -115,6 +155,13 @@ Pedido do responsável nos testes em `dev` (2026-10-13). Código em `src/feature
 - **AC-0015-11:** `/contas/<id>?mes=2026-03` chama `GET /reports/account-movements?bankAccountId=<id>&from=2026-03-01&to=2026-03-31` e mostra o saldo inicial, os movimentos do stub na ordem da resposta, com o valor com sinal e o saldo de cada um, e o saldo final; ‹ leva a `?mes=2026-02`.
 - **AC-0015-12:** cada tipo de movimento mostra a descrição e o apoio da tabela e leva à rota do lançamento de origem; o pagamento antecipado (sem `statementId`) leva ao cartão.
 - **AC-0015-13:** `404 BANK_ACCOUNT_NOT_FOUND` mostra "Não encontramos este item." com o link para `/contas`; com `leitor`, o extrato aparece e a lista de contas mostra **Extrato** em cada linha.
+- **AC-0015-14:** com hoje em 15/10/2026, `/fluxo-de-caixa` mostra, em ordem de data, as receitas e as despesas de conta de outubro, as vencidas de setembro e a fatura do cartão que vence em outubro, sem despesas de cartão e sem transferências; ‹ leva a `?mes=2026-09`.
+- **AC-0015-15:** o resumo mostra **Entradas** e **Saídas** iguais às somas da lista. Em `2026-10`, o início é o `accountsTotalCents` de `2026-09` e o fim é `accountsTotalCents(2026-10) − cardDueCents(2026-10)`. Em `2026-12`, o fim é `accountsTotalCents(2026-12)` menos a soma de `cardDueCents` de `2026-10` a `2026-12`. Em `2026-08`, os dois saldos são os pontos realizados.
+- **AC-0015-16:** com `lancador`:
+    - **Pagar** numa despesa abre o diálogo sobre a tela (`?acao=pagar&despesa=<id>`) e envia `{ status: 'PAID', paidOn }`, e a tela continua no mesmo mês; **Receber** numa receita faz o mesmo.
+    - **Pagar fatura** numa fatura fechada a pagar abre o pagamento da fatura e envia `POST /statements/{id}/payments`.
+    - A fatura projetada não tem menu. Com `leitor`, nenhuma linha tem menu e `?acao=pagar&despesa=<id>` não abre nada.
+- **AC-0015-17:** **Fluxo de caixa** aparece na navegação de todos os perfis, depois de **Cartões**; na aba **Fluxo de caixa** de Relatórios, o mês `2026-09` leva a `/fluxo-de-caixa?mes=2026-09`.
 
 ## Test mapping
 
@@ -127,6 +174,9 @@ Pedido do responsável nos testes em `dev` (2026-10-13). Código em `src/feature
 | AC-0015-09                                      | `src/features/reporting/reports/period.test.ts`                                         |
 | AC-0015-10                                      | revisão do PR e `e2e/dashboard.spec.ts`                                                 |
 | AC-0015-11, AC-0015-12, AC-0015-13, INV-0015-05 | `src/features/reporting/account-statement/*.test.tsx` e `e2e/account-statement.spec.ts` |
+| AC-0015-14, AC-0015-15, INV-0015-07             | `src/features/reporting/cash-flow/*.test.ts(x)` e `e2e/cash-flow.spec.ts`               |
+| AC-0015-16, INV-0015-06                         | `e2e/cash-flow.spec.ts` (com `lancador` e `leitor`) e o gate `boundaries`               |
+| AC-0015-17                                      | `e2e/cash-flow.spec.ts` e `e2e/reports.spec.ts`                                         |
 
 ## Open questions
 
