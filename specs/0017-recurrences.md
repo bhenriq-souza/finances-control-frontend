@@ -1,7 +1,7 @@
 ---
 id: '0017'
 title: Séries fixas de despesas e receitas
-status: approved
+status: implemented
 depends_on: ['0009', '0012', '0014']
 ---
 

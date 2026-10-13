@@ -22,7 +22,7 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0013](0013-statements.md)               | Faturas de cartão, pagamentos e estornos                           | implemented |
 | [0014](0014-earnings.md)                 | Receitas e tipos de receita                                        | implemented |
 | [0015](0015-dashboard-and-reports.md)    | Dashboard de saldo e relatórios                                    | implemented |
-| [0017](0017-recurrences.md)              | Séries fixas de despesas e receitas                                | approved    |
+| [0017](0017-recurrences.md)              | Séries fixas de despesas e receitas                                | implemented |
 | [0018](0018-transfers.md)                | Transferências entre contas próprias                               | implemented |
 
 Decisões de arquitetura: as de **produto** vivem em [`docs/adr/` do hub](https://github.com/bhenriq-souza/finances-control/tree/main/docs/adr); as **locais do frontend**, em `adr/` (ainda vazia).
