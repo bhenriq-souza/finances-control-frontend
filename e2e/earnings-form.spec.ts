@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import type { components } from '../src/api/generated/schema';
+
 import { stubApi, type ApiStub } from './fixtures/api';
 import { chooseUser, signInWithEmail, stubUsersMe, type E2EUser } from './fixtures/auth';
 import {
@@ -8,26 +10,35 @@ import {
     EARNING_TYPES,
     OCTOBER_EARNINGS,
     PROJECT_INSTALLMENT,
+    ROOM_RENT,
     SALARY,
     SALARY_TYPE,
 } from './fixtures/data/earnings';
 import { stubRuntime } from './fixtures/runtime-config';
 
+type Earning = components['schemas']['EarningResponse'];
+
 // Formulário de receita (spec 0014): AC-0014-03, AC-0014-04, AC-0014-07 (edição),
 // AC-0014-09 (formulário) e INV-0014-04.
 
 /** As três ocorrências que o `POST` de uma fixa até dezembro devolve. */
-const CREATED_SERIES = [
+const CREATED_SERIES: Earning[] = [
     SALARY,
     { ...SALARY, id: '50000000-0000-4000-8000-000000000011', occurredOn: '2026-11-05' },
     { ...SALARY, id: '50000000-0000-4000-8000-000000000012', occurredOn: '2026-12-05' },
 ];
 
-async function openAs(page: Page, user: E2EUser, path: string, heading: string): Promise<ApiStub> {
+async function openAs(
+    page: Page,
+    user: E2EUser,
+    path: string,
+    heading: string,
+    created: readonly Earning[] = CREATED_SERIES,
+): Promise<ApiStub> {
     await stubRuntime(page);
     const stub = await stubApi(page, [
         { method: 'GET', path: '/earnings', body: { data: OCTOBER_EARNINGS } },
-        { method: 'POST', path: '/earnings', status: 201, body: { data: CREATED_SERIES } },
+        { method: 'POST', path: '/earnings', status: 201, body: { data: created } },
         { method: 'GET', path: `/earnings/${SALARY.id}`, body: { data: SALARY } },
         {
             method: 'GET',
@@ -54,7 +65,7 @@ const writes = (stub: ApiStub, method: string) =>
     stub.requests.filter((r) => r.method === method && r.path.startsWith('/earnings'));
 
 // AC-0014-03, AC-0014-09: Nova receita fixa de 5.000,00 com Repetir até, no `FormDialog`.
-test('creates a fixed earning with Repetir até and opens the first one', async ({
+test('creates a fixed earning with Repetir até and returns to the list', async ({
     page,
 }, testInfo) => {
     const stub = await openAs(page, 'lancador', '/receitas?mes=2026-10', 'Receitas');
@@ -86,8 +97,8 @@ test('creates a fixed earning with Repetir até and opens the first one', async 
     await dialog.getByRole('button', { name: 'Salvar' }).click();
 
     await expect(page.getByText('3 receitas criadas.')).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`/receitas/${SALARY.id}$`));
-    await expect(page.getByRole('heading', { name: 'Salário', level: 1 })).toBeVisible();
+    await expect(page).toHaveURL(/\/receitas\?mes=2026-10$/);
+    await expect(page.getByRole('heading', { name: 'Receitas', level: 1 })).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'Nova receita' })).toHaveCount(0);
 
     const posts = writes(stub, 'POST');
@@ -102,6 +113,29 @@ test('creates a fixed earning with Repetir até and opens the first one', async 
         status: 'OPEN',
         recurrenceEndsOn: '2026-12-05',
     });
+});
+
+// AC-0014-10: criar com data de outro mês leva a lista a esse mês, sem filtros e sem detalhe.
+test('goes to the month of the created earning without filters or detail', async ({ page }) => {
+    const november: Earning = { ...ROOM_RENT, id: SALARY.id, occurredOn: '2026-11-05' };
+    const stub = await openAs(page, 'lancador', '/receitas?mes=2026-10&tipo=x', 'Receitas', [
+        november,
+    ]);
+
+    await page.getByRole('button', { name: 'Nova receita' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Nova receita' });
+    await dialog.getByLabel('Descrição').fill('Aluguel da sala');
+    await dialog.getByLabel('Tipo').selectOption({ label: SALARY_TYPE.name });
+    await dialog.getByLabel('Valor').fill('800,00');
+    await dialog.getByLabel('Conta').selectOption({ label: CHECKING_ACCOUNT.description });
+    await dialog.getByLabel('Data prevista').fill('2026-11-05');
+    await dialog.getByRole('button', { name: 'Salvar' }).click();
+
+    await expect(page.getByText('Receita salva.')).toBeVisible();
+    await expect(page).toHaveURL(/\/receitas\?mes=2026-11$/);
+    await expect(page.getByRole('dialog', { name: 'Nova receita' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Receitas', level: 1 })).toBeVisible();
+    expect(writes(stub, 'POST')).toHaveLength(1);
 });
 
 // AC-0014-04, INV-0014-03, INV-0014-04: a conta de uma parcela, com a nota da cascata.

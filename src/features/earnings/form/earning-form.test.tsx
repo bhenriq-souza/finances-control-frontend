@@ -22,7 +22,12 @@ import { createNoticeStore, NoticeProvider } from '@/ui/notice';
 
 import { EarningDetail } from '../detail/earning-detail';
 import type { Earning } from '../list/earning-model';
-import { earningDetailSearchSchema, type EarningDetailSearch } from '../list/earning-search';
+import {
+    earningDetailSearchSchema,
+    earningListSearchSchema,
+    type EarningDetailSearch,
+    type EarningListSearch,
+} from '../list/earning-search';
 import {
     CHECKING,
     earning,
@@ -100,6 +105,15 @@ async function renderApp(url: string, form: ReactNode, profile: Profile = 'ADMIN
         path: '/formulario',
         component: () => form,
     });
+    const list = createRoute({
+        getParentRoute: () => root,
+        path: '/receitas',
+        validateSearch: earningListSearchSchema,
+        component: function List() {
+            const search: EarningListSearch = useSearch({ strict: false });
+            return search.novo === 1 ? form : <p>Lista de receitas</p>;
+        },
+    });
     const detail = createRoute({
         getParentRoute: () => root,
         path: '/receitas/$receitaId',
@@ -124,7 +138,7 @@ async function renderApp(url: string, form: ReactNode, profile: Profile = 'ADMIN
         },
     });
     const router = createRouter({
-        routeTree: root.addChildren([formRoute, detail]),
+        routeTree: root.addChildren([formRoute, list, detail]),
         history: createMemoryHistory({ initialEntries: [url] }),
     });
     await router.load();
@@ -140,9 +154,9 @@ async function renderApp(url: string, form: ReactNode, profile: Profile = 'ADMIN
     return { router, queryClient };
 }
 
-async function renderForm(existing?: Earning) {
+async function renderForm(existing?: Earning, url = '/formulario') {
     const result = await renderApp(
-        '/formulario',
+        url,
         <EarningFormDialog open onOpenChange={onOpenChange} earning={existing} />,
     );
     return { ...result, dialog: screen.getByRole('dialog') };
@@ -183,7 +197,7 @@ afterEach(() => {
 });
 
 describe('EarningFormDialog — create (spec 0014)', () => {
-    it('creates a variable earning, notifies and goes to its detail', async () => {
+    it('creates a variable earning, notifies and goes to the list of its month', async () => {
         vi.useFakeTimers({ now: new Date('2026-10-12T15:00:00Z'), toFake: ['Date'] });
         const { dialog, router, queryClient } = await renderForm();
         vi.useRealTimers();
@@ -231,7 +245,8 @@ describe('EarningFormDialog — create (spec 0014)', () => {
             },
         });
         expect(await screen.findByText('Receita salva.')).toBeInTheDocument();
-        expect(router.state.location.pathname).toBe('/receitas/nova');
+        expect(router.state.location.pathname).toBe('/receitas');
+        expect(router.state.location.search).toEqual({ mes: '2026-10' });
         // INV-0009-02: invalidação pela matriz, domínio `earning`.
         expect(invalidate.mock.calls.map(([filters]) => filters?.queryKey)).toEqual([
             ['earnings'],
@@ -239,6 +254,32 @@ describe('EarningFormDialog — create (spec 0014)', () => {
             ['bank-accounts'],
             ['reports'],
         ]);
+    });
+
+    // AC-0014-10: a lista vai para o mês da primeira criada, sem filtros e sem abrir o detalhe.
+    it('goes to the month of the first created earning, dropping filters and novo', async () => {
+        mocks.POST.mockResolvedValue(
+            ok([earning({ id: 'a', occurredOn: '2026-11-05' }), earning({ id: 'b' })], 201),
+        );
+        const { dialog, router } = await renderForm(
+            undefined,
+            '/receitas?mes=2026-10&status=OPEN&tipo=t1&novo=1',
+        );
+
+        fill(dialog, {
+            Descrição: 'Bônus',
+            Tipo: FREELANCE_TYPE.id,
+            Valor: '100,00',
+            Conta: CHECKING.id,
+            'Data prevista': '2026-11-05',
+        });
+        await save(dialog);
+
+        expect(await screen.findByText('2 receitas criadas.')).toBeInTheDocument();
+        expect(await screen.findByText('Lista de receitas')).toBeInTheDocument();
+        expect(router.state.location.pathname).toBe('/receitas');
+        expect(router.state.location.search).toEqual({ mes: '2026-11' });
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     // AC-0014-03: fixa de 5.000,00 com **Repetir até**.
@@ -271,7 +312,7 @@ describe('EarningFormDialog — create (spec 0014)', () => {
             recurrenceEndsOn: '2026-12-05',
         });
         expect(await screen.findByText('3 receitas criadas.')).toBeInTheDocument();
-        expect(router.state.location.pathname).toBe('/receitas/s1');
+        expect(router.state.location.pathname).toBe('/receitas');
     });
 
     it('sends no recurrenceEndsOn for a fixed earning without an end date', async () => {

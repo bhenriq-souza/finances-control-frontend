@@ -275,7 +275,7 @@ Tarefas da revisão das specs [0004](../specs/0004-theme.md), [0006](../specs/00
     - What: criar despesa volta para a lista no mês da primeira criada, sem filtros; **Fatura de** recolhido atrás de **Lançar em outra fatura**, com o fechamento da fatura atual, no formulário e em **Trocar forma de pagamento**
     - Where: `src/features/expenses/form/`, `src/features/expenses/list/`, `src/features/expenses/detail/actions/`, `e2e/expenses-form.spec.ts`
     - Done when: `AC-0012-14` e `AC-0012-15` cobertos
-- [ ] **T-0014-05 — Lista depois de criar uma receita** · #129
+- [x] **T-0014-05 — Lista depois de criar uma receita** · #129
     - What: criar receita volta para a lista no mês da primeira criada, sem filtros, sem abrir o detalhe
     - Where: `src/features/earnings/form/`, `src/features/earnings/list/`, `e2e/earnings-form.spec.ts`
     - Done when: `AC-0014-10` coberto

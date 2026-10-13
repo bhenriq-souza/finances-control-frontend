@@ -5,7 +5,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { applyApiError, type ApiFieldMap } from '@/api/errors/form-errors';
 import { useBankAccounts, useEarningTypes } from '@/api/queries/reference';
-import { today } from '@/shared/dates';
+import { monthOf, today } from '@/shared/dates';
 import { formatBRL, type Cents } from '@/shared/money';
 import { Button } from '@/ui/components/ui/button';
 import { Input } from '@/ui/components/ui/input';
@@ -236,7 +236,9 @@ export function EarningFormDialog({ open, onOpenChange, earning }: EarningFormDi
             });
             const first = created[0];
             if (first) {
-                void navigate({ to: '/receitas/$receitaId', params: { receitaId: first.id } });
+                // A lista vai para o mês da primeira criada, sem filtros nem `novo`: o diálogo
+                // fecha com a rota e o detalhe não é aberto (AC-0014-10).
+                void navigate({ to: '/receitas', search: { mes: monthOf(first.occurredOn) } });
             } else {
                 onOpenChange(false);
             }
