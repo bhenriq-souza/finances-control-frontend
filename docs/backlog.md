@@ -263,7 +263,7 @@ Tarefas da revisão das specs [0004](../specs/0004-theme.md), [0006](../specs/00
     - What: `color-scheme` do `<html>` acompanhando o tema em uso, para que os controles nativos usem a cor do tema
     - Where: `src/index.css`, `e2e/theme.spec.ts`
     - Done when: `AC-0004-06` coberto
-- [ ] **T-0006-04 — Favicon e camada do menu do usuário** · #126
+- [x] **T-0006-04 — Favicon e camada do menu do usuário** · #126
     - What: favicon SVG, PNG de 32px e `apple-touch-icon` em `public/`, declarados no `index.html`; o menu do usuário aberto acima do botão flutuante das listas
     - Where: `public/`, `index.html`, `src/ui/brand/README.md`, `src/app/shell/`, `e2e/shell.spec.ts`
     - Done when: `AC-0006-13` e `AC-0006-14` cobertos

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { stubApi } from './fixtures/api';
 import { chooseUser, signInWithEmail, stubUsersMe } from './fixtures/auth';
 import { stubRuntime } from './fixtures/runtime-config';
 
@@ -81,4 +82,67 @@ test('the user menu shows the name, the email and the profile in pt-BR', async (
 
     await page.keyboard.press('Escape');
     await expect(page.getByText('ativo@example.com')).toHaveCount(0);
+});
+
+// AC-0006-13: ícone da aba declarado no `index.html` publicado, com os três arquivos no ar.
+test('the published index declares the tab icons and the three files respond 200', async ({
+    page,
+}) => {
+    await page.goto('/entrar');
+    const icons = [
+        { selector: 'link[rel="icon"][type="image/svg+xml"]', href: '/favicon.svg' },
+        { selector: 'link[rel="icon"][type="image/png"][sizes="32x32"]', href: '/favicon-32.png' },
+        { selector: 'link[rel="apple-touch-icon"]', href: '/apple-touch-icon.png' },
+    ];
+    for (const { selector, href } of icons) {
+        await expect(page.locator(selector)).toHaveAttribute('href', href);
+        const response = await page.request.get(href);
+        expect(response.status()).toBe(200);
+        expect(response.headers()['content-type']).toMatch(/image\//);
+    }
+});
+
+// AC-0006-14: o painel do menu do usuário fica acima do botão flutuante da lista. A sobreposição
+// só existe onde o painel (de cima do cabeçalho) alcança o botão: no tablet e no desktop, o botão
+// está no cabeçalho da página; no celular, o botão é fixo acima da barra e só encontra o painel
+// numa tela bem baixa (menos de ~460px, como um navegador de celular com as barras abertas), então
+// o celular roda a 390×440.
+test('the user menu panel is above the Nova despesa button', async ({ page }, testInfo) => {
+    if (testInfo.project.name === 'celular')
+        await page.setViewportSize({ width: 390, height: 440 });
+    await stubApi(page, [
+        { method: 'GET', path: '/bank-accounts', body: { data: [] } },
+        { method: 'GET', path: '/credit-cards', body: { data: [] } },
+        { method: 'GET', path: '/expense-types', body: { data: [] } },
+        { method: 'GET', path: '/expenses', body: { data: [] } },
+    ]);
+    await page
+        .getByRole('navigation', { name: 'Principal' })
+        .getByRole('link', { name: 'Despesas' })
+        .click();
+    await expect(page.getByRole('heading', { name: 'Despesas', level: 1 })).toBeVisible();
+    await page.getByRole('button', { name: 'Menu do usuário' }).click();
+
+    const panel = page.getByRole('region', { name: 'Conta do usuário' });
+    await expect(panel).toBeVisible();
+    const button = await page.getByRole('button', { name: 'Nova despesa' }).boundingBox();
+    const box = await panel.boundingBox();
+    if (!button || !box) throw new Error('no button or panel box');
+
+    // Centro da área em que os dois se sobrepõem.
+    const left = Math.max(button.x, box.x);
+    const right = Math.min(button.x + button.width, box.x + box.width);
+    const top = Math.max(button.y, box.y);
+    const bottom = Math.min(button.y + button.height, box.y + box.height);
+    expect(right).toBeGreaterThan(left);
+    expect(bottom).toBeGreaterThan(top);
+
+    const insidePanel = await page.evaluate(
+        ([x, y]) => {
+            const hit = document.elementFromPoint(x ?? 0, y ?? 0);
+            return hit?.closest('section[aria-label="Conta do usuário"]') !== null;
+        },
+        [(left + right) / 2, (top + bottom) / 2],
+    );
+    expect(insidePanel).toBe(true);
 });
