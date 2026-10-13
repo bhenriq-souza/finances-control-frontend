@@ -182,7 +182,7 @@ interface EntryColumn<T> {
 - **`DateField`** (`src/ui/date-field.tsx`), próprio ([ADR 0001 local](adr/0001-seletor-de-data-proprio.md)):
     - **API:** controlado pelo react-hook-form com `useController` — `<DateField control={form.control} name="occurredOn" label="…" help? min? max? disabled? />`. O valor no formulário é `YYYY-MM-DD` ou `''` (vazio), o formato da API.
     - **Digitação:** campo de texto com `inputMode="numeric"`, `placeholder` "dd/mm/aaaa" e máscara: só dígitos, com as barras postas ao digitar. Colar `aaaa-mm-dd` também vale. Data completa e existente vai para o formulário como `YYYY-MM-DD` e aparece como `dd/mm/aaaa`; texto incompleto ou data inexistente (`31/02/2026`) vai para o formulário como está e é recusado pela validação.
-    - **Validação:** `src/shared/dates/` exporta `dateSchema(mensagemObrigatória)` e `optionalDateSchema()` (zod), que aceitam só `YYYY-MM-DD` existente (e `''` no opcional) e recusam o resto com "Data inválida."; todo schema de formulário com data os usa.
+    - **Validação:** `src/shared/dates/` exporta `dateSchema(mensagemObrigatória)` e `optionalDateSchema()` (zod), que aceitam só `YYYY-MM-DD` existente (e `''` no opcional) e recusam o resto com "Data inválida."; todo schema de formulário com data os usa. Data opcional de um campo que pode sumir do formulário (**Fatura de**, só com cartão; **Repetir até**, só em Fixa; a conclusão da transferência, só na concluída) é validada por `refineOptionalDate`, também de `src/shared/dates/`, só enquanto o campo aparece: um texto inválido deixado num campo que sumiu não trava o envio (decisão do responsável em 2026-10-13).
     - **Calendário:** um botão com ícone (`CalendarDays`, `aria-label` "Escolher data") abre o calendário de `react-day-picker` em pt-BR: abaixo de `md`, numa folha presa à base da tela (`@radix-ui/react-dialog`); a partir de `md`, num balão ancorado ao campo (`@radix-ui/react-popover`). Abre no mês da data do campo (ou de `today()`), marca hoje e a data escolhida, desabilita os dias fora de `min`/`max`, navega por mês e por teclado (setas, `PageUp`/`PageDown`, `Home`/`End`). Escolher um dia preenche o campo, fecha e devolve o foco ao campo; `Esc` fecha sem mudar o valor e devolve o foco ao botão.
     - **Desenho:** só tokens do tema, nos dois temas; alvo de toque de 44px no botão e nos dias; o campo ocupa a largura do formulário em todos os tamanhos.
 - **Campos e erros:** todo campo tem `<label>` visível, mensagem de erro ligada por `aria-describedby` e `aria-invalid`. Os formulários usam `react-hook-form` com `zodResolver`; valores monetários usam `MoneyInput` e `moneySchema` (spec 0008).
@@ -292,6 +292,7 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 - **AC-0009-13:** o botão **Escolher data** abre o calendário em pt-BR (folha no `celular`, balão no `tablet` e no `desktop`) no mês da data do campo; escolher um dia preenche o campo, fecha o calendário e devolve o foco ao campo; `Esc` fecha sem mudar o valor; um dia fora de `min`/`max` não pode ser escolhido.
 - **AC-0009-14:** os formulários de despesa, receita, transferência, pagamento e estorno de fatura, encerramento de série e os diálogos de pagar e receber usam o `DateField` próprio, e os seus fluxos de e2e passam digitando a data.
 - **AC-0009-15:** na página de prova, o `RowMenu` de uma linha abre por clique e por teclado, percorre os itens com as setas, mostra **Excluir** em `negativo` e separado, fecha com `Esc` devolvendo o foco, e escolher um item chama a ação sem navegar para o `href` da linha, nos três projetos.
+- **AC-0009-16:** um texto inválido em **Fatura de**, **Repetir até** ou na data de conclusão da transferência não impede o envio depois que o campo some (cartão trocado por conta, natureza trocada, transferência agendada), e continua recusado com "Data inválida." enquanto o campo aparece.
 
 ## Test mapping
 
@@ -311,6 +312,7 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 | AC-0009-12, AC-0009-13  | `src/ui/date-field.test.tsx`, `src/shared/dates/dates.test.ts` e `e2e/date-field.spec.ts` (página de prova `/_e2e/formulario`)                                                  |
 | AC-0009-14, INV-0009-07 | os e2e de cada formulário, `src/ui/date-field-usage.test.ts` (varredura de `src/`) e o gate `build` (o calendário fora do JS inicial)                                           |
 | AC-0009-15, INV-0009-08 | `src/ui/row-menu.test.tsx`, `src/ui/entry-list.test.tsx` e `e2e/entry-list.spec.ts` (página de prova `/_e2e/lista`)                                                             |
+| AC-0009-16              | `src/features/expenses/expense-schema.test.ts`, `src/features/earnings/form/earning-schema.test.ts` e `src/features/accounts/transfers/schema.test.ts`                          |
 
 ## Open questions
 
