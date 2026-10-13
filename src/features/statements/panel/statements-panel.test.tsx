@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('@/api/client', () => ({ api: { GET: mocks.get } }));
 
+import { CURRENT_USER_QUERY_KEY } from '@/api/queries/current-user';
 import { queryKeys } from '@/api/queries/keys';
 
 import { StatementsPanel } from './statements-panel';
@@ -58,6 +59,16 @@ function stubApi({
 async function renderPanel() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(queryKeys.bankAccounts.all, ACCOUNTS);
+    // O painel consulta `entries.write` para as ações de estorno (T-0013-03): aqui, só leitura.
+    client.setQueryData(CURRENT_USER_QUERY_KEY, {
+        id: 'u',
+        email: 'a@b.c',
+        emailVerified: true,
+        name: 'Ana',
+        profile: 'VIEWER',
+        profileGrantedAt: null,
+        createdAt: '2026-10-01T00:00:00Z',
+    });
     const root = createRootRoute();
     const page = createRoute({
         getParentRoute: () => root,

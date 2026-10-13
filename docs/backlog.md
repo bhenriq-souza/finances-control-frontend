@@ -198,7 +198,7 @@ Tarefas da [spec 0013](../specs/0013-statements.md), da issue de entrega [FCF-01
     - What: pagar (total, mínimo, outro valor; aberta e fechada), desfazer o último, informar mínimo; depende de T-0013-01
     - Where: `src/features/statements/payment/`, `e2e/statement-payments.spec.ts`
     - Done when: `AC-0013-03` a `AC-0013-07` e `AC-0013-09` cobertos; `INV-0013-02` e `INV-0013-04` verificados
-- [ ] **T-0013-03 — Estornos** · #73
+- [x] **T-0013-03 — Estornos** · #73
     - What: novo estorno (com despesa de origem por `?despesa`), alterar descrição e observações, excluir; depende de T-0013-01
     - Where: `src/features/statements/refunds/`, `e2e/refunds.spec.ts`
     - Done when: `AC-0013-08` coberto

@@ -9,6 +9,7 @@ import { Skeleton } from '@/ui/skeleton';
 
 import { asApiError, statementDetailQuery } from '../panel/statement-model';
 import { StatementBadge, StatementBody, StatementDates } from '../panel/statement-parts';
+import { RefundActions } from '../refunds/refund-actions';
 
 const LINK_CLASS =
     'rounded-sm text-acento underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-foco';
@@ -53,18 +54,29 @@ export function StatementDetailPage({
     } else {
         const statement = query.data;
         content = (
-            <article className="flex flex-col gap-6">
-                <header className="flex flex-col gap-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h1 className="text-titulo-1">
-                            Fatura de {formatMonth(monthOf(statement.closesOn))}
-                        </h1>
-                        <StatementBadge statement={statement} />
-                    </div>
-                    <StatementDates statement={statement} />
-                </header>
-                <StatementBody statement={statement} level={2} />
-            </article>
+            <RefundActions cardId={cardId}>
+                {(refunds) => (
+                    <article className="flex flex-col gap-6">
+                        <header className="flex flex-col gap-3">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <h1 className="text-titulo-1">
+                                    Fatura de {formatMonth(monthOf(statement.closesOn))}
+                                </h1>
+                                <StatementBadge statement={statement} />
+                            </div>
+                            <StatementDates statement={statement} />
+                            {refunds.newRefund && (
+                                <div className="flex flex-wrap gap-3">{refunds.newRefund}</div>
+                            )}
+                        </header>
+                        <StatementBody
+                            statement={statement}
+                            level={2}
+                            refundActions={refunds.rowActions}
+                        />
+                    </article>
+                )}
+            </RefundActions>
         );
     }
 
