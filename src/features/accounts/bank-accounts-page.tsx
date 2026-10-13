@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Landmark, Plus } from 'lucide-react';
+import { Landmark, Plus, ReceiptText } from 'lucide-react';
 
 import { useCan } from '@/api/permissions';
 import { useBankAccounts, type BankAccount } from '@/api/queries/reference';
@@ -63,6 +63,18 @@ const COLUMNS: readonly EntryColumn<BankAccount>[] = [
     { header: 'Estado', cell: archivedBadge },
 ];
 
+const StatementLink = ({ account }: { account: BankAccount }) => (
+    <Link
+        to="/contas/$contaId"
+        params={{ contaId: account.id }}
+        aria-label={`Extrato de ${account.description}`}
+        className={buttonVariants({ variant: 'outline' })}
+    >
+        <ReceiptText aria-hidden="true" strokeWidth={1.75} />
+        Extrato
+    </Link>
+);
+
 function AccountCard({ account }: { account: BankAccount }) {
     return (
         <div className="flex items-start justify-between gap-3">
@@ -96,17 +108,21 @@ export function BankAccountsPage({
 }: BankAccountsPageProps) {
     const query = useBankAccounts();
     const canWrite = useCan('accounts.write');
+    // O **Extrato** vale para todos os perfis; **Editar** e **Arquivar** só com a permissão.
     const actions = (account: BankAccount) => (
-        <WriteActions
-            kind="bank-account"
-            item={account}
-            label={account.description}
-            onEdit={() => onFormChange({ editar: account.id })}
-        />
+        <div className="flex flex-wrap gap-2 md:justify-end">
+            <StatementLink account={account} />
+            {canWrite && (
+                <WriteActions
+                    kind="bank-account"
+                    item={account}
+                    label={account.description}
+                    onEdit={() => onFormChange({ editar: account.id })}
+                />
+            )}
+        </div>
     );
-    const columns = canWrite
-        ? [...COLUMNS, { header: 'Ações', cell: actions, align: 'end' as const }]
-        : COLUMNS;
+    const columns = [...COLUMNS, { header: 'Ações', cell: actions, align: 'end' as const }];
     // Sem a permissão, `?novo` e `?editar` não têm efeito (INV-0011-01).
     const editing =
         canWrite && form.editar ? query.data?.find((a) => a.id === form.editar) : undefined;
@@ -162,7 +178,7 @@ export function BankAccountsPage({
                                 renderCard={(account) => (
                                     <div className="flex flex-col gap-3">
                                         <AccountCard account={account} />
-                                        {canWrite && actions(account)}
+                                        {actions(account)}
                                     </div>
                                 )}
                                 empty={
