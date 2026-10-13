@@ -287,3 +287,20 @@ Tarefas da revisão das specs [0004](../specs/0004-theme.md), [0006](../specs/00
     - What: criar receita volta para a lista no mês da primeira criada, sem filtros, sem abrir o detalhe
     - Where: `src/features/earnings/form/`, `src/features/earnings/list/`, `e2e/earnings-form.spec.ts`
     - Done when: `AC-0014-10` coberto
+
+## Ações rápidas nas listas
+
+Tarefas da revisão das specs [0009](../specs/0009-lists-and-reference-data.md), [0012](../specs/0012-expenses.md) e [0014](../specs/0014-earnings.md), da issue de entrega [FCF-019](https://github.com/bhenriq-souza/finances-control-frontend/issues/121) (2026-10-13). A T-0009-08 roda primeiro; as outras duas, juntas, depois dela.
+
+- [ ] **T-0009-08 — Menu da linha** · #142
+    - What: `RowMenu` sobre `@radix-ui/react-dropdown-menu` e a coluna `actions` do `EntryList`, com a página de prova
+    - Where: `package.json`, `src/ui/row-menu.tsx`, `src/ui/entry-list.tsx`, `src/routes/[_]e2e/`, `e2e/entry-list.spec.ts`
+    - Done when: `AC-0009-15` coberto; `INV-0009-08` verificado
+- [ ] **T-0012-06 — Ações rápidas de despesas** · #143
+    - What: o menu de cada linha de `/despesas` com os diálogos sobre a lista, e **Mais ações** no detalhe pelo celular; depende da T-0009-08
+    - Where: `src/features/expenses/list/`, `src/features/expenses/detail/`, `e2e/expenses-list.spec.ts`, `e2e/expenses-detail.spec.ts`
+    - Done when: `AC-0012-16` a `AC-0012-18` cobertos; `INV-0012-06` verificado
+- [ ] **T-0014-06 — Ações rápidas de receitas** · #144
+    - What: o menu de cada linha de `/receitas` com os diálogos sobre a lista, e **Mais ações** no detalhe pelo celular; depende da T-0009-08
+    - Where: `src/features/earnings/list/`, `src/features/earnings/detail/`, `e2e/earnings-list.spec.ts`, `e2e/earnings-detail.spec.ts`
+    - Done when: `AC-0014-11` a `AC-0014-13` cobertos; `INV-0014-05` verificado

@@ -1,7 +1,7 @@
 ---
 id: '0009'
 title: Listas, formulários e dados de referência compartilhados
-status: implemented
+status: approved
 depends_on: ['0003', '0004', '0005', '0006', '0008']
 ---
 
@@ -18,6 +18,7 @@ Dar às telas de domínio (specs 0010+) tudo o que elas têm em comum, para que 
 - **Depende do backend:** contrato na tag `v1.1.0` — rotas de leitura de [0011](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0011-accounts.md), [0012](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0012-expenses.md) e [0014](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0014-earnings.md) e a matriz de perfis de [0010](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0010-identity.md) e do hub ([perfis](https://github.com/bhenriq-souza/finances-control/blob/main/docs/user-profiles.md)). Toda resposta de sucesso vem envelopada em `{ data }`.
 - **Decisões de 2026-10-12 (aprovação):** páginas de prova `/_e2e/lista` e `/_e2e/formulario` só no build `--mode e2e`, eliminadas no de produção como o fake de autenticação; selo **Previsto** e **Em aberto** na família `info`, **Verificando** na neutra e **Aguardando** em `atencao`; as peças que o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) (versão `1791836639-e596`) desenha e o Design System ainda não define (diálogo, folha, select, controle segmentado, etiquetas de filtro, abas, menu da linha, campo de data, estado vazio, interruptor, barra de limite, erro de validação, véu, botão destrutivo, cores de gráfico) são construídas só com os tokens existentes e voltam ao Design System do hub numa revisão futura; cores de gráfico: realizado em `acento`, previsto em `info-fundo` com contorno `info`.
 - **Revisão de 2026-10-13 (seletor de data):** o `DateField` deixa de ser o `<input type="date">` nativo e passa a ser um campo de texto com máscara e calendário próprio, pelo [ADR 0001 local](adr/0001-seletor-de-data-proprio.md) (decisão do responsável, depois dos testes em `dev` no Firefox para Android); dependências novas `react-day-picker` e `@radix-ui/react-popover`.
+- **Revisão de 2026-10-13 (ações rápidas):** o menu da linha do canvas de padrões vira o componente `RowMenu`, e o `EntryList` ganha uma coluna de ações fora do link da linha, para que despesas e receitas sejam pagas, recebidas, confirmadas, alteradas e excluídas pela própria lista (decisão do responsável em 2026-10-13); dependência nova `@radix-ui/react-dropdown-menu`.
 - **Forma visual:** componentes do [Design System](https://claude.ai/artifact/DxDnUbE9sSQdJbxTPh6WPQ) e o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) (lista, formulário em diálogo, confirmação, estados).
 
 ## Contracts
@@ -149,6 +150,7 @@ interface EntryListProps<T> {
     columns: readonly EntryColumn<T>[]; // tabela, a partir de `md`
     renderCard: (item: T) => ReactNode; // cartão, abaixo de `md`
     href?: (item: T) => string; // linha/cartão navegável
+    actions?: (item: T) => ReactNode; // menu da linha, fora do link (normalmente um `RowMenu`)
     empty: ReactNode; // normalmente um `EmptyState`
 }
 interface EntryColumn<T> {
@@ -162,6 +164,7 @@ interface EntryColumn<T> {
 - **Abaixo de `md`:** lista (`<ul>`) de cartões com borda `linha`, raio `raio-md`, padding `espaco-4`; com `href`, o cartão inteiro é um link (alvo ≥ 44px).
 - **A partir de `md`:** `<table>` com `<caption>` oculta, cabeçalho no estilo `rotulo` sobre `superficie-elevada`, linhas separadas por `linha`; com `href`, a primeira célula de texto é o link, e a linha inteira é clicável por um `onClick` que repete o link (o teclado usa o link).
 - Valores em `Money` com algarismos tabulares, alinhados ao fim.
+- **`actions`:** na tabela, uma última coluna sem cabeçalho visível (rótulo acessível "Ações"); no cartão do celular, o menu fica no canto superior direito, ao lado do link e fora dele. Clicar no menu nunca navega para o `href` da linha.
 - Sem ordenação, paginação nem seleção múltipla: as telas ordenam antes de passar `items`.
 
 ### Estados — `EmptyState`, `Skeleton`, `BarList`
@@ -193,6 +196,28 @@ interface EntryColumn<T> {
     - **lançamentos** (despesas, receitas, transferências, faturas): lista com filtros na URL; detalhe em rota própria (`/despesas/$despesaId`); criar por `?novo=1` na lista; editar por `?editar=1` no detalhe; ações de status em `FormDialog` ou `ConfirmDialog` abertos do detalhe, também endereçáveis por parâmetro (ex.: `?pagar=1`), para que o dashboard leve direto a elas sem importar a feature.
     - Os parâmetros de busca de toda rota são validados por um schema zod no `validateSearch` da rota; parâmetro inválido é descartado.
 - **Depois de uma escrita bem-sucedida:** fecha o diálogo, chama `invalidateAfter` e mostra um `Notice` de sucesso curto ("Despesa salva.").
+
+### Menu da linha — `RowMenu`
+
+`src/ui/row-menu.tsx`, o padrão DropdownMenu do shadcn/ui sobre `@radix-ui/react-dropdown-menu`, desenhado só com tokens:
+
+```ts
+interface RowMenuProps {
+    label: string; // rótulo acessível do gatilho, ex.: "Ações de Aluguel"
+    trigger?: 'icone' | 'texto'; // `icone` (padrão): botão `ghost` com `MoreHorizontal`, 44×44px; `texto`: botão `outline` "Mais ações", na largura do contêiner
+    items: readonly RowMenuItem[];
+}
+interface RowMenuItem {
+    label: string;
+    icon?: LucideIcon;
+    onSelect: () => void;
+    tone?: 'negativo'; // ação destrutiva (Excluir), separada das demais por uma linha
+    disabled?: boolean;
+}
+```
+
+- `role="menu"` com navegação por setas, `Home`/`End`, letra inicial, `Enter`/`Espaço` para escolher e `Esc` para fechar, devolvendo o foco ao gatilho; itens com alvo de 44px.
+- Sem itens, o `RowMenu` não é renderizado.
 
 ### Aviso global — `Notice`
 
@@ -236,6 +261,7 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 - **INV-0009-05:** datas de negócio circulam como `YYYY-MM-DD` e "hoje" é sempre `today()` no fuso `America/Sao_Paulo`.
 - **INV-0009-06:** erro de API num formulário nunca fecha o formulário nem apaga o que foi digitado.
 - **INV-0009-07:** nenhum `<input type="date">` resta em `src/`, e o código do calendário (`react-day-picker`, `date-fns`) não entra no JS inicial nem no chunk de rota nenhuma: é carregado quando o calendário abre.
+- **INV-0009-08:** um item de `RowMenu` só existe quando a ação existe para o perfil e para o estado do item: o menu nunca oferece o que o detalhe não ofereceria.
 
 ## Error cases
 
@@ -265,6 +291,7 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 - **AC-0009-12:** na página de prova, digitar `05112026` no `DateField` mostra `05/11/2026` e envia `2026-11-05`; colar `2026-11-05` dá o mesmo; `31/02/2026` e `05/11/20` mostram "Data inválida." no envio e nada é enviado; num campo opcional, apagar o texto envia `''`.
 - **AC-0009-13:** o botão **Escolher data** abre o calendário em pt-BR (folha no `celular`, balão no `tablet` e no `desktop`) no mês da data do campo; escolher um dia preenche o campo, fecha o calendário e devolve o foco ao campo; `Esc` fecha sem mudar o valor; um dia fora de `min`/`max` não pode ser escolhido.
 - **AC-0009-14:** os formulários de despesa, receita, transferência, pagamento e estorno de fatura, encerramento de série e os diálogos de pagar e receber usam o `DateField` próprio, e os seus fluxos de e2e passam digitando a data.
+- **AC-0009-15:** na página de prova, o `RowMenu` de uma linha abre por clique e por teclado, percorre os itens com as setas, mostra **Excluir** em `negativo` e separado, fecha com `Esc` devolvendo o foco, e escolher um item chama a ação sem navegar para o `href` da linha, nos três projetos.
 
 ## Test mapping
 
@@ -283,6 +310,7 @@ Um item com `profiles` de todos os perfis é declarado com os três explicitamen
 | AC-0009-11              | `src/features/expenses/types/expense-types-page.test.tsx`, `src/features/earnings/types/earning-types-page.test.tsx`, `e2e/expense-types.spec.ts` e `e2e/earning-types.spec.ts` |
 | AC-0009-12, AC-0009-13  | `src/ui/date-field.test.tsx`, `src/shared/dates/dates.test.ts` e `e2e/date-field.spec.ts` (página de prova `/_e2e/formulario`)                                                  |
 | AC-0009-14, INV-0009-07 | os e2e de cada formulário, `src/ui/date-field-usage.test.ts` (varredura de `src/`) e o gate `build` (o calendário fora do JS inicial)                                           |
+| AC-0009-15, INV-0009-08 | `src/ui/row-menu.test.tsx`, `src/ui/entry-list.test.tsx` e `e2e/entry-list.spec.ts` (página de prova `/_e2e/lista`)                                                             |
 
 ## Open questions
 

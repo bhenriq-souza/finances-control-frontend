@@ -1,7 +1,7 @@
 ---
 id: '0012'
 title: Despesas e tipos de despesa
-status: implemented
+status: approved
 depends_on: ['0008', '0009', '0011']
 ---
 
@@ -23,14 +23,14 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 
 ### Rotas e navegação
 
-| Rota                   | Conteúdo         | Parâmetros de busca (zod)                                                                                  |
-| ---------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
-| `/despesas`            | lista do mês     | `mes` (`YYYY-MM`, padrão o de `today()`), `status`, `tipo`, `conta`, `cartao`, `natureza`, `grupo`, `novo` |
-| `/despesas/$despesaId` | detalhe e ações  | `editar`, `pagar`, `excluir`, `meio`                                                                       |
-| `/despesas/tipos`      | tipos de despesa | `arquivados`, `novo`, `editar`                                                                             |
+| Rota                   | Conteúdo         | Parâmetros de busca (zod)                                                                                                                                                                    |
+| ---------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/despesas`            | lista do mês     | `mes` (`YYYY-MM`, padrão o de `today()`), `status`, `tipo`, `conta`, `cartao`, `natureza`, `grupo`, `novo`, `pagar`, `editar`, `excluir`, `desfazer` (os quatro últimos com o id da despesa) |
+| `/despesas/$despesaId` | detalhe e ações  | `editar`, `pagar`, `excluir`, `meio`                                                                                                                                                         |
+| `/despesas/tipos`      | tipos de despesa | `arquivados`, `novo`, `editar`                                                                                                                                                               |
 
 - Navegação: `{ to: '/despesas', label: 'Despesas', icon: ArrowDown, profiles: [todos], slot: 'barra' }`.
-- `novo`, `editar`, `pagar`, `excluir` e `meio` só têm efeito com `entries.write`.
+- `novo`, `editar`, `pagar`, `excluir`, `desfazer` e `meio` só têm efeito com `entries.write`.
 - Código em `src/features/expenses/`.
 
 ### Lista — `/despesas`
@@ -52,6 +52,11 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 
 - O cartão do celular segue o do dashboard: descrição e valor na primeira linha; data, conta/cartão e selo na segunda.
 - Com `entries.write`: **Nova despesa** (botão fixo no cabeçalho; no celular, botão flutuante acima da barra inferior) e o link **Tipos de despesa**.
+- **Ações rápidas** (decisão do responsável em 2026-10-13): com `entries.write`, cada linha tem um `RowMenu` (`actions` do `EntryList`, rótulo "Ações de <descrição>") com, nesta ordem: as transições do status pela tabela do detalhe (**Pagar**, **Confirmar**, **Marcar para verificar**, **Voltar para pendente**, **Desfazer pagamento**), **Editar** e, se não paga, **Excluir**. **Trocar forma de pagamento** e **Estornar** ficam só no detalhe.
+    - **Pagar**, **Editar**, **Excluir** e **Desfazer pagamento** abrem, sobre a própria lista, os mesmos diálogos do detalhe, endereçáveis por `?pagar=<id>`, `?editar=<id>`, `?excluir=<id>` e `?desfazer=<id>` (a despesa é lida por `GET /expenses/{id}`); id desconhecido ou ação que o status não permite é ignorado e o parâmetro removido.
+    - **Confirmar**, **Marcar para verificar** e **Voltar para pendente** enviam direto, sem diálogo.
+    - Depois do sucesso: `Notice`, o diálogo fecha e a lista fica no mesmo mês e com os mesmos filtros; a lista se atualiza pelo `invalidateAfter`.
+    - **Erro:** no diálogo, como no detalhe; numa transição sem diálogo, alerta (`FormAlert`) acima da lista com o nome da despesa e a mensagem do catálogo, até a próxima ação ou o fechar do alerta.
 
 ### Formulário de despesa (criar e alterar)
 
@@ -93,6 +98,7 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 - **Trocar forma de pagamento** (não paga): `FormDialog` com "Pagar com" (contas e cartões ativos, exceto o atual) e, se o destino for cartão, `postedOn` opcional, recolhido como no formulário; em série, a mesma escolha **Só esta** / **Esta e as próximas previstas** → `PATCH /expenses/{id}/payment-method[?scope=following]` com exatamente um de `bankAccountId`/`creditCardId`. Parcela: nota "Vale para todas as parcelas não pagas do parcelamento."
 - **Estornar** (decisão do responsável, 2026-10-13): em despesa de cartão que não é `FORECAST`, com `entries.write`, um link no grupo de ações, depois das transições, para `/cartoes/$cartaoId?estorno=1&despesa=<id>`. Abre o **Novo estorno** da spec 0013 com a despesa pré-selecionada.
 - Cada ação é endereçável: `?pagar=1`, `?excluir=1`, `?meio=1` abrem o diálogo correspondente (o dashboard usa `?pagar=1`).
+- **No celular** (abaixo de `md`) (decisão do responsável em 2026-10-13): a primeira ação de transição do status aparece como botão de largura total, e as demais ações (outras transições, **Editar**, **Trocar forma de pagamento**, **Estornar**, **Excluir**) num `RowMenu` com `trigger="texto"` (**Mais ações**) logo abaixo. A partir de `md`, os botões como hoje.
 - **Erro de uma ação** (decisão do responsável, 2026-10-13, padrão de despesas e receitas): sempre em alerta (`role="alert"`, mensagem do catálogo), nunca em aviso. Transição sem diálogo: o alerta aparece abaixo dos botões de ação. Ação com diálogo: o alerta fica no diálogo, que continua aberto, também quando um conflito de status recarrega o detalhe e a ação deixa de existir.
 - Toda ação: `invalidateAfter(..., 'expense')`.
 
@@ -120,6 +126,7 @@ Padrão de **cadastro**: `EntryList` por `name`, selo **Arquivado**; com `entrie
 - **INV-0012-03:** as ações oferecidas num status são exatamente as da tabela de transições; o cliente não oferece transição que o backend recusaria.
 - **INV-0012-04:** toda exclusão e toda alteração com efeito em cascata (parcelas, série) mostra o efeito antes de enviar.
 - **INV-0012-05:** o `PATCH` de despesa nunca envia `kind`, `status`, `paidOn`, `bankAccountId`, `creditCardId` nem campos de parcela.
+- **INV-0012-06:** as ações da lista são as do detalhe para o mesmo status e perfil (mesmo modelo de ações), e usam os mesmos diálogos e mutações.
 
 ## Error cases
 
@@ -147,17 +154,21 @@ Padrão de **cadastro**: `EntryList` por `name`, selo **Arquivado**; com `entrie
 - **AC-0012-13:** o detalhe de uma despesa de cartão que não é `FORECAST` mostra **Estornar**, que leva a `/cartoes/$cartaoId?estorno=1&despesa=<id>`; despesa de conta, despesa `FORECAST` e `leitor` não o veem.
 - **AC-0012-14:** criar uma despesa com data `2026-11-05` a partir de `/despesas?mes=2026-10&status=PAID` mostra "Despesa salva.", fecha o diálogo e leva a `/despesas?mes=2026-11`, sem filtros e sem abrir o detalhe.
 - **AC-0012-15:** com um cartão em Pagar com, **Fatura de** só aparece depois de **Lançar em outra fatura**; sem abri-lo, o texto mostra o fechamento da fatura atual do cartão e o `POST /expenses` não leva `postedOn`; aberto e preenchido, leva `postedOn`.
+- **AC-0012-16:** com `lancador`, o menu de uma despesa de conta `OPEN` oferece **Pagar**, **Marcar para verificar**, **Editar** e **Excluir**; **Pagar** abre o diálogo sobre a lista (`?pagar=<id>`), envia `{ status: 'PAID', paidOn }` e a lista continua no mesmo mês e com os mesmos filtros; o menu de uma despesa de cartão não tem **Pagar**.
+- **AC-0012-17:** **Confirmar** no menu de uma despesa `FORECAST` envia `{ status: 'OPEN' }` sem diálogo; um `409` mostra o alerta acima da lista com o nome da despesa; com `leitor`, nenhuma linha tem menu e `?pagar=<id>` não abre nada.
+- **AC-0012-18:** no `celular`, o detalhe de uma despesa de conta `OPEN` mostra **Pagar** em largura total e as demais ações em **Mais ações**; no `tablet` e no `desktop`, os botões como antes.
 
 ## Test mapping
 
-| Item                                                                                  | Teste                                                                            |
-| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| AC-0012-01, AC-0012-02, AC-0012-12, INV-0012-01                                       | `e2e/expenses-list.spec.ts` e `src/features/expenses/list/*.test.tsx`            |
-| AC-0012-03, AC-0012-04, AC-0012-05, AC-0012-14, AC-0012-15, INV-0012-05               | `src/features/expenses/form/expense-form.test.tsx` e `e2e/expenses-form.spec.ts` |
-| AC-0012-06, AC-0012-07, AC-0012-08, AC-0012-09, INV-0012-02, INV-0012-03, INV-0012-04 | `src/features/expenses/detail/*.test.tsx` e `e2e/expenses-detail.spec.ts`        |
-| AC-0012-10                                                                            | `e2e/expenses-list.spec.ts` e `e2e/expenses-detail.spec.ts` (com `leitor`)       |
-| AC-0012-11                                                                            | `e2e/expense-types.spec.ts`                                                      |
-| AC-0012-13                                                                            | `src/features/expenses/detail/*.test.tsx` e `e2e/refunds.spec.ts`                |
+| Item                                                                                  | Teste                                                                                                                                           |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-0012-01, AC-0012-02, AC-0012-12, INV-0012-01                                       | `e2e/expenses-list.spec.ts` e `src/features/expenses/list/*.test.tsx`                                                                           |
+| AC-0012-03, AC-0012-04, AC-0012-05, AC-0012-14, AC-0012-15, INV-0012-05               | `src/features/expenses/form/expense-form.test.tsx` e `e2e/expenses-form.spec.ts`                                                                |
+| AC-0012-06, AC-0012-07, AC-0012-08, AC-0012-09, INV-0012-02, INV-0012-03, INV-0012-04 | `src/features/expenses/detail/*.test.tsx` e `e2e/expenses-detail.spec.ts`                                                                       |
+| AC-0012-16, AC-0012-17, AC-0012-18, INV-0012-06                                       | `src/features/expenses/list/*.test.tsx`, `src/features/expenses/detail/*.test.tsx`, `e2e/expenses-list.spec.ts` e `e2e/expenses-detail.spec.ts` |
+| AC-0012-10                                                                            | `e2e/expenses-list.spec.ts` e `e2e/expenses-detail.spec.ts` (com `leitor`)                                                                      |
+| AC-0012-11                                                                            | `e2e/expense-types.spec.ts`                                                                                                                     |
+| AC-0012-13                                                                            | `src/features/expenses/detail/*.test.tsx` e `e2e/refunds.spec.ts`                                                                               |
 
 ## Open questions
 

@@ -1,7 +1,7 @@
 ---
 id: '0014'
 title: Receitas e tipos de receita
-status: implemented
+status: approved
 depends_on: ['0008', '0009', '0011']
 ---
 
@@ -22,11 +22,11 @@ Levar o F005 para a tela, no mesmo padrão das despesas (spec 0012): ver as rece
 
 ### Rotas e navegação
 
-| Rota                   | Conteúdo         | Parâmetros de busca (zod)                                     |
-| ---------------------- | ---------------- | ------------------------------------------------------------- |
-| `/receitas`            | lista do mês     | `mes`, `status`, `tipo`, `conta`, `natureza`, `grupo`, `novo` |
-| `/receitas/$receitaId` | detalhe e ações  | `editar`, `receber`, `excluir`                                |
-| `/receitas/tipos`      | tipos de receita | `arquivados`, `novo`, `editar`                                |
+| Rota                   | Conteúdo         | Parâmetros de busca (zod)                                                                                                                         |
+| ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/receitas`            | lista do mês     | `mes`, `status`, `tipo`, `conta`, `natureza`, `grupo`, `novo`, `receber`, `editar`, `excluir`, `desfazer` (os quatro últimos com o id da receita) |
+| `/receitas/$receitaId` | detalhe e ações  | `editar`, `receber`, `excluir`                                                                                                                    |
+| `/receitas/tipos`      | tipos de receita | `arquivados`, `novo`, `editar`                                                                                                                    |
 
 - Navegação: `{ to: '/receitas', label: 'Receitas', icon: ArrowUp, profiles: [todos], slot: 'barra' }`.
 - Código em `src/features/earnings/`.
@@ -70,6 +70,8 @@ Os campos da spec 0012, com estas diferenças:
 - **Receber:** `FormDialog` com `receivedOn` (padrão `today()`) → `PATCH /earnings/{id}/status` `{ status: 'RECEIVED', receivedOn }`.
 - **Excluir** (não recebida): `ConfirmDialog` com a cascata (parcelas não recebidas; série: esta e as seguintes, e a série termina) → `DELETE /earnings/{id}`.
 - `?receber=1` e `?excluir=1` abrem os diálogos.
+- **Ações rápidas na lista** (decisão do responsável em 2026-10-13): como nas despesas (spec 0012): com `entries.write`, um `RowMenu` por linha com as transições do status pela tabela acima (**Receber**, **Confirmar**, **Marcar para verificar**, **Voltar para pendente**, **Desfazer recebimento**), **Editar** e, se não recebida, **Excluir**; **Receber**, **Editar**, **Excluir** e **Desfazer recebimento** abrem os mesmos diálogos sobre a lista, por `?receber=<id>`, `?editar=<id>`, `?excluir=<id>` e `?desfazer=<id>` (a receita é lida por `GET /earnings/{id}`); as demais transições enviam direto; sucesso, erro e filtros como nas despesas.
+- **No celular** (abaixo de `md`): a primeira ação de transição em largura total e as demais em **Mais ações**, como nas despesas.
 - **Erro de uma ação** (decisão do responsável, 2026-10-13, padrão de receitas e despesas): sempre em alerta (`role="alert"`, mensagem do catálogo), nunca em aviso. Transição sem diálogo: o alerta aparece abaixo dos botões de ação. Ação com diálogo: o alerta fica no diálogo, que continua aberto, também quando um conflito de status recarrega o detalhe e a ação deixa de existir.
 - `invalidateAfter(..., 'earning')`.
 
@@ -94,6 +96,7 @@ Igual a `/despesas/tipos`, sobre `/earning-types`; `invalidateAfter(..., 'earnin
 - **INV-0014-02:** as ações oferecidas num status são exatamente as da tabela de transições.
 - **INV-0014-03:** toda exclusão e toda alteração em cascata mostra o efeito antes de enviar.
 - **INV-0014-04:** o `PATCH` de receita nunca envia `kind`, `status`, `receivedOn` nem campos de parcela.
+- **INV-0014-05:** as ações da lista são as do detalhe para o mesmo status e perfil, com os mesmos diálogos e mutações.
 
 ## Error cases
 
@@ -116,16 +119,20 @@ Igual a `/despesas/tipos`, sobre `/earning-types`; `invalidateAfter(..., 'earnin
 - **AC-0014-08:** `/receitas/tipos` cria, renomeia e arquiva; `409 EARNING_TYPE_ALREADY_EXISTS` marca o nome.
 - **AC-0014-09:** nos três projetos, lista e formulário seguem `EntryList` e `FormDialog`.
 - **AC-0014-10:** criar uma receita com data `2026-11-05` a partir de `/receitas?mes=2026-10` mostra o `Notice`, fecha o diálogo e leva a `/receitas?mes=2026-11`, sem filtros e sem abrir o detalhe.
+- **AC-0014-11:** com `lancador`, o menu de uma receita `OPEN` oferece **Receber**, **Marcar para verificar**, **Editar** e **Excluir**; **Receber** abre o diálogo sobre a lista (`?receber=<id>`), envia `{ status: 'RECEIVED', receivedOn }` e a lista continua no mesmo mês e com os mesmos filtros.
+- **AC-0014-12:** **Confirmar** no menu de uma receita `FORECAST` envia `{ status: 'OPEN' }` sem diálogo; um `409` mostra o alerta acima da lista; com `leitor`, nenhuma linha tem menu.
+- **AC-0014-13:** no `celular`, o detalhe de uma receita `OPEN` mostra **Receber** em largura total e as demais ações em **Mais ações**.
 
 ## Test mapping
 
-| Item                                             | Teste                                                                            |
-| ------------------------------------------------ | -------------------------------------------------------------------------------- |
-| AC-0014-01, AC-0014-02, AC-0014-09, INV-0014-01  | `e2e/earnings-list.spec.ts` e `src/features/earnings/list/*.test.tsx`            |
-| AC-0014-03, AC-0014-04, AC-0014-10, INV-0014-04  | `src/features/earnings/form/earning-form.test.tsx` e `e2e/earnings-form.spec.ts` |
-| AC-0014-05, AC-0014-06, INV-0014-02, INV-0014-03 | `src/features/earnings/detail/*.test.tsx` e `e2e/earnings-detail.spec.ts`        |
-| AC-0014-07                                       | `e2e/earnings-list.spec.ts` e `e2e/earnings-detail.spec.ts` (com `leitor`)       |
-| AC-0014-08                                       | `e2e/earning-types.spec.ts`                                                      |
+| Item                                             | Teste                                                                                                                                           |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-0014-01, AC-0014-02, AC-0014-09, INV-0014-01  | `e2e/earnings-list.spec.ts` e `src/features/earnings/list/*.test.tsx`                                                                           |
+| AC-0014-03, AC-0014-04, AC-0014-10, INV-0014-04  | `src/features/earnings/form/earning-form.test.tsx` e `e2e/earnings-form.spec.ts`                                                                |
+| AC-0014-05, AC-0014-06, INV-0014-02, INV-0014-03 | `src/features/earnings/detail/*.test.tsx` e `e2e/earnings-detail.spec.ts`                                                                       |
+| AC-0014-07                                       | `e2e/earnings-list.spec.ts` e `e2e/earnings-detail.spec.ts` (com `leitor`)                                                                      |
+| AC-0014-11, AC-0014-12, AC-0014-13, INV-0014-05  | `src/features/earnings/list/*.test.tsx`, `src/features/earnings/detail/*.test.tsx`, `e2e/earnings-list.spec.ts` e `e2e/earnings-detail.spec.ts` |
+| AC-0014-08                                       | `e2e/earning-types.spec.ts`                                                                                                                     |
 
 ## Open questions
 
