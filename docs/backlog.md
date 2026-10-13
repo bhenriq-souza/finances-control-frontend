@@ -194,7 +194,7 @@ Tarefas da [spec 0013](../specs/0013-statements.md), da issue de entrega [FCF-01
     - What: fatura atual, anteriores e próximas em `/cartoes/$cartaoId`, e `/cartoes/$cartaoId/faturas/$faturaId`, só leitura
     - Where: `src/features/statements/panel/`, `src/features/statements/detail/`, `src/routes/_app/cartoes.$cartaoId*`, `e2e/statements.spec.ts`, `e2e/fixtures/data/statements.ts`
     - Done when: `AC-0013-01`, `AC-0013-02` e `AC-0013-10` cobertos; `INV-0013-01` e `INV-0013-03` verificados
-- [ ] **T-0013-02 — Pagamentos e mínimo** · #72
+- [x] **T-0013-02 — Pagamentos e mínimo** · #72
     - What: pagar (total, mínimo, outro valor; aberta e fechada), desfazer o último, informar mínimo; depende de T-0013-01
     - Where: `src/features/statements/payment/`, `e2e/statement-payments.spec.ts`
     - Done when: `AC-0013-03` a `AC-0013-07` e `AC-0013-09` cobertos; `INV-0013-02` e `INV-0013-04` verificados

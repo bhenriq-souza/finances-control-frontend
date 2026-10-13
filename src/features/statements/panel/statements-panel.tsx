@@ -7,6 +7,8 @@ import { EntryList, type EntryColumn } from '@/ui/entry-list';
 import { Money } from '@/ui/money';
 import { EntryListSkeleton, Skeleton } from '@/ui/skeleton';
 
+import { usePaymentActions, type PaymentActions } from '../payment/payment-actions';
+
 import {
     asApiError,
     currentStatementQuery,
@@ -54,6 +56,24 @@ function CurrentStatement({
     query: UseQueryResult<Statement>;
     refunds: RefundActionSlots;
 }) {
+    const payment = usePaymentActions(query.data);
+    return (
+        <>
+            <CurrentStatementContent query={query} payment={payment} refunds={refunds} />
+            {payment.dialogs}
+        </>
+    );
+}
+
+function CurrentStatementContent({
+    query,
+    payment,
+    refunds,
+}: {
+    query: UseQueryResult<Statement>;
+    payment: PaymentActions;
+    refunds: RefundActionSlots;
+}) {
     if (query.isError) return <QueryError query={query} />;
     if (!query.data) {
         return (
@@ -71,7 +91,13 @@ function CurrentStatement({
                 <StatementBadge statement={statement} />
             </div>
             {refunds.newRefund && <div className="flex flex-wrap gap-3">{refunds.newRefund}</div>}
-            <StatementBody statement={statement} level={3} refundActions={refunds.rowActions} />
+            {payment.actions}
+            <StatementBody
+                statement={statement}
+                level={3}
+                refundActions={refunds.rowActions}
+                paymentAction={payment.paymentAction}
+            />
         </div>
     );
 }

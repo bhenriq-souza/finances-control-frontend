@@ -320,19 +320,22 @@ export function StatementRefunds({
     );
 }
 
-/** **Pagamentos** da fatura, com a conta pelo nome (o desfazer chega com T-0013-02). */
+/** **Pagamentos** da fatura, com a conta pelo nome e, com `action`, o **Desfazer** do último. */
 export function StatementPayments({
     payments,
     level,
+    action,
 }: {
     payments: readonly StatementPayment[];
     level: HeadingLevel;
+    action?: (payment: StatementPayment) => ReactNode;
 }) {
     const accounts = useAccountLookup();
     const columns: readonly EntryColumn<StatementPayment>[] = [
         { header: 'Data', cell: (payment) => formatDate(payment.paidOn, 'curta') },
         { header: 'Conta', cell: (payment) => accounts.label(payment.bankAccountId) },
         { header: 'Valor', cell: (payment) => <Money cents={payment.amountCents} />, align: 'end' },
+        ...(action ? [{ header: 'Ações', cell: action, align: 'end' as const }] : []),
     ];
     return (
         <Block title="Pagamentos" level={level}>
@@ -342,11 +345,14 @@ export function StatementPayments({
                 caption="Pagamentos da fatura"
                 columns={columns}
                 renderCard={(payment) => (
-                    <CardLine
-                        title={accounts.label(payment.bankAccountId)}
-                        support={formatDate(payment.paidOn, 'curta')}
-                        value={<Money cents={payment.amountCents} />}
-                    />
+                    <div className="flex flex-col gap-3">
+                        <CardLine
+                            title={accounts.label(payment.bankAccountId)}
+                            support={formatDate(payment.paidOn, 'curta')}
+                            value={<Money cents={payment.amountCents} />}
+                        />
+                        {action?.(payment)}
+                    </div>
                 )}
                 empty={<NoneText>Nenhum pagamento nesta fatura.</NoneText>}
             />
@@ -363,12 +369,14 @@ export function StatementBody({
     level,
     className,
     refundActions,
+    paymentAction,
 }: {
     statement: Statement;
     level: HeadingLevel;
     className?: string;
     /** **Editar** e **Excluir** de cada estorno (T-0013-03). */
     refundActions?: (refund: StatementRefund) => ReactNode;
+    paymentAction?: (payment: StatementPayment) => ReactNode;
 }) {
     return (
         <div className={clsx('flex flex-col gap-6', className)}>
@@ -382,7 +390,11 @@ export function StatementBody({
                 level={level}
                 actions={refundActions}
             />
-            <StatementPayments payments={statement.payments ?? []} level={level} />
+            <StatementPayments
+                payments={statement.payments ?? []}
+                level={level}
+                action={paymentAction}
+            />
         </div>
     );
 }

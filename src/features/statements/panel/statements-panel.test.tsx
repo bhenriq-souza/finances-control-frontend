@@ -58,6 +58,8 @@ function stubApi({
 
 async function renderPanel() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    // Leitor: as ações de pagamento (T-0013-02) leem o perfil do cache.
+    client.setQueryData(CURRENT_USER_QUERY_KEY, { profile: 'VIEWER' });
     client.setQueryData(queryKeys.bankAccounts.all, ACCOUNTS);
     // O painel consulta `entries.write` para as ações de estorno (T-0013-03): aqui, só leitura.
     client.setQueryData(CURRENT_USER_QUERY_KEY, {
