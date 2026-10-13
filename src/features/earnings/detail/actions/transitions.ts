@@ -60,3 +60,24 @@ export function deleteCascade(earning: Pick<Earning, 'installment' | 'recurrence
     }
     return 'A receita será excluída.';
 }
+
+/** Uma ação do menu da linha e do "Mais ações" do celular: as de status, **Editar** e **Excluir**. */
+export type MenuAction = EarningAction | 'editar' | 'excluir';
+
+export const MENU_LABELS: Readonly<Record<MenuAction, string>> = {
+    ...ACTION_LABELS,
+    editar: 'Editar',
+    excluir: 'Excluir',
+};
+
+/**
+ * As ações do menu da linha para um status (INV-0014-05): as transições da tabela, **Editar** e,
+ * se não recebida, **Excluir**. O detalhe oferece as mesmas.
+ */
+export function menuActions(earning: Pick<Earning, 'status'>): readonly MenuAction[] {
+    return [
+        ...statusActions(earning.status),
+        'editar',
+        ...(canDelete(earning) ? (['excluir'] as const) : []),
+    ];
+}

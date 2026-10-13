@@ -15,6 +15,11 @@ export interface EarningDialogProps {
     onClose: () => void;
 }
 
+export interface DeleteEarningDialogProps extends EarningDialogProps {
+    /** Depois de excluir. Sem ela, volta para `/receitas` (o detalhe excluído deixa de existir). */
+    onDeleted?: () => void;
+}
+
 function close(onClose: () => void) {
     return (open: boolean) => {
         if (!open) onClose();
@@ -66,7 +71,7 @@ export function UndoReceiptDialog({ earning, onClose }: EarningDialogProps) {
  * **Excluir** (spec 0014): mostra a cascata antes de enviar (INV-0014-03) → `DELETE
  * /earnings/{id}`; no sucesso, volta para a lista.
  */
-export function DeleteEarningDialog({ earning, onClose }: EarningDialogProps) {
+export function DeleteEarningDialog({ earning, onClose, onDeleted }: DeleteEarningDialogProps) {
     const notify = useNotify();
     const navigate = useNavigate();
     const remove = useDeleteEarning();
@@ -74,7 +79,8 @@ export function DeleteEarningDialog({ earning, onClose }: EarningDialogProps) {
         remove.mutate(earning.id, {
             onSuccess: () => {
                 notify({ tone: 'sucesso', message: 'Receita excluída.' });
-                void navigate({ to: '/receitas' });
+                if (onDeleted) onDeleted();
+                else void navigate({ to: '/receitas' });
             },
         });
 

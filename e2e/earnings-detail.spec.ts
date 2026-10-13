@@ -66,6 +66,29 @@ function actionNames(page: Page) {
     return page.getByRole('group', { name: 'Ações' }).getByRole('button');
 }
 
+/** Abaixo de `md` (o projeto `celular`), o detalhe mostra só a primeira ação e **Mais ações**. */
+function isNarrow(page: Page) {
+    return (page.viewportSize()?.width ?? 1440) < 768;
+}
+
+/** As ações oferecidas: todas lado a lado, ou, no celular, a primeira e Mais ações (AC-0014-13). */
+async function expectActions(page: Page, names: string[]) {
+    const [first, ...rest] = names;
+    await expect(actionNames(page)).toHaveText(
+        isNarrow(page) && rest.length > 0 ? [first ?? '', 'Mais ações'] : names,
+    );
+}
+
+/** Aciona uma ação, pelo menu **Mais ações** no celular quando não é a primeira. */
+async function chooseAction(page: Page, name: string, { first = false } = {}) {
+    if (isNarrow(page) && !first) {
+        await page.getByRole('button', { name: 'Mais ações' }).click();
+        await page.getByRole('menuitem', { name }).click();
+    } else {
+        await page.getByRole('button', { name }).click();
+    }
+}
+
 // AC-0014-05 e INV-0014-02: Receber com a data padrão envia `{ status: 'RECEIVED', receivedOn }`.
 test('Receber sends RECEIVED with today as receivedOn', async ({ page }) => {
     const stub = await openDetail(page, PROJECT_INSTALLMENT, {
@@ -78,7 +101,7 @@ test('Receber sends RECEIVED with today as receivedOn', async ({ page }) => {
         ],
     });
 
-    await expect(actionNames(page)).toHaveText(['Receber', 'Marcar para verificar', 'Excluir']);
+    await expectActions(page, ['Receber', 'Marcar para verificar', 'Excluir']);
     await page.getByRole('button', { name: 'Receber' }).click();
     await expect(page).toHaveURL(/receber=1/);
 
@@ -106,7 +129,7 @@ test('Desfazer recebimento asks first and sends OPEN', async ({ page }) => {
         ],
     });
 
-    await expect(actionNames(page)).toHaveText(['Desfazer recebimento']);
+    await expectActions(page, ['Desfazer recebimento']);
     await page.getByRole('button', { name: 'Desfazer recebimento' }).click();
 
     const dialog = page.getByRole('alertdialog', { name: 'Desfazer recebimento?' });
@@ -131,7 +154,7 @@ test('a forecast earning offers Confirmar, which sends only the status', async (
         ],
     });
 
-    await expect(actionNames(page)).toHaveText(['Confirmar', 'Excluir']);
+    await expectActions(page, ['Confirmar', 'Excluir']);
     await page.getByRole('button', { name: 'Confirmar' }).click();
     await expect(page.getByText('Receita confirmada.')).toBeVisible();
     expect(statusRequests(stub, ROOM_RENT.id).map((r) => r.body)).toEqual([{ status: 'OPEN' }]);
@@ -179,7 +202,7 @@ test('Excluir shows the installment cascade before deleting and goes back to the
     });
     const deletes = () => stub.requests.filter((r) => r.method === 'DELETE');
 
-    await page.getByRole('button', { name: 'Excluir' }).click();
+    await chooseAction(page, 'Excluir');
     await expect(page).toHaveURL(/excluir=1/);
     const dialog = page.getByRole('alertdialog', { name: 'Excluir receita?' });
     await expect(dialog).toContainText(
@@ -227,4 +250,25 @@ test('a viewer sees no action and ?receber=1 or ?excluir=1 opens no dialog', asy
 test('a biller opens Receber from ?receber=1', async ({ page }) => {
     await openDetail(page, PROJECT_INSTALLMENT, { user: 'lancador', query: '?receber=1' });
     await expect(page.getByRole('dialog', { name: 'Receber receita' })).toBeVisible();
+});
+
+// AC-0014-13: no celular, Receber em largura total e as demais ações em Mais ações; nos outros
+// tamanhos, todas lado a lado.
+test('on a phone the first action is full width and the rest are under Mais ações', async ({
+    page,
+}) => {
+    const open = { ...ROOM_RENT, status: 'OPEN' as const };
+    await openDetail(page, open, {
+        routes: [{ method: 'GET', path: `/earnings/${open.id}`, body: { data: open } }],
+    });
+
+    await expectActions(page, ['Receber', 'Marcar para verificar', 'Excluir']);
+    if (!isNarrow(page)) return;
+
+    const group = await page.getByRole('group', { name: 'Ações' }).boundingBox();
+    const receive = await page.getByRole('button', { name: 'Receber' }).boundingBox();
+    expect(receive?.width).toBeCloseTo(group?.width ?? 0, 0);
+
+    await page.getByRole('button', { name: 'Mais ações' }).click();
+    await expect(page.getByRole('menuitem')).toHaveText(['Marcar para verificar', 'Excluir']);
 });

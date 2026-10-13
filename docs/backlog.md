@@ -300,7 +300,7 @@ Tarefas da revisão das specs [0009](../specs/0009-lists-and-reference-data.md),
     - What: o menu de cada linha de `/despesas` com os diálogos sobre a lista, e **Mais ações** no detalhe pelo celular; depende da T-0009-08
     - Where: `src/features/expenses/list/`, `src/features/expenses/detail/`, `e2e/expenses-list.spec.ts`, `e2e/expenses-detail.spec.ts`
     - Done when: `AC-0012-16` a `AC-0012-18` cobertos; `INV-0012-06` verificado
-- [ ] **T-0014-06 — Ações rápidas de receitas** · #144
+- [x] **T-0014-06 — Ações rápidas de receitas** · #144
     - What: o menu de cada linha de `/receitas` com os diálogos sobre a lista, e **Mais ações** no detalhe pelo celular; depende da T-0009-08
     - Where: `src/features/earnings/list/`, `src/features/earnings/detail/`, `e2e/earnings-list.spec.ts`, `e2e/earnings-detail.spec.ts`
     - Done when: `AC-0014-11` a `AC-0014-13` cobertos; `INV-0014-05` verificado

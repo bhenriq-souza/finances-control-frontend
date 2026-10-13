@@ -1,17 +1,19 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 
 import { useCan } from '@/api/permissions';
 import { Button } from '@/ui/components/ui/button';
 import { FormAlert } from '@/ui/form-alert';
 import { useNotify } from '@/ui/notice';
+import { RowMenu } from '@/ui/row-menu';
 
 import type { Earning } from '../../list/earning-model';
 import { asApiError } from '../../list/earnings-query';
 
 import { useChangeEarningStatus } from './api';
 import { DeleteEarningDialog, UndoReceiptDialog } from './confirm-dialogs';
+import { menuItems } from './menu-items';
 import { ReceiveDialog } from './receive-dialog';
 import {
     ACTION_LABELS,
@@ -20,7 +22,24 @@ import {
     canDelete,
     statusActions,
     type EarningAction,
+    type MenuAction,
 } from './transitions';
+
+/** `md` (768px): a partir dele os botões ficam lado a lado; abaixo, só o primeiro e "Mais ações". */
+const MD_QUERY = '(min-width: 768px)';
+
+function subscribe(onChange: () => void): () => void {
+    const query = window.matchMedia?.(MD_QUERY);
+    query?.addEventListener('change', onChange);
+    return () => query?.removeEventListener('change', onChange);
+}
+
+/** Sem `matchMedia` (jsdom), vale o layout largo. */
+const isWide = () => window.matchMedia?.(MD_QUERY).matches ?? true;
+
+function useIsWide(): boolean {
+    return useSyncExternalStore(subscribe, isWide);
+}
 
 /** Os parâmetros de busca do detalhe que abrem os diálogos destas ações. */
 type DialogParam = 'receber' | 'excluir';
@@ -49,7 +68,7 @@ function useDialogParams() {
  * Um diálogo só abre se a ação existe no status atual; aberto, fica aberto mesmo que um
  * recarregamento mude o status, para o alerta do erro continuar à vista (spec 0014).
  */
-function useLatchedOpen(requested: boolean, allowed: boolean): boolean {
+export function useLatchedOpen(requested: boolean, allowed: boolean): boolean {
     const [latched, setLatched] = useState(false);
     const open = requested && (allowed || latched);
     if (open !== latched) setLatched(open);
@@ -82,6 +101,8 @@ function WriteActions({ earning }: EarningActionsProps) {
     const receiveOpen = useLatchedOpen(dialogs.receber, actions.includes('receber'));
     const deleteOpen = useLatchedOpen(dialogs.excluir, deletable);
 
+    const wide = useIsWide();
+
     const run = (action: EarningAction) => {
         if (action === 'receber') return dialogs.open('receber');
         if (action === 'desfazer') return setUndoOpen(true);
@@ -93,28 +114,54 @@ function WriteActions({ earning }: EarningActionsProps) {
 
     return (
         <>
-            <div
-                role="group"
-                aria-label="Ações"
-                className="flex flex-col gap-3 md:flex-row md:flex-wrap"
-            >
-                {actions.map((action, index) => (
-                    <Button
-                        key={action}
-                        variant={index === 0 ? 'default' : 'outline'}
-                        disabled={change.isPending}
-                        onClick={() => run(action)}
-                    >
-                        {ACTION_LABELS[action]}
-                    </Button>
-                ))}
-                {deletable && (
-                    <Button variant="outline" onClick={() => dialogs.open('excluir')}>
-                        <Trash2 aria-hidden="true" />
-                        Excluir
-                    </Button>
-                )}
-            </div>
+            {wide ? (
+                <div
+                    role="group"
+                    aria-label="Ações"
+                    className="flex flex-col gap-3 md:flex-row md:flex-wrap"
+                >
+                    {actions.map((action, index) => (
+                        <Button
+                            key={action}
+                            variant={index === 0 ? 'default' : 'outline'}
+                            disabled={change.isPending}
+                            onClick={() => run(action)}
+                        >
+                            {ACTION_LABELS[action]}
+                        </Button>
+                    ))}
+                    {deletable && (
+                        <Button variant="outline" onClick={() => dialogs.open('excluir')}>
+                            <Trash2 aria-hidden="true" />
+                            Excluir
+                        </Button>
+                    )}
+                </div>
+            ) : (
+                <div role="group" aria-label="Ações" className="flex flex-col gap-3">
+                    {actions[0] && (
+                        <Button
+                            className="w-full"
+                            disabled={change.isPending}
+                            onClick={() => run(actions[0] as EarningAction)}
+                        >
+                            {ACTION_LABELS[actions[0]]}
+                        </Button>
+                    )}
+                    <RowMenu
+                        label={`Mais ações de ${earning.description}`}
+                        trigger="texto"
+                        items={menuItems(
+                            [...actions.slice(1), ...(deletable ? (['excluir'] as const) : [])],
+                            (action: MenuAction) =>
+                                action === 'excluir'
+                                    ? dialogs.open('excluir')
+                                    : run(action as EarningAction),
+                            change.isPending,
+                        )}
+                    />
+                </div>
+            )}
             <FormAlert message={change.error ? asApiError(change.error).userMessage : null} />
 
             {receiveOpen && (
