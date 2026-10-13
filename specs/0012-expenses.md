@@ -14,7 +14,7 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 ## Scope / Non-goals
 
 - **Em escopo:** `/despesas`, `/despesas/$despesaId`, `/despesas/tipos`; o formulário de despesa (criar e alterar); os diálogos de status, de exclusão e de troca de forma de pagamento; o item **Despesas** da navegação.
-- **Fora de escopo:** pagamento de despesa de cartão (é pela fatura, spec 0013); a lista de séries e o encerramento de série (spec 0017; aqui só o `scope=following` de uma ocorrência e o link para a série); estornos (spec 0013); busca por texto e ordenação no servidor (a API não oferece); importação CSV.
+- **Fora de escopo:** pagamento de despesa de cartão (é pela fatura, spec 0013); a lista de séries e o encerramento de série (spec 0017; aqui só o `scope=following` de uma ocorrência e o link para a série); estornos (spec 0013; aqui só o link **Estornar**); busca por texto e ordenação no servidor (a API não oferece); importação CSV.
 - **Depende do backend:** [spec 0012](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0012-expenses.md) e, para séries, a [0017](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0017-jobs-and-recurrence.md), na tag `v1.1.0`. Escrita: `ADMIN` e `BILLER`; leitura: todos.
 - **Limites da API aceitos:** o filtro `status` aceita um valor só, e a lista mantém um status por vez (o dashboard, spec 0015, faz as duas consultas); sem busca nem totais no servidor, o resumo do mês soma no cliente a lista carregada, que é completa por não haver paginação.
 - **Forma visual:** padrão de **lançamento** da spec 0009, o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC) e a tabela "Vence esta semana" do [dashboard](https://claude.ai/artifact/HEj1d1jqqwAPMBVYZdMsyy).
@@ -90,6 +90,7 @@ Levar o F003 para a tela: ver as despesas de um mês com os filtros que a API of
 - **Pagar:** `FormDialog` com `paidOn` (`DateField`, padrão `today()`) → `PATCH /expenses/{id}/status` `{ status: 'PAID', paidOn }`. As demais transições enviam só `{ status }`.
 - **Excluir** (não paga): `ConfirmDialog` com o texto da cascata — avulsa: "A despesa será excluída."; parcela: "Todas as parcelas não pagas deste parcelamento serão excluídas."; série: "Esta ocorrência e as seguintes ainda não pagas serão excluídas, e a série termina." → `DELETE /expenses/{id}`, volta para a lista.
 - **Trocar forma de pagamento** (não paga): `FormDialog` com "Pagar com" (contas e cartões ativos, exceto o atual) e, se o destino for cartão, `postedOn` opcional; em série, a mesma escolha **Só esta** / **Esta e as próximas previstas** → `PATCH /expenses/{id}/payment-method[?scope=following]` com exatamente um de `bankAccountId`/`creditCardId`. Parcela: nota "Vale para todas as parcelas não pagas do parcelamento."
+- **Estornar** (decisão do responsável, 2026-10-13): em despesa de cartão que não é `FORECAST`, com `entries.write`, um link no grupo de ações, depois das transições, para `/cartoes/$cartaoId?estorno=1&despesa=<id>`. Abre o **Novo estorno** da spec 0013 com a despesa pré-selecionada.
 - Cada ação é endereçável: `?pagar=1`, `?excluir=1`, `?meio=1` abrem o diálogo correspondente (o dashboard usa `?pagar=1`).
 - **Erro de uma ação** (decisão do responsável, 2026-10-13, padrão de despesas e receitas): sempre em alerta (`role="alert"`, mensagem do catálogo), nunca em aviso. Transição sem diálogo: o alerta aparece abaixo dos botões de ação. Ação com diálogo: o alerta fica no diálogo, que continua aberto, também quando um conflito de status recarrega o detalhe e a ação deixa de existir.
 - Toda ação: `invalidateAfter(..., 'expense')`.
@@ -142,6 +143,7 @@ Padrão de **cadastro**: `EntryList` por `name`, selo **Arquivado**; com `entrie
 - **AC-0012-10:** com `leitor`, a lista e o detalhe não mostram **Nova despesa**, **Tipos de despesa** como ação de escrita, nem nenhuma ação do detalhe; `?novo=1` e `?pagar=1` não abrem diálogo.
 - **AC-0012-11:** `/despesas/tipos` cria, renomeia e arquiva um tipo; `409 EXPENSE_TYPE_ALREADY_EXISTS` marca o nome.
 - **AC-0012-12:** nos três projetos, a lista segue o `EntryList`, o formulário segue o `FormDialog` e **Nova despesa** fica acessível sem cobrir a barra inferior.
+- **AC-0012-13:** o detalhe de uma despesa de cartão que não é `FORECAST` mostra **Estornar**, que leva a `/cartoes/$cartaoId?estorno=1&despesa=<id>`; despesa de conta, despesa `FORECAST` e `leitor` não o veem.
 
 ## Test mapping
 
@@ -152,6 +154,7 @@ Padrão de **cadastro**: `EntryList` por `name`, selo **Arquivado**; com `entrie
 | AC-0012-06, AC-0012-07, AC-0012-08, AC-0012-09, INV-0012-02, INV-0012-03, INV-0012-04 | `src/features/expenses/detail/*.test.tsx` e `e2e/expenses-detail.spec.ts`        |
 | AC-0012-10                                                                            | `e2e/expenses-list.spec.ts` e `e2e/expenses-detail.spec.ts` (com `leitor`)       |
 | AC-0012-11                                                                            | `e2e/expense-types.spec.ts`                                                      |
+| AC-0012-13                                                                            | `src/features/expenses/detail/*.test.tsx` e `e2e/refunds.spec.ts`                |
 
 ## Open questions
 
