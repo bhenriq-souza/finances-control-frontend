@@ -1,7 +1,7 @@
 ---
 id: '0015'
 title: Dashboard de saldo e relatórios
-status: implemented
+status: approved
 depends_on: ['0009', '0011', '0012', '0013', '0014']
 ---
 
@@ -13,9 +13,9 @@ Trocar a tela inicial provisória pelo dashboard de saldo aprovado no [Design](h
 
 ## Scope / Non-goals
 
-- **Em escopo:** o dashboard em `/` (substitui a `HomePage` de `identity`, que é removida), `/relatorios` com as abas de saldo, por tipo e fluxo de caixa, o componente de colunas mensais e o item **Relatórios** da navegação.
+- **Em escopo:** o dashboard em `/` (substitui a `HomePage` de `identity`, que é removida), `/relatorios` com as abas de saldo, por tipo e fluxo de caixa, o componente de colunas mensais e o item **Relatórios** da navegação; o extrato de uma conta em `/contas/$contaId` (revisão de 2026-10-13, FCF-021).
 - **Fora de escopo:** orçamentos, alertas e exportação (a API não tem); saldo diário (os relatórios são mensais); um endpoint agregado para o dashboard (a API não tem: o dashboard compõe consultas existentes, abaixo).
-- **Depende do backend:** [spec 0015](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0015-reporting.md) (`/reports/*`, todo perfil) e as listas das specs 0011–0014 do backend, na tag `v1.1.0`.
+- **Depende do backend:** [spec 0015](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0015-reporting.md) (`/reports/*`, todo perfil) e as listas das specs 0011–0014 do backend, na tag `v1.1.0`; o extrato usa `/reports/account-movements`, da tag `v1.2.0`, para a qual o contrato fixado em `sources.json` passa.
 - **Decisões de 2026-10-12 (aprovação):** "Previsto" mostra o saldo previsto (`accountsTotalCents` do ponto `FORECAST`) com a variação ao lado; "Receitas do mês" e "Despesas do mês" somam todos os status, inclusive previstos. **Limite aceito:** sem rota agregada, o dashboard faz 4 consultas fixas e mais uma por cartão ativo.
 - **Forma visual:** os seis artboards do [dashboard](https://claude.ai/artifact/HEj1d1jqqwAPMBVYZdMsyy) (celular, tablet e desktop, nos dois temas) e, para os relatórios, o [canvas de padrões](https://claude.ai/artifact/YA6oWvBzWghdVTa2kAFTkC).
 
@@ -56,12 +56,33 @@ Código em `src/features/reporting/reports/`. Abas (com `role="tablist"`) na URL
 - **Celular:** gráfico com rolagem horizontal quando o período passa de seis meses; a tabela vira `EntryList` (um cartão por mês).
 - Navegação: `{ to: '/relatorios', label: 'Relatórios', icon: ChartColumn, profiles: [todos], slot: 'mais' }`.
 
+### Extrato de conta — `/contas/$contaId`
+
+Pedido do responsável nos testes em `dev` (2026-10-13). Código em `src/features/reporting/account-statement/`; qualquer perfil lê.
+
+- **Rota:** `/contas/$contaId`, com `?mes=YYYY-MM` (padrão o mês de `today()`; inválido é descartado). Ela compõe só a feature `reporting`.
+- **Cabeçalho:** link de volta **Contas**; `description` da conta e, no apoio, o banco e o tipo, por `useBankAccounts`/`useAccountLookup` de `src/api/queries/` (conta arquivada com o selo **Arquivado**); navegação de mês (‹ outubro de 2026 ›) como nas listas.
+- **Consulta:** `GET /reports/account-movements?bankAccountId=<contaId>&from&to` com `monthRange(mes)`, chave `queryKeys.reports.report('account-movements', { bankAccountId, mes })` — sob a raiz `reports`, que toda escrita de lançamento, fatura e transferência já invalida.
+- **Saldos:** **Saldo inicial** (`openingBalanceCents`) acima da lista e **Saldo final** (`closingBalanceCents`) abaixo, em `Money` com sinal; nada é somado no cliente.
+- **`EntryList`** dos `movements`, na ordem da resposta:
+
+| Coluna    | Conteúdo                                                                                                                                                                                                                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Data      | `date` em `formatDate(…, 'relativa')`                                                                                                                                                                                                                                                      |
+| Descrição | `EARNING`/`EXPENSE`: `description`, com `typeName` no apoio; `STATEMENT_PAYMENT`: "Pagamento de fatura" e o cartão por `useCardLookup` no apoio; `TRANSFER_IN`/`TRANSFER_OUT`: `description`, com "De <conta>"/"Para <conta>" (`counterpartBankAccountId` por `useAccountLookup`) no apoio |
+| Valor     | `amountCents` em `Money sign="always"`, `tone="auto"`                                                                                                                                                                                                                                      |
+| Saldo     | `balanceAfterCents` em `Money`; no celular, na segunda linha do cartão, com a data                                                                                                                                                                                                         |
+
+- Cada linha leva ao lançamento de origem: `EARNING` → `/receitas/$receitaId`, `EXPENSE` → `/despesas/$despesaId`, `STATEMENT_PAYMENT` → `/cartoes/$cartaoId/faturas/$faturaId` (ou `/cartoes/$cartaoId` quando `statementId` é `null`), `TRANSFER_*` → `/transferencias/$transferenciaId`.
+- **Vazio:** "Nenhum movimento neste mês.", com os dois saldos.
+- **Entrada:** na lista de contas (spec 0011), cada linha ganha o link **Extrato**, para todos os perfis.
+
 ### Mapa de erros
 
-| Código                   | Onde                                                                   |
-| ------------------------ | ---------------------------------------------------------------------- |
-| `VALIDATION_ERROR`       | não deve ocorrer (o período é validado antes); se ocorrer, ERR-0009-01 |
-| `BANK_ACCOUNT_NOT_FOUND` | aviso "Conta não encontrada." e o filtro de conta é removido           |
+| Código                   | Onde                                                                                                                              |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `VALIDATION_ERROR`       | não deve ocorrer (o período é validado antes); se ocorrer, ERR-0009-01                                                            |
+| `BANK_ACCOUNT_NOT_FOUND` | aviso "Conta não encontrada." e o filtro de conta é removido; no extrato, `EmptyState` `nao-encontrado` com o link para `/contas` |
 
 ## Invariants
 
@@ -69,6 +90,7 @@ Código em `src/features/reporting/reports/`. Abas (com `role="tablist"`) na URL
 - **INV-0015-02:** todo número do dashboard e dos relatórios vem da API em centavos; o cliente só soma, subtrai e filtra listas, nunca divide nem arredonda.
 - **INV-0015-03:** todo gráfico tem a tabela com os mesmos números ao lado.
 - **INV-0015-04:** a falha de uma consulta do dashboard afeta só a sua seção.
+- **INV-0015-05:** o extrato não calcula saldo: os saldos inicial, final e de cada linha são os da resposta.
 
 ## Error cases
 
@@ -90,17 +112,21 @@ Código em `src/features/reporting/reports/`. Abas (com `role="tablist"`) na URL
 - **AC-0015-08:** a aba **Fluxo de caixa** mostra o líquido negativo abaixo do eixo e as colunas da tabela.
 - **AC-0015-09:** período com `de` maior que `ate` não chega à API.
 - **AC-0015-10:** a tela inicial provisória e a `HomePage` de `identity` não existem mais.
+- **AC-0015-11:** `/contas/<id>?mes=2026-03` chama `GET /reports/account-movements?bankAccountId=<id>&from=2026-03-01&to=2026-03-31` e mostra o saldo inicial, os movimentos do stub na ordem da resposta, com o valor com sinal e o saldo de cada um, e o saldo final; ‹ leva a `?mes=2026-02`.
+- **AC-0015-12:** cada tipo de movimento mostra a descrição e o apoio da tabela e leva à rota do lançamento de origem; o pagamento antecipado (sem `statementId`) leva ao cartão.
+- **AC-0015-13:** `404 BANK_ACCOUNT_NOT_FOUND` mostra "Não encontramos este item." com o link para `/contas`; com `leitor`, o extrato aparece e a lista de contas mostra **Extrato** em cada linha.
 
 ## Test mapping
 
-| Item                                            | Teste                                                                               |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------- |
-| AC-0015-01, AC-0015-02, INV-0015-02             | `src/features/reporting/dashboard/dashboard-data.test.ts` e `e2e/dashboard.spec.ts` |
-| AC-0015-03, INV-0015-01                         | `e2e/dashboard.spec.ts` (com `lancador` e `leitor`) e o gate `boundaries`           |
-| AC-0015-04, AC-0015-05, INV-0015-04             | `e2e/dashboard.spec.ts`                                                             |
-| AC-0015-06, AC-0015-07, AC-0015-08, INV-0015-03 | `e2e/reports.spec.ts` e `src/ui/charts/month-columns.test.tsx`                      |
-| AC-0015-09                                      | `src/features/reporting/reports/period.test.ts`                                     |
-| AC-0015-10                                      | revisão do PR e `e2e/dashboard.spec.ts`                                             |
+| Item                                            | Teste                                                                                   |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------- |
+| AC-0015-01, AC-0015-02, INV-0015-02             | `src/features/reporting/dashboard/dashboard-data.test.ts` e `e2e/dashboard.spec.ts`     |
+| AC-0015-03, INV-0015-01                         | `e2e/dashboard.spec.ts` (com `lancador` e `leitor`) e o gate `boundaries`               |
+| AC-0015-04, AC-0015-05, INV-0015-04             | `e2e/dashboard.spec.ts`                                                                 |
+| AC-0015-06, AC-0015-07, AC-0015-08, INV-0015-03 | `e2e/reports.spec.ts` e `src/ui/charts/month-columns.test.tsx`                          |
+| AC-0015-09                                      | `src/features/reporting/reports/period.test.ts`                                         |
+| AC-0015-10                                      | revisão do PR e `e2e/dashboard.spec.ts`                                                 |
+| AC-0015-11, AC-0015-12, AC-0015-13, INV-0015-05 | `src/features/reporting/account-statement/*.test.tsx` e `e2e/account-statement.spec.ts` |
 
 ## Open questions
 

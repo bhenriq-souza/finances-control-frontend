@@ -236,6 +236,10 @@ Tarefas da [spec 0015](../specs/0015-dashboard-and-reports.md), da issue de entr
     - What: `/relatorios` com as abas de saldo, por tipo e fluxo de caixa, `MonthColumns` e o item **Relatórios**
     - Where: `src/features/reporting/reports/`, `src/ui/charts/month-columns.tsx`, `src/routes/_app/relatorios.tsx`, `src/app/shell/navigation.ts`, `e2e/reports.spec.ts`
     - Done when: `AC-0015-06` a `AC-0015-09` cobertos; `INV-0015-03` verificado
+- [ ] **T-0015-03 — Extrato de conta** · #139
+    - What: `/contas/$contaId` com o extrato do mês (revisão de 2026-10-13, FCF-021), o link **Extrato** na lista de contas e o contrato fixado na tag `v1.2.0` do backend
+    - Where: `sources.json`, `src/api/queries/keys.ts`, `src/features/reporting/account-statement/`, `src/features/accounts/bank-accounts-page.tsx`, `src/routes/_app/contas.$contaId.tsx`, `e2e/account-statement.spec.ts`
+    - Done when: `AC-0015-11` a `AC-0015-13` cobertos; `INV-0015-05` verificado
 
 ## Séries fixas
 
