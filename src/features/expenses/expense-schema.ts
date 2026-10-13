@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { dateSchema, optionalDateSchema } from '@/shared/dates';
+import { dateSchema, optionalDateSchema, refineOptionalDate } from '@/shared/dates';
 import { type Cents, moneySchema } from '@/shared/money';
 
 import { EXPENSE_KINDS } from './list/expense-model';
@@ -69,9 +69,10 @@ export const expenseCreateSchema = z
             .string()
             .refine((value) => parsePayment(value) !== null, EXPENSE_FORM_MESSAGES.payment),
         occurredOn: dateSchema(EXPENSE_FORM_MESSAGES.occurredOn),
-        postedOn: optionalDateSchema(),
+        // Só validados quando o campo aparece (cartão; Fixa), no `superRefine`.
+        postedOn: z.string(),
         installmentTotal: z.string(),
-        recurrenceEndsOn: optionalDateSchema(),
+        recurrenceEndsOn: z.string(),
         status: z.enum(INITIAL_STATUSES),
         notes: z.string(),
     })
@@ -86,6 +87,10 @@ export const expenseCreateSchema = z
                     message: EXPENSE_FORM_MESSAGES.installments,
                 });
             }
+        }
+        if (isCardPayment(values.payment)) refineOptionalDate(ctx, 'postedOn', values.postedOn);
+        if (values.kind === 'FIXED') {
+            refineOptionalDate(ctx, 'recurrenceEndsOn', values.recurrenceEndsOn);
         }
         if (isCardPayment(values.payment) && !notBefore(values.postedOn, values.occurredOn)) {
             ctx.addIssue({
