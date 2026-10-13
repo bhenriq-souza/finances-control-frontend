@@ -1,15 +1,17 @@
 import { Link } from '@tanstack/react-router';
-import { Landmark } from 'lucide-react';
+import { Landmark, Plus } from 'lucide-react';
 
+import { useCan } from '@/api/permissions';
 import { useBankAccounts, type BankAccount } from '@/api/queries/reference';
 import type { Cents } from '@/shared/money';
-import { buttonVariants } from '@/ui/components/ui/button';
+import { Button, buttonVariants } from '@/ui/components/ui/button';
 import { EmptyState } from '@/ui/empty-state';
 import { EntryList, type EntryColumn } from '@/ui/entry-list';
 import { Money } from '@/ui/money';
 import { StatusBadge } from '@/ui/status-badge';
 import { DERIVED_BADGES } from '@/ui/status-labels';
 
+import { type AccountsFormSearch, BankAccountFormDialog, WriteActions } from './forms';
 import {
     ACCOUNT_TYPE_LABELS,
     ArchivedToggle,
@@ -80,19 +82,51 @@ export interface BankAccountsPageProps {
     /** `?arquivadas=1`. */
     showArchived: boolean;
     onShowArchivedChange: (showArchived: boolean) => void;
+    /** `?novo=1` e `?editar=<id>`: o formulário aberto (só com `accounts.write`). */
+    form?: AccountsFormSearch;
+    onFormChange?: (form: AccountsFormSearch) => void;
 }
 
 /** `/contas` (spec 0011): o saldo em contas e a lista das contas bancárias, em ordem de descrição. */
-export function BankAccountsPage({ showArchived, onShowArchivedChange }: BankAccountsPageProps) {
+export function BankAccountsPage({
+    showArchived,
+    onShowArchivedChange,
+    form = {},
+    onFormChange = () => undefined,
+}: BankAccountsPageProps) {
     const query = useBankAccounts();
+    const canWrite = useCan('accounts.write');
+    const actions = (account: BankAccount) => (
+        <WriteActions
+            kind="bank-account"
+            item={account}
+            label={account.description}
+            onEdit={() => onFormChange({ editar: account.id })}
+        />
+    );
+    const columns = canWrite
+        ? [...COLUMNS, { header: 'Ações', cell: actions, align: 'end' as const }]
+        : COLUMNS;
+    // Sem a permissão, `?novo` e `?editar` não têm efeito (INV-0011-01).
+    const editing =
+        canWrite && form.editar ? query.data?.find((a) => a.id === form.editar) : undefined;
+    const creating = canWrite && form.novo === 1 && editing === undefined;
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h1 className="text-titulo-1">Contas</h1>
-                <Link to="/contas/bancos" className={buttonVariants({ variant: 'outline' })}>
-                    <Landmark aria-hidden="true" strokeWidth={1.75} />
-                    Bancos
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                    <Link to="/contas/bancos" className={buttonVariants({ variant: 'outline' })}>
+                        <Landmark aria-hidden="true" strokeWidth={1.75} />
+                        Bancos
+                    </Link>
+                    {canWrite && (
+                        <Button onClick={() => onFormChange({ novo: 1 })}>
+                            <Plus aria-hidden="true" />
+                            Nova conta
+                        </Button>
+                    )}
+                </div>
             </div>
             <QueryContent query={query}>
                 {(accounts) => (
@@ -124,8 +158,13 @@ export function BankAccountsPage({ showArchived, onShowArchivedChange }: BankAcc
                                 )}
                                 getKey={(account) => account.id}
                                 caption="Contas bancárias"
-                                columns={COLUMNS}
-                                renderCard={(account) => <AccountCard account={account} />}
+                                columns={columns}
+                                renderCard={(account) => (
+                                    <div className="flex flex-col gap-3">
+                                        <AccountCard account={account} />
+                                        {canWrite && actions(account)}
+                                    </div>
+                                )}
                                 empty={
                                     <EmptyState
                                         variant="vazio"
@@ -139,6 +178,13 @@ export function BankAccountsPage({ showArchived, onShowArchivedChange }: BankAcc
                     </>
                 )}
             </QueryContent>
+            {(creating || editing) && (
+                <BankAccountFormDialog
+                    key={editing?.id ?? 'novo'}
+                    account={editing}
+                    onClose={() => onFormChange({})}
+                />
+            )}
         </div>
     );
 }

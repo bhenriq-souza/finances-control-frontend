@@ -160,7 +160,7 @@ Tarefas da [spec 0011](../specs/0011-accounts.md), da issue de entrega [FCF-010]
     - What: `/contas`, `/contas/bancos`, `/cartoes`, `/cartoes/$cartaoId` (resumo), itens **Cartões** e **Contas**, só leitura
     - Where: `src/features/accounts/` (exceto `forms/` e `transfers/`), `src/routes/_app/contas*`, `src/routes/_app/cartoes*`, `src/app/shell/navigation.ts`, `e2e/accounts.spec.ts`, `e2e/fixtures/data/accounts.ts`
     - Done when: `AC-0011-01`, `AC-0011-02` e `AC-0011-08` cobertos; `INV-0011-03` verificado
-- [ ] **T-0011-02 — Cadastro de bancos, contas e cartões** · #66
+- [x] **T-0011-02 — Cadastro de bancos, contas e cartões** · #66
     - What: formulários de criar e alterar, arquivar e desarquivar, só com `accounts.write`; depende de T-0011-01
     - Where: `src/features/accounts/forms/`, as páginas de lista da T-0011-01 (botões e `?novo`/`?editar`), `e2e/accounts-admin.spec.ts`
     - Done when: `AC-0011-03` a `AC-0011-07` cobertos; `INV-0011-01`, `INV-0011-02` e `INV-0011-04` verificados

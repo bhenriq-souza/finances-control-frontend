@@ -10,6 +10,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CURRENT_USER_QUERY_KEY } from '@/api/queries/current-user';
 import { queryKeys } from '@/api/queries/keys';
 import type { Bank, BankAccount, CreditCard } from '@/api/queries/reference';
 
@@ -106,6 +107,9 @@ const CARDS: CreditCard[] = [
 
 async function renderAt(node: ReactNode, seed: (client: QueryClient) => void = () => undefined) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    // Leitura: as listas são as mesmas para todo perfil; os controles de escrita (ADMIN) são
+    // testados em `forms/`.
+    client.setQueryData(CURRENT_USER_QUERY_KEY, { profile: 'VIEWER' });
     seed(client);
     const root = createRootRoute();
     const page = createRoute({ getParentRoute: () => root, path: '/', component: () => node });
