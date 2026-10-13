@@ -21,6 +21,8 @@ import { ExpenseFormDialog } from '../form/expense-form';
 import { asApiError } from '../list/expense-list-search';
 import { EXPENSE_KIND_LABELS, type Expense } from '../list/expense-model';
 
+import { ExpenseActions } from './actions/expense-actions';
+
 const flag = z.literal(1).optional().catch(undefined);
 
 /**
@@ -122,28 +124,30 @@ function ExpenseFields({ expense }: { expense: Expense }) {
 export interface ExpenseDetailPageProps {
     expenseId: string;
     search: ExpenseDetailSearch;
+    /** Atualiza os parâmetros de busca da rota (os não citados ficam como estão). */
     onSearchChange: (next: Partial<ExpenseDetailSearch>) => void;
-    /** A despesa sumiu durante uma ação (`EXPENSE_NOT_FOUND`): volta para a lista. */
-    onGone: () => void;
+    /** Volta para a lista (depois de excluir, ou com `EXPENSE_NOT_FOUND` numa ação). */
+    onBackToList: () => void;
 }
 
 /**
  * Detalhe de uma despesa (`/despesas/$despesaId`, spec 0012): os campos da resposta, o selo, a
- * conta ou o cartão por nome e os links da parcela e da fatura. `404 EXPENSE_NOT_FOUND` mostra o
- * estado `nao-encontrado` (ERR-0009-02); outra falha, o estado `erro` (ERR-0009-01). Com
+ * conta ou o cartão por nome, os links da parcela e da fatura, e as ações. `404 EXPENSE_NOT_FOUND`
+ * mostra o estado `nao-encontrado` (ERR-0009-02); outra falha, o estado `erro` (ERR-0009-01). Com
  * `entries.write`, **Alterar** abre o formulário (`?editar=1`).
  */
 export function ExpenseDetailPage({
     expenseId,
     search,
     onSearchChange,
-    onGone,
+    onBackToList,
 }: ExpenseDetailPageProps) {
     const query = useQuery(expenseDetailQuery(expenseId));
     const canWrite = useCan('entries.write');
 
     let content;
-    if (query.isError) {
+    // Com dado, ele vale mesmo que um recarregamento falhe: assim a exclusão termina na tela.
+    if (query.isError && !query.data) {
         const error = asApiError(query.error);
         content = error.code.endsWith('_NOT_FOUND') ? (
             <EmptyState
@@ -186,6 +190,12 @@ export function ExpenseDetailPage({
                         </div>
                     )}
                 </header>
+                <ExpenseActions
+                    expense={expense}
+                    search={search}
+                    onSearchChange={onSearchChange}
+                    onBackToList={onBackToList}
+                />
                 <section className="rounded-md border border-linha bg-superficie px-4 md:px-6">
                     <ExpenseFields expense={expense} />
                 </section>
@@ -196,7 +206,7 @@ export function ExpenseDetailPage({
                         onOpenChange={(open) => {
                             if (!open) onSearchChange({ editar: undefined });
                         }}
-                        onGone={onGone}
+                        onGone={onBackToList}
                     />
                 )}
             </article>

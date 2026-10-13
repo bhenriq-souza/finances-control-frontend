@@ -177,7 +177,7 @@ Tarefas da [spec 0012](../specs/0012-expenses.md), da issue de entrega [FCF-011]
     - What: criar (variável, parcelada, fixa) e alterar com escopo de série; depende de T-0012-01
     - Where: `src/features/expenses/form/`, `e2e/expenses-form.spec.ts`
     - Done when: `AC-0012-03`, `AC-0012-04` e `AC-0012-05` cobertos; `INV-0012-05` verificado
-- [ ] **T-0012-03 — Ações de status, exclusão e forma de pagamento** · #69
+- [x] **T-0012-03 — Ações de status, exclusão e forma de pagamento** · #69
     - What: ações do detalhe por status, pagar, excluir com cascata, trocar forma de pagamento, parâmetros `?pagar`, `?excluir`, `?meio`; depende de T-0012-01
     - Where: `src/features/expenses/detail/actions/`, `e2e/expenses-detail.spec.ts`
     - Done when: `AC-0012-06` a `AC-0012-10` cobertos; `INV-0012-02`, `INV-0012-03` e `INV-0012-04` verificados
