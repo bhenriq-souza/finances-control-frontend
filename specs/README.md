@@ -18,7 +18,7 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0009](0009-lists-and-reference-data.md) | Listas, formulários e dados de referência compartilhados           | implemented |
 | [0010](0010-users-admin.md)              | Administração de usuários e perfis                                 | implemented |
 | [0011](0011-accounts.md)                 | Bancos, contas bancárias e cartões de crédito                      | implemented |
-| [0012](0012-expenses.md)                 | Despesas e tipos de despesa                                        | approved    |
+| [0012](0012-expenses.md)                 | Despesas e tipos de despesa                                        | implemented |
 | [0013](0013-statements.md)               | Faturas de cartão, pagamentos e estornos                           | approved    |
 | [0014](0014-earnings.md)                 | Receitas e tipos de receita                                        | approved    |
 | [0015](0015-dashboard-and-reports.md)    | Dashboard de saldo e relatórios                                    | approved    |
