@@ -127,20 +127,17 @@ describe('ExpenseTypesPage', () => {
     it('shows the archived types with the Arquivado badge when asked', async () => {
         const { changes } = await renderPage();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Mostrar arquivados' }));
+        fireEvent.click(screen.getByLabelText('Mostrar arquivados'));
 
         expect(changes).toEqual([{ arquivados: 1 }]);
-        expect(screen.getByRole('button', { name: 'Mostrar arquivados' })).toHaveAttribute(
-            'aria-pressed',
-            'true',
-        );
+        expect(screen.getByRole('checkbox', { name: 'Mostrar arquivados' })).toBeChecked();
         const archived = within(cards()).getByText('Academia').closest('li')!;
         expect(within(archived).getByText('Arquivado')).toBeInTheDocument();
         expect(
             within(archived).getByRole('button', { name: 'Desarquivar Academia' }),
         ).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Mostrar arquivados' }));
+        fireEvent.click(screen.getByLabelText('Mostrar arquivados'));
         expect(changes.at(-1)).toEqual({});
     });
 

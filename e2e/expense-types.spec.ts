@@ -49,7 +49,7 @@ test('lists the active types by name, cards on the phone and a table from tablet
         archived: 'true',
     });
 
-    await page.getByRole('button', { name: 'Mostrar arquivados' }).click();
+    await page.getByLabel('Mostrar arquivados').check();
     await expect(page).toHaveURL(/arquivados=1/);
     await expect(list.getByText('Academia')).toBeVisible();
     await expect(list.getByText('Arquivado')).toBeVisible();

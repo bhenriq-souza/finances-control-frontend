@@ -1,4 +1,4 @@
-import { Plus, Tags } from 'lucide-react';
+import { Archive, ArchiveRestore, Pencil, Plus, Tags } from 'lucide-react';
 import { useId } from 'react';
 
 import { ApiError } from '@/api/errors/api-error';
@@ -63,15 +63,21 @@ function RowActions({ earningType, onRename }: { earningType: EarningType; onRen
 
     return (
         <div className="flex flex-wrap justify-end gap-2">
-            <Button variant="ghost" aria-label={`Renomear ${earningType.name}`} onClick={onRename}>
+            <Button
+                variant="outline"
+                aria-label={`Renomear ${earningType.name}`}
+                onClick={onRename}
+            >
+                <Pencil aria-hidden="true" />
                 Renomear
             </Button>
             <Button
-                variant="ghost"
+                variant="outline"
                 aria-label={`${archived ? 'Desarquivar' : 'Arquivar'} ${earningType.name}`}
                 disabled={archive.isPending}
                 onClick={toggleArchived}
             >
+                {archived ? <ArchiveRestore aria-hidden="true" /> : <Archive aria-hidden="true" />}
                 {archived ? 'Desarquivar' : 'Arquivar'}
             </Button>
         </div>

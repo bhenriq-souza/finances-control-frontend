@@ -157,6 +157,12 @@ describe('EarningTypesPage', () => {
         expect(
             within(archivedRow).getByRole('button', { name: 'Desarquivar Bônus' }),
         ).toBeInTheDocument();
+        // AC-0009-11: ações de linha `outline` com ícone.
+        for (const name of ['Desarquivar Bônus', 'Renomear Bônus']) {
+            const button = within(archivedRow).getByRole('button', { name });
+            expect(button.querySelector('svg')).not.toBeNull();
+            expect(button.className).toContain('border');
+        }
 
         fireEvent.click(screen.getByLabelText('Mostrar arquivados'));
         expect(searches.at(-1)).toEqual({ arquivados: undefined });

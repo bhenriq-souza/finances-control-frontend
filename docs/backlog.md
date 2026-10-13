@@ -267,7 +267,7 @@ Tarefas da revisão das specs [0004](../specs/0004-theme.md), [0006](../specs/00
     - What: favicon SVG, PNG de 32px e `apple-touch-icon` em `public/`, declarados no `index.html`; o menu do usuário aberto acima do botão flutuante das listas
     - Where: `public/`, `index.html`, `src/ui/brand/README.md`, `src/app/shell/`, `e2e/shell.spec.ts`
     - Done when: `AC-0006-13` e `AC-0006-14` cobertos
-- [ ] **T-0009-06 — Telas de tipos no padrão de cadastro** · #127
+- [x] **T-0009-06 — Telas de tipos no padrão de cadastro** · #127
     - What: botões `outline` com ícone em `/receitas/tipos`; **Mostrar arquivados** como caixa de seleção em `/despesas/tipos`
     - Where: `src/features/expenses/types/`, `src/features/earnings/types/`, `e2e/expense-types.spec.ts`, `e2e/earning-types.spec.ts`
     - Done when: `AC-0009-11` coberto
