@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import {
     EARNING_QUICK_PARAMS,
@@ -11,11 +11,16 @@ import {
     useExpenseQuickActions,
     type ExpenseQuickParams,
 } from '@/features/expenses';
-import { CashFlowPage, cashFlowSearchSchema, type CashFlowSearch } from '@/features/reporting';
+import {
+    CashFlowPage,
+    cashFlowSearchSchema,
+    type CashFlowPageProps,
+    type CashFlowSearch,
+} from '@/features/reporting';
 import { useStatementPayQuickAction, type StatementPayRequest } from '@/features/statements';
 
 /**
- * Fluxo de caixa do mês (spec 0015): `?mes`, `?situacao` e os diálogos das ações,
+ * Fluxo de caixa do mês (spec 0015): `?mes`, `?situacao`, `?conta` e os diálogos das ações,
  * `?acao=<…>&despesa=<id>`, `?acao=<…>&receita=<id>` e `?acao=pagar&fatura=<id>&cartao=<id>`.
  */
 export const Route = createFileRoute('/_app/fluxo-de-caixa')({
@@ -82,6 +87,12 @@ function CashFlowRoute() {
     const setTarget = (next: Target) =>
         void navigate({ search: (prev) => ({ ...prev, ...NO_TARGET, ...next }) });
     const clear = () => setTarget({});
+    // Estável: o fluxo de caixa a usa para descartar o filtro de conta num efeito.
+    const onSearchChange = useCallback<CashFlowPageProps['onSearchChange']>(
+        (next, options) =>
+            void navigate({ search: (prev) => ({ ...prev, ...next }), replace: options?.replace }),
+        [navigate],
+    );
 
     const expense = useExpenseQuickActions(target.expense, (next) => {
         const open = firstOpen(next);
@@ -108,7 +119,7 @@ function CashFlowRoute() {
     return (
         <CashFlowPage
             search={search}
-            onSearchChange={(next) => void navigate({ search: (prev) => ({ ...prev, ...next }) })}
+            onSearchChange={onSearchChange}
             rowActions={{
                 expense: expense.rowMenu,
                 earning: earning.rowMenu,

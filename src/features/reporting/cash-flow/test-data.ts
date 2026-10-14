@@ -1,6 +1,6 @@
 import type { BankAccount, CreditCard } from '@/api/queries/reference';
 
-import type { BalanceReport, Earning, Expense, Statement } from './cash-flow-model';
+import type { BalanceReport, BankTransfer, Earning, Expense, Statement } from './cash-flow-model';
 
 // Dados dos testes do fluxo de caixa (spec 0015): "hoje" é 15/10/2026.
 
@@ -8,6 +8,7 @@ export const TODAY = '2026-10-15T12:00:00-03:00';
 
 const CREATED = '2026-10-01T12:00:00Z';
 export const ACCOUNT_ID = '11111111-1111-4111-8111-111111111111';
+export const OTHER_ACCOUNT_ID = '11111111-1111-4111-8111-111111111112';
 export const CARD_ID = '33333333-3333-4333-8333-333333333333';
 export const ARCHIVED_CARD_ID = '33333333-3333-4333-8333-333333333334';
 
@@ -24,6 +25,13 @@ export const ACCOUNT: BankAccount = {
     overdraftLimitCents: 0,
     archivedAt: null,
     createdAt: CREATED,
+};
+
+export const OTHER_ACCOUNT: BankAccount = {
+    ...ACCOUNT,
+    id: OTHER_ACCOUNT_ID,
+    accountNumber: '2',
+    description: 'Poupança',
 };
 
 export function card(fields: Partial<CreditCard> = {}): CreditCard {
@@ -205,4 +213,46 @@ export const PROJECTED = statement({
     dueOn: '2026-11-05',
     amountDueCents: 30000,
     remainingCents: 30000,
+});
+
+export function transfer(
+    fields: Pick<BankTransfer, 'id' | 'description' | 'status' | 'amountCents' | 'occurredOn'> &
+        Partial<BankTransfer>,
+): BankTransfer {
+    return {
+        fromBankAccountId: ACCOUNT_ID,
+        toBankAccountId: OTHER_ACCOUNT_ID,
+        completedOn: fields.status === 'COMPLETED' ? fields.occurredOn : null,
+        notes: null,
+        createdAt: CREATED,
+        updatedAt: CREATED,
+        ...fields,
+    };
+}
+
+/** Sai da conta corrente para a poupança, concluída. */
+export const TRANSFER_OUT = transfer({
+    id: 't1',
+    description: 'Reserva',
+    status: 'COMPLETED',
+    amountCents: 20000,
+    occurredOn: '2026-10-03',
+});
+/** Entra na conta corrente, agendada antes de hoje: vencida. */
+export const TRANSFER_IN_LATE = transfer({
+    id: 't2',
+    description: 'Resgate',
+    status: 'SCHEDULED',
+    amountCents: 15000,
+    occurredOn: '2026-10-10',
+    fromBankAccountId: OTHER_ACCOUNT_ID,
+    toBankAccountId: ACCOUNT_ID,
+});
+/** Sai da conta corrente, agendada depois de hoje: a vencer. */
+export const TRANSFER_OUT_LATER = transfer({
+    id: 't3',
+    description: 'Aporte',
+    status: 'SCHEDULED',
+    amountCents: 5000,
+    occurredOn: '2026-10-20',
 });

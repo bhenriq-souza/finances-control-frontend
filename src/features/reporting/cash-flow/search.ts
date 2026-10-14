@@ -20,6 +20,8 @@ export const cashFlowSearchSchema = z.object({
     mes: optional(z.string().refine((value) => isIsoMonth(value))),
     /** Filtro de situação; ausente, todos. */
     situacao: optional(z.enum(SITUATIONS)),
+    /** Filtro de conta (revisão de 2026-10-14); ausente, todas. Id fora de `GET /bank-accounts` sai. */
+    conta: optional(id),
     /** Diálogo de ação aberto sobre a tela, com o alvo em `despesa`, `receita` ou `fatura`. */
     acao: optional(z.enum(CASH_FLOW_ACTIONS)),
     despesa: optional(id),

@@ -1,3 +1,4 @@
+import type { components } from '@/api/generated/schema';
 import type { CreditCard } from '@/api/queries/reference';
 import { addMonths, monthRange, type IsoDate, type IsoMonth } from '@/shared/dates';
 import type { Cents } from '@/shared/money';
@@ -10,6 +11,10 @@ import type { Situation } from './search';
 // se soma, subtrai e filtra (INV-0015-02, INV-0015-07), nunca se divide nem arredonda.
 
 export type { BalanceReport, Earning, Expense, Statement };
+export type BankTransfer = components['schemas']['BankTransferResponse'];
+
+/** O sentido da transferência para a conta escolhida: entra (`+`) ou sai (`−`). */
+export type TransferDirection = 'in' | 'out';
 
 export type CashFlowRow =
     | { kind: 'earning'; key: string; date: IsoDate; situation: Situation; earning: Earning }
@@ -21,6 +26,14 @@ export type CashFlowRow =
           situation: Situation;
           statement: Statement;
           card: CreditCard;
+      }
+    | {
+          kind: 'transfer';
+          key: string;
+          date: IsoDate;
+          situation: Situation;
+          transfer: BankTransfer;
+          direction: TransferDirection;
       };
 
 /** As faturas de um cartão ativo, como `GET /statements` as devolveu. */
@@ -34,6 +47,15 @@ export interface CashFlowInput {
     earnings: readonly Earning[];
     expenses: readonly Expense[];
     statements: readonly CardStatementList[];
+    /**
+     * A conta escolhida (`?conta=`, revisão de 2026-10-14); sem ela, todas as contas e nenhuma
+     * transferência (INV-0015-08).
+     */
+    account?: string;
+    /** As transferências do mês da conta escolhida (`GET /bank-transfers?bankAccountId&from&to`). */
+    transfers?: readonly BankTransfer[];
+    /** `today()`: a transferência agendada antes de hoje está vencida. */
+    today: IsoDate;
 }
 
 /** Receita e despesa: realizada, a vencer ou vencida pelo status. */
@@ -58,6 +80,15 @@ function statementSituation(statement: Statement): Situation {
     return 'a-vencer';
 }
 
+/**
+ * Transferência: concluída é realizada; agendada a partir de hoje, a vencer; agendada antes de
+ * hoje, vencida.
+ */
+function transferSituation(transfer: BankTransfer, today: IsoDate): Situation {
+    if (transfer.status === 'COMPLETED') return 'realizados';
+    return transfer.occurredOn < today ? 'vencidos' : 'a-vencer';
+}
+
 /** As faturas que entram na lista: fechadas, pagas ou a projetada (a rolada não sai da conta). */
 function listedStatement(statement: Statement): boolean {
     return statement.status !== 'ROLLED_OVER';
@@ -76,6 +107,7 @@ const KIND_ORDER: Readonly<Record<CashFlowRow['kind'], number>> = {
     earning: 0,
     expense: 1,
     statement: 2,
+    transfer: 3,
 };
 
 const inMonth = (date: IsoDate, month: IsoMonth) => date.startsWith(`${month}-`);
@@ -83,17 +115,23 @@ const inMonth = (date: IsoDate, month: IsoMonth) => date.startsWith(`${month}-`)
 /**
  * A lista do mês (spec 0015): receitas, despesas de conta e faturas com vencimento no mês, em
  * ordem de data. Despesa de cartão nunca entra, só a fatura (INV-0015-07); o que tem data fora do
- * mês fica no seu mês.
+ * mês fica no seu mês. Com uma conta escolhida, só o que é dela: as receitas e as despesas da
+ * conta, as faturas dos cartões que ela paga e as suas transferências (INV-0015-08).
  */
 export function cashFlowRows({
     month,
     earnings,
     expenses,
     statements,
+    account,
+    transfers = [],
+    today,
 }: CashFlowInput): CashFlowRow[] {
+    const ofAccount = (bankAccountId: string | null) =>
+        bankAccountId !== null && (account === undefined || bankAccountId === account);
     const rows: CashFlowRow[] = [];
     for (const earning of earnings) {
-        if (!inMonth(earning.occurredOn, month)) continue;
+        if (!ofAccount(earning.bankAccountId) || !inMonth(earning.occurredOn, month)) continue;
         rows.push({
             kind: 'earning',
             key: `receita:${earning.id}`,
@@ -103,7 +141,7 @@ export function cashFlowRows({
         });
     }
     for (const expense of expenses) {
-        if (expense.bankAccountId === null || !inMonth(expense.occurredOn, month)) continue;
+        if (!ofAccount(expense.bankAccountId) || !inMonth(expense.occurredOn, month)) continue;
         rows.push({
             kind: 'expense',
             key: `despesa:${expense.id}`,
@@ -113,6 +151,8 @@ export function cashFlowRows({
         });
     }
     for (const { card, statements: list } of statements) {
+        // Cartão sem conta pagadora só aparece em **Todas as contas**.
+        if (account !== undefined && card.paymentBankAccountId !== account) continue;
         for (const statement of list) {
             if (!listedStatement(statement) || !inMonth(statement.dueOn, month)) continue;
             rows.push({
@@ -125,6 +165,24 @@ export function cashFlowRows({
             });
         }
     }
+    // Sem conta escolhida, as transferências se anulam e ficam de fora.
+    if (account !== undefined) {
+        for (const transfer of transfers) {
+            if (!inMonth(transfer.occurredOn, month)) continue;
+            let direction: TransferDirection;
+            if (transfer.toBankAccountId === account) direction = 'in';
+            else if (transfer.fromBankAccountId === account) direction = 'out';
+            else continue;
+            rows.push({
+                kind: 'transfer',
+                key: `transferencia:${transfer.id}`,
+                date: transfer.occurredOn,
+                situation: transferSituation(transfer, today),
+                transfer,
+                direction,
+            });
+        }
+    }
     return rows.sort(
         (a, b) =>
             a.date.localeCompare(b.date) ||
@@ -133,7 +191,10 @@ export function cashFlowRows({
     );
 }
 
-/** O valor com sinal da linha: `+` na receita, `−` na despesa e na fatura (`amountDueCents`). */
+/**
+ * O valor com sinal da linha: `+` na receita e na transferência que entra, `−` na despesa, na
+ * fatura (`amountDueCents`) e na transferência que sai.
+ */
 export function rowAmount(row: CashFlowRow): Cents {
     switch (row.kind) {
         case 'earning':
@@ -142,7 +203,14 @@ export function rowAmount(row: CashFlowRow): Cents {
             return -row.expense.amountCents;
         case 'statement':
             return -row.statement.amountDueCents;
+        case 'transfer':
+            return row.direction === 'in' ? row.transfer.amountCents : -row.transfer.amountCents;
     }
+}
+
+/** A linha entra em **Entradas**: a receita e a transferência que entra na conta. */
+export function isInflow(row: CashFlowRow): boolean {
+    return row.kind === 'earning' || (row.kind === 'transfer' && row.direction === 'in');
 }
 
 /** As linhas da situação; sem filtro, todas. O resumo nunca usa a lista filtrada. */
@@ -158,9 +226,9 @@ export interface FlowTotal {
 }
 
 export interface FlowSummary {
-    /** As receitas da lista. */
+    /** As receitas e as transferências que entram. */
     inflows: FlowTotal;
-    /** As despesas e as faturas da lista. */
+    /** As despesas, as faturas e as transferências que saem. */
     outflows: FlowTotal;
 }
 
@@ -169,7 +237,7 @@ export function summarizeRows(rows: readonly CashFlowRow[]): FlowSummary {
     const empty = (): FlowTotal => ({ totalCents: 0, realized: 0, pending: 0 });
     const summary: FlowSummary = { inflows: empty(), outflows: empty() };
     for (const row of rows) {
-        const total = row.kind === 'earning' ? summary.inflows : summary.outflows;
+        const total = isInflow(row) ? summary.inflows : summary.outflows;
         const amount = rowAmount(row);
         total.totalCents += amount < 0 ? -amount : amount;
         if (row.situation === 'realizados') total.realized += 1;
@@ -245,20 +313,23 @@ export function cashFlowBalances(
     return start && end ? { start, end } : null;
 }
 
-/** Vencidas de meses anteriores: as `OVERDUE` com data antes do mês. */
+/** Vencidas de meses anteriores: as `OVERDUE` e as transferências agendadas com data antes do mês. */
 export interface OverdueBefore {
     expenses: number;
     earnings: number;
+    transfers: number;
 }
 
 /**
  * As vencidas de antes do mês que o saldo previsto conta (spec 0015): despesas de conta e
- * receitas `OVERDUE` com data antes do 1º dia do mês.
+ * receitas `OVERDUE` com data antes do 1º dia do mês e, com uma conta escolhida, as suas
+ * transferências `SCHEDULED` com data antes do mês.
  */
 export function overdueBefore(
     month: IsoMonth,
     expenses: readonly Expense[],
     earnings: readonly Earning[],
+    transfers: readonly BankTransfer[] = [],
 ): OverdueBefore {
     const first = monthRange(month).from;
     return {
@@ -266,5 +337,6 @@ export function overdueBefore(
             (e) => e.status === 'OVERDUE' && e.bankAccountId !== null && e.occurredOn < first,
         ).length,
         earnings: earnings.filter((e) => e.status === 'OVERDUE' && e.occurredOn < first).length,
+        transfers: transfers.filter((t) => t.status === 'SCHEDULED' && t.occurredOn < first).length,
     };
 }

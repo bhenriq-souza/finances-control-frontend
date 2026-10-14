@@ -12,6 +12,7 @@ export const ADMIN_SELF: UserResponse = {
     name: 'Ana Souza',
     profile: 'ADMIN',
     profileGrantedAt: '2026-09-01T12:00:00Z',
+    avatarUpdatedAt: null,
     createdAt: '2026-09-01T12:00:00Z',
 };
 
@@ -22,6 +23,7 @@ export const BILLER_USER: UserResponse = {
     name: 'Lucas Martins',
     profile: 'BILLER',
     profileGrantedAt: '2026-09-05T12:00:00Z',
+    avatarUpdatedAt: null,
     createdAt: '2026-09-05T12:00:00Z',
 };
 
@@ -32,6 +34,7 @@ export const PENDING_USER: UserResponse = {
     name: 'Paula Nunes',
     profile: null,
     profileGrantedAt: null,
+    avatarUpdatedAt: null,
     createdAt: '2026-10-10T12:00:00Z',
 };
 
@@ -42,6 +45,7 @@ export const UNVERIFIED_USER: UserResponse = {
     name: 'Rafael Costa',
     profile: null,
     profileGrantedAt: null,
+    avatarUpdatedAt: null,
     createdAt: '2026-10-11T12:00:00Z',
 };
 

@@ -248,7 +248,7 @@ Tarefas da [spec 0015](../specs/0015-dashboard-and-reports.md), da issue de entr
     - What: `/fluxo-de-caixa` (revisão de 2026-10-13, FCF-020): resumo do mês, lista de receitas, despesas de conta e faturas, ações rápidas das listas e **Pagar fatura** sobre a tela, item na navegação e link de cada mês na aba **Fluxo de caixa**; specs `0009` e `0015` voltam a `implemented`
     - Where: `src/features/reporting/cash-flow/`, `src/features/reporting/reports/`, `src/features/{expenses,earnings,statements}/index.ts` e o que eles exportam, `src/app/shell/navigation.ts`, `src/routes/_app/fluxo-de-caixa.tsx`, `e2e/cash-flow.spec.ts`
     - Done when: `AC-0015-14` a `AC-0015-17` cobertos; `INV-0015-06` e `INV-0015-07` verificados
-- [ ] **T-0015-05 — Filtro por conta no fluxo de caixa** · #158
+- [x] **T-0015-05 — Filtro por conta no fluxo de caixa** · #158
     - What: `?conta=` em `/fluxo-de-caixa` (revisão de 2026-10-14): lista, somas e saldos só da conta, faturas dos cartões que ela paga e transferências da conta; o contrato em `sources.json` passa para a tag `v1.3.0` do backend
     - Where: `src/features/reporting/cash-flow/`, `src/routes/_app/fluxo-de-caixa.tsx`, `e2e/cash-flow.spec.ts`, `sources.json`
     - Done when: `AC-0015-18` coberto; `INV-0015-08` verificado; spec `0015` volta a `implemented`

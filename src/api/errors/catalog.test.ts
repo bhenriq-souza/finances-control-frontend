@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { CLIENT_ERROR_MESSAGES, ERROR_MESSAGES } from './catalog';
 
 describe('error catalog', () => {
-    it('has a non-empty pt-BR message for each of the 55 contract codes (AC-0005-05)', () => {
+    it('has a non-empty pt-BR message for each of the 58 contract codes (AC-0005-05)', () => {
         const entries = Object.entries(ERROR_MESSAGES);
-        expect(entries).toHaveLength(55);
+        expect(entries).toHaveLength(58);
         for (const [code, message] of entries) {
             expect(message.trim(), code).not.toBe('');
             expect(message, code).not.toContain(code);
