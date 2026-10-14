@@ -8,6 +8,9 @@ type ErrorCode = components['schemas']['ErrorCode'];
 // O gate lê as chaves daqui: mantenha uma por linha, sem aspas, no formato `CODIGO: 'texto'`.
 export const ERROR_MESSAGES: Record<ErrorCode, string> = {
     AUTH_UNAVAILABLE: 'Não foi possível validar seu acesso agora. Tente de novo em instantes.',
+    AVATAR_NOT_FOUND: 'Você ainda não tem foto.',
+    AVATAR_TOO_LARGE: 'A foto é grande demais. Escolha outra imagem e tente de novo.',
+    AVATAR_UNSUPPORTED_TYPE: 'Formato de imagem não aceito. Use uma foto em JPEG, PNG ou WebP.',
     BANK_ACCOUNT_ALREADY_EXISTS: 'Você já tem essa conta neste banco. Use a conta existente.',
     BANK_ACCOUNT_ARCHIVED: 'Essa conta está arquivada. Reative a conta ou escolha outra.',
     BANK_ACCOUNT_NOT_FOUND: 'Não encontramos essa conta. Atualize a página e tente de novo.',

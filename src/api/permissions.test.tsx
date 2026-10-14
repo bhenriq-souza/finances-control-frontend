@@ -21,6 +21,7 @@ function user(profile: Profile | null): CurrentUser {
         name: 'Ana',
         profile,
         profileGrantedAt: null,
+        avatarUpdatedAt: null,
         createdAt: '2026-10-01T00:00:00Z',
     };
 }

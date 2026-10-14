@@ -29,6 +29,7 @@ function me(profile: CurrentUser['profile'], name = 'Ana Souza'): CurrentUser {
         name,
         profile,
         profileGrantedAt: null,
+        avatarUpdatedAt: null,
         createdAt: '2026-10-01T00:00:00Z',
     };
 }

@@ -22,6 +22,7 @@ export function platformUser(overrides: Partial<PlatformUser> & { id: string }):
         name: overrides.id,
         profile: null,
         profileGrantedAt: null,
+        avatarUpdatedAt: null,
         createdAt: '2026-10-01T12:00:00Z',
         ...overrides,
     };
@@ -32,6 +33,7 @@ export const ADMIN_ME = platformUser({
     name: 'Ana Souza',
     profile: 'ADMIN',
     profileGrantedAt: '2026-10-01T12:00:00Z',
+    avatarUpdatedAt: null,
 });
 
 /** Corpo `200` de uma resposta do cliente gerado. */
