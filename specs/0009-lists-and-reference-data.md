@@ -1,7 +1,7 @@
 ---
 id: '0009'
 title: Listas, formulários e dados de referência compartilhados
-status: implemented
+status: approved
 depends_on: ['0003', '0004', '0005', '0006', '0008']
 ---
 
@@ -239,11 +239,12 @@ A lista completa, com a spec que acrescenta cada item:
 | 2     | Despesas       | `/despesas`       | todos   | `barra` | 0012 |
 | 3     | Receitas       | `/receitas`       | todos   | `barra` | 0014 |
 | 4     | Cartões        | `/cartoes`        | todos   | `barra` | 0011 |
-| 5     | Contas         | `/contas`         | todos   | `mais`  | 0011 |
-| 6     | Transferências | `/transferencias` | todos   | `mais`  | 0018 |
-| 7     | Séries fixas   | `/series`         | todos   | `mais`  | 0017 |
-| 8     | Relatórios     | `/relatorios`     | todos   | `mais`  | 0015 |
-| 9     | Usuários       | `/usuarios`       | `ADMIN` | `mais`  | 0010 |
+| 5     | Fluxo de caixa | `/fluxo-de-caixa` | todos   | `mais`  | 0015 |
+| 6     | Contas         | `/contas`         | todos   | `mais`  | 0011 |
+| 7     | Transferências | `/transferencias` | todos   | `mais`  | 0018 |
+| 8     | Séries fixas   | `/series`         | todos   | `mais`  | 0017 |
+| 9     | Relatórios     | `/relatorios`     | todos   | `mais`  | 0015 |
+| 10    | Usuários       | `/usuarios`       | `ADMIN` | `mais`  | 0010 |
 
 Um item com `profiles` de todos os perfis é declarado com os três explicitamente. A ordem da lista em `navigation.ts` segue a coluna _Ordem_, qualquer que seja a ordem em que as specs entrem.
 
