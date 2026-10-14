@@ -1,0 +1,36 @@
+name: deploy
+
+# Publica a imagem no Artifact Registry e atualiza a tag no repositório GitOps,
+# de onde o Argo CD reconcilia (spec 0007). Toda a lógica vive no workflow
+# reutilizável do homelab-gitops — este arquivo só o chama com os parâmetros
+# desta aplicação.
+
+on:
+    push:
+        # develop publica em dev; main, que só recebe develop pelo merge do
+        # responsável, publica em prd (ADR-0011 do hub).
+        branches: [develop, main]
+        # Mudanças que não entram na imagem não precisam gerar deploy.
+        paths:
+            - '**'
+            - '!**.md'
+            - '!docs/**'
+            - '!specs/**'
+            - '!.claude/**'
+    # O ambiente sai da branch, também no disparo manual: develop nunca chega a prd.
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    id-token: write
+
+jobs:
+    deploy:
+        uses: bhenriq-souza/homelab-gitops/.github/workflows/docker-build-push.yaml@main
+        with:
+            app-name: finances-frontend
+            environment: ${{ github.ref_name == 'main' && 'prd' || 'dev' }}
+        secrets:
+            GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
+            GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+            GITOPS_DEPLOY_KEY: ${{ secrets.GITOPS_DEPLOY_KEY }}

@@ -1,0 +1,62 @@
+/* O tema vem de ./ui/theme/tokens.css, gerado dos tokens do hub (spec 0004). */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './ui/theme/tokens.css';
+/* Fontes empacotadas (spec 0004): sem requisição a terceiros. */
+@import '@fontsource/outfit/400.css';
+@import '@fontsource/outfit/500.css';
+@import '@fontsource/outfit/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
+/* Fundo e texto da página pelo tema, antes de qualquer tela (spec 0006). */
+@layer base {
+    body {
+        @apply bg-fundo font-sans text-texto;
+    }
+}
+
+/*
+ * Véu (scrim) dos diálogos (spec 0009, decisão do responsável de 2026-10-12): o `fundo` do tema
+ * misturado a transparente, 72% no escuro e 48% no claro. Enquanto o token não chega ao
+ * `tokens.json` do hub, vive aqui, só sobre variáveis semânticas; o utilitário é `bg-veu`.
+ */
+:root,
+:root[data-tema='escuro'] {
+    --ft-veu: color-mix(in oklab, var(--ft-fundo) 72%, transparent);
+}
+
+:root[data-tema='claro'] {
+    --ft-veu: color-mix(in oklab, var(--ft-fundo) 48%, transparent);
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-tema]) {
+        --ft-veu: color-mix(in oklab, var(--ft-fundo) 48%, transparent);
+    }
+}
+
+/*
+ * `color-scheme` acompanha o tema em uso (spec 0004), para os controles nativos do navegador
+ * (ícone do calendário, barras de rolagem) usarem a cor do tema. Espelha os seletores do
+ * `tokens.css`: escuro é o padrão do `:root`; no `sistema` (sem `data-tema`) vale o do sistema.
+ */
+:root,
+:root[data-tema='escuro'] {
+    color-scheme: dark;
+}
+
+:root[data-tema='claro'] {
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-tema]) {
+        color-scheme: light;
+    }
+}
+
+@theme inline {
+    --color-veu: var(--ft-veu);
+}

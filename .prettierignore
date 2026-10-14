@@ -1,0 +1,15 @@
+dist
+coverage
+node_modules
+package-lock.json
+.claude/worktrees
+src/api/generated
+playwright-report
+test-results
+blob-report
+# Gerado de src/routes/ (spec 0003): não commitado
+src/routeTree.gen.ts
+.tanstack
+
+# Gerado por scripts/theme.mjs (spec 0004)
+src/ui/theme/tokens.css

@@ -1,0 +1,29 @@
+node_modules
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Worktrees de subagentes (docs/parallel-execution.md)
+.claude/worktrees/
+
+# Tipos gerados do contrato da API pelo gate contract (spec 0002): nunca commitados
+src/api/generated/
+
+# Árvore de rotas gerada de src/routes/ (spec 0003) e a pasta temporária do gerador: nunca commitadas
+src/routeTree.gen.ts
+.tanstack/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# Configuração de runtime local, copiada de public/config.example.js (spec 0003)
+public/config.js
+
+# TypeScript
+*.tsbuildinfo
