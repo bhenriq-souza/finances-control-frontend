@@ -1,14 +1,27 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
+import { useCan } from '@/api/permissions';
+import { FormAlert } from '@/ui/form-alert';
+import { useNotify } from '@/ui/notice';
+import { RowMenu } from '@/ui/row-menu';
+
+import { useChangeEarningStatus } from '../detail/actions/api';
 import { DeleteEarningDialog, UndoReceiptDialog } from '../detail/actions/confirm-dialogs';
 import { useLatchedOpen } from '../detail/actions/earning-actions';
+import { menuItems } from '../detail/actions/menu-items';
 import { ReceiveDialog } from '../detail/actions/receive-dialog';
-import { canDelete, statusActions } from '../detail/actions/transitions';
+import {
+    ACTION_NOTICES,
+    ACTION_TARGET,
+    canDelete,
+    menuActions,
+    statusActions,
+    type MenuAction,
+} from '../detail/actions/transitions';
 import { EarningFormDialog } from '../form/earning-form';
 
 import type { Earning } from './earning-model';
-import type { EarningListSearch } from './earning-search';
 import { asApiError, earningDetailQuery } from './earnings-query';
 
 /** Os parâmetros de busca da lista que abrem um diálogo de ação, cada um com o id da receita. */
@@ -84,28 +97,94 @@ function DialogHost({ dialog, id, onClose, onFail }: HostProps) {
     }
 }
 
+/**
+ * Os diálogos abertos: `{ receber: <id> }` etc. A lista os lê de `?receber=<id>`; o fluxo de caixa
+ * (spec 0015) os traduz de `?acao=receber&receita=<id>`.
+ */
+export type EarningQuickParams = Partial<Record<RowDialog, string | undefined>>;
+
 export interface RowDialogsProps {
-    search: EarningListSearch;
-    onSearchChange: (search: EarningListSearch) => void;
+    params: EarningQuickParams;
+    onParamsChange: (next: EarningQuickParams) => void;
     onFail: (message: string) => void;
 }
 
-/** Os diálogos de ação abertos por `?receber=<id>`, `?editar=<id>`, `?excluir=<id>`, `?desfazer=<id>`. */
-export function RowDialogs({ search, onSearchChange, onFail }: RowDialogsProps) {
+/** Os diálogos de ação abertos pelos parâmetros (na lista, `?receber=<id>`, `?editar=<id>` etc.). */
+export function RowDialogs({ params, onParamsChange, onFail }: RowDialogsProps) {
     return (
         <>
             {ROW_DIALOGS.map((dialog) => {
-                const id = search[dialog];
+                const id = params[dialog];
                 return id ? (
                     <DialogHost
                         key={`${dialog}-${id}`}
                         dialog={dialog}
                         id={id}
                         onFail={onFail}
-                        onClose={() => onSearchChange({ ...search, [dialog]: undefined })}
+                        onClose={() => onParamsChange({ ...params, [dialog]: undefined })}
                     />
                 ) : null;
             })}
         </>
     );
+}
+
+export interface EarningQuickActions {
+    /** O menu da linha (`actions` do `EntryList`); `undefined` sem `entries.write`. */
+    rowMenu: ((earning: Earning) => ReactNode) | undefined;
+    /** O alerta de erro de uma transição sem diálogo (ou de uma receita que não pôde ser lida). */
+    alert: ReactNode;
+    /** Os diálogos abertos pelos parâmetros; `null` sem `entries.write`. */
+    dialogs: ReactNode;
+}
+
+/**
+ * As ações rápidas da lista de receitas (spec 0014, INV-0014-05): o menu da linha com as ações do
+ * detalhe, as transições sem diálogo enviadas direto e os diálogos de **Receber**, **Editar**,
+ * **Excluir** e **Desfazer recebimento** sobre a tela. Os diálogos abertos vêm de `params`,
+ * independentes da rota: a lista usa `?receber=<id>`; o fluxo de caixa (spec 0015),
+ * `?acao=receber&receita=<id>`. Só com `entries.write`.
+ */
+export function useEarningQuickActions(
+    params: EarningQuickParams,
+    onParamsChange: (next: EarningQuickParams) => void,
+): EarningQuickActions {
+    const canWrite = useCan('entries.write');
+    const notify = useNotify();
+    const change = useChangeEarningStatus();
+    const [dialogError, setDialogError] = useState<string | null>(null);
+
+    // Receber, Editar, Excluir e Desfazer recebimento abrem o diálogo sobre a lista; as demais
+    // transições enviam direto (spec 0014, "Ações rápidas na lista").
+    const runAction = (earning: Earning, action: MenuAction) => {
+        setDialogError(null);
+        if (isRowDialog(action)) {
+            onParamsChange({ ...params, [action]: earning.id });
+        } else {
+            change.mutate(
+                { id: earning.id, body: { status: ACTION_TARGET[action] } },
+                { onSuccess: () => notify({ tone: 'sucesso', message: ACTION_NOTICES[action] }) },
+            );
+        }
+    };
+    const actionError = change.error ? asApiError(change.error).userMessage : dialogError;
+
+    return {
+        rowMenu: canWrite
+            ? (earning) => (
+                  <RowMenu
+                      label={`Ações de ${earning.description}`}
+                      items={menuItems(
+                          menuActions(earning),
+                          (action) => runAction(earning, action),
+                          change.isPending,
+                      )}
+                  />
+              )
+            : undefined,
+        alert: <FormAlert message={actionError} />,
+        dialogs: canWrite && (
+            <RowDialogs params={params} onParamsChange={onParamsChange} onFail={setDialogError} />
+        ),
+    };
 }
