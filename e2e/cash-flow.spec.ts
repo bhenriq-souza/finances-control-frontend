@@ -13,13 +13,16 @@ import {
 } from './fixtures/data/accounts';
 import { stubRuntime } from './fixtures/runtime-config';
 
-// Fluxo de caixa do mês em `/fluxo-de-caixa` (spec 0015, T-0015-04), com "hoje" em 15/10/2026.
+// Fluxo de caixa do mês em `/fluxo-de-caixa` (spec 0015, T-0015-04 e T-0015-05), com "hoje" em
+// 15/10/2026.
 
 type Schemas = components['schemas'];
 type Expense = Schemas['ExpenseResponse'];
 type Earning = Schemas['EarningResponse'];
 type Statement = Schemas['StatementResponse'];
 type BalancePoint = Schemas['BalanceReport']['points'][number];
+type BankTransfer = Schemas['BankTransferResponse'];
+type CreditCard = Schemas['CreditCardResponse'];
 
 const TODAY = '2026-10-15T12:00:00-03:00';
 const CREATED = '2026-10-01T12:00:00Z';
@@ -189,11 +192,110 @@ const VISA_PROJECTED = statement({
     remainingCents: 12000,
 });
 
+// Filtro por conta (AC-0015-18): a conta corrente (A) paga o Nubank Roxinho (X) e o Inter Black
+// (Y); o C6 Carbon (Z) é pago pela poupança (B); o Itaú Visa não tem conta pagadora.
+const INTER_BLACK = {
+    ...NUBANK_ROXINHO,
+    id: '22000000-0000-4000-8000-000000000011',
+    name: 'Inter Black',
+    paymentBankAccountId: CONTA_CORRENTE.id,
+} satisfies CreditCard;
+const C6_CARBON = {
+    ...NUBANK_ROXINHO,
+    id: '22000000-0000-4000-8000-000000000012',
+    name: 'C6 Carbon',
+    paymentBankAccountId: POUPANCA.id,
+} satisfies CreditCard;
+
+const INTER_CLOSED = statement({
+    id: '73000000-0000-4000-8000-000000000011',
+    creditCardId: INTER_BLACK.id,
+    status: 'CLOSED',
+    closesOn: '2026-10-12',
+    dueOn: '2026-10-22',
+    amountDueCents: 15000,
+    remainingCents: 15000,
+});
+const C6_CLOSED = statement({
+    id: '73000000-0000-4000-8000-000000000012',
+    creditCardId: C6_CARBON.id,
+    status: 'CLOSED',
+    closesOn: '2026-10-02',
+    dueOn: '2026-10-12',
+    amountDueCents: 30000,
+    remainingCents: 30000,
+});
+
+function transfer(
+    fields: Pick<
+        BankTransfer,
+        | 'id'
+        | 'description'
+        | 'status'
+        | 'amountCents'
+        | 'occurredOn'
+        | 'fromBankAccountId'
+        | 'toBankAccountId'
+    >,
+): BankTransfer {
+    return {
+        completedOn: fields.status === 'COMPLETED' ? fields.occurredOn : null,
+        notes: null,
+        createdAt: CREATED,
+        updatedAt: CREATED,
+        ...fields,
+    };
+}
+
+/** Sai da conta corrente, concluída. */
+const RESERVA = transfer({
+    id: '74000000-0000-4000-8000-000000000001',
+    description: 'Reserva',
+    status: 'COMPLETED',
+    amountCents: 100000,
+    occurredOn: '2026-10-03',
+    fromBankAccountId: CONTA_CORRENTE.id,
+    toBankAccountId: POUPANCA.id,
+});
+/** Entra na conta corrente, agendada para antes de hoje: vencida. */
+const RESGATE = transfer({
+    id: '74000000-0000-4000-8000-000000000002',
+    description: 'Resgate',
+    status: 'SCHEDULED',
+    amountCents: 20000,
+    occurredOn: '2026-10-10',
+    fromBankAccountId: POUPANCA.id,
+    toBankAccountId: CONTA_CORRENTE.id,
+});
+/** Sai da conta corrente, agendada para depois de hoje: a vencer. */
+const APORTE = transfer({
+    id: '74000000-0000-4000-8000-000000000003',
+    description: 'Aporte',
+    status: 'SCHEDULED',
+    amountCents: 5000,
+    occurredOn: '2026-10-20',
+    fromBankAccountId: CONTA_CORRENTE.id,
+    toBankAccountId: POUPANCA.id,
+});
+/** Agendada em setembro e não concluída: entra na nota das vencidas de outubro. */
+const SEPTEMBER_SCHEDULED = transfer({
+    id: '74000000-0000-4000-8000-000000000004',
+    description: 'Pendente de setembro',
+    status: 'SCHEDULED',
+    amountCents: 7000,
+    occurredOn: '2026-09-25',
+    fromBankAccountId: CONTA_CORRENTE.id,
+    toBankAccountId: POUPANCA.id,
+});
+const TRANSFERS = [SEPTEMBER_SCHEDULED, RESERVA, RESGATE, APORTE];
+
 const EARNINGS = [FREELA, SALARY];
 const EXPENSES = [INTERNET, CARD_PURCHASE, RENT, IPVA];
 const STATEMENTS: Record<string, Statement[]> = {
     [NUBANK_ROXINHO.id]: [ROXINHO_PAID, ROXINHO_CLOSED, ROXINHO_PROJECTED],
     [ITAU_VISA.id]: [VISA_PAID, VISA_PROJECTED],
+    [INTER_BLACK.id]: [INTER_CLOSED],
+    [C6_CARBON.id]: [C6_CLOSED],
 };
 
 function balancePoint(month: string, accountsTotalCents: number, cardDueCents: number | null) {
@@ -218,6 +320,13 @@ const POINTS: BalancePoint[] = [
     balancePoint('2026-12', 550000, 10000),
 ];
 
+/** `GET /reports/balance?bankAccountId=<conta corrente>`: só os números dela. */
+const ACCOUNT_POINTS: BalancePoint[] = [
+    balancePoint('2026-09', 200000, null),
+    balancePoint('2026-10', 260000, 50000),
+    balancePoint('2026-11', 270000, 0),
+];
+
 const CASH_FLOW: Schemas['CashFlowReport'] = {
     from: '2026-05',
     to: '2026-10',
@@ -235,12 +344,20 @@ interface Sent {
 const inRange = (date: string, query: Record<string, string>) =>
     (!query.from || date >= query.from) && (!query.to || date <= query.to);
 
+const ofAccount = (bankAccountId: string | null, query: Record<string, string>) =>
+    !query.bankAccountId || bankAccountId === query.bankAccountId;
+
+interface StubOptions {
+    /** Os cartões Inter Black (pago pela conta corrente) e C6 Carbon (pago pela poupança). */
+    accountCards?: boolean;
+}
+
 /**
  * A API do fluxo de caixa, respondendo pela query como o backend: as listas filtram por `status`
  * e pelo intervalo de data; `GET /statements` pelo cartão e pelo `closesOn` na janela. As escritas
  * respondem com o recurso alterado.
  */
-async function stubCashFlow(page: Page): Promise<Sent> {
+async function stubCashFlow(page: Page, options: StubOptions = {}): Promise<Sent> {
     const requests: RecordedRequest[] = [];
     await page.route('**/api/**', (route) => {
         const request = route.request();
@@ -261,13 +378,18 @@ async function stubCashFlow(page: Page): Promise<Sent> {
 
         if (method === 'GET') {
             if (path === '/bank-accounts') return json(BANK_ACCOUNTS);
-            if (path === '/credit-cards') return json(CREDIT_CARDS);
+            if (path === '/credit-cards') {
+                return json(
+                    options.accountCards ? [...CREDIT_CARDS, INTER_BLACK, C6_CARBON] : CREDIT_CARDS,
+                );
+            }
             if (path === '/expense-types' || path === '/earning-types') return json([]);
             if (path === '/earnings') {
                 return json(
                     EARNINGS.filter(
                         (e) =>
                             (!query.status || e.status === query.status) &&
+                            ofAccount(e.bankAccountId, query) &&
                             inRange(e.occurredOn, query),
                     ),
                 );
@@ -277,6 +399,7 @@ async function stubCashFlow(page: Page): Promise<Sent> {
                     EXPENSES.filter(
                         (e) =>
                             (!query.status || e.status === query.status) &&
+                            ofAccount(e.bankAccountId, query) &&
                             inRange(e.occurredOn, query),
                     ),
                 );
@@ -288,11 +411,23 @@ async function stubCashFlow(page: Page): Promise<Sent> {
                     ),
                 );
             }
+            if (path === '/bank-transfers') {
+                return json(
+                    TRANSFERS.filter(
+                        (t) =>
+                            (!query.bankAccountId ||
+                                t.fromBankAccountId === query.bankAccountId ||
+                                t.toBankAccountId === query.bankAccountId) &&
+                            (!query.status || t.status === query.status) &&
+                            inRange(t.occurredOn, query),
+                    ),
+                );
+            }
             if (path === '/reports/balance') {
                 return json({
                     from: query.from,
                     to: query.to,
-                    points: POINTS.filter(
+                    points: (query.bankAccountId ? ACCOUNT_POINTS : POINTS).filter(
                         (p) => p.month >= (query.from ?? '') && p.month <= (query.to ?? ''),
                     ),
                 });
@@ -330,11 +465,12 @@ async function open(
     path: string,
     user: E2EUser = 'ativo',
     heading = 'Fluxo de caixa',
+    options: StubOptions = {},
 ): Promise<Sent> {
     await page.clock.setFixedTime(new Date(TODAY));
     await stubRuntime(page);
     await chooseUser(page, user);
-    const sent = await stubCashFlow(page);
+    const sent = await stubCashFlow(page, options);
     await stubUsersMe(page, user);
     await page.goto(`/entrar?redirect=${encodeURIComponent(path)}`);
     await signInWithEmail(page);
@@ -623,4 +759,110 @@ test('Fluxo de caixa is in the navigation after Cartões and each Relatórios mo
             .allTextContents();
         expect(items[0]).toContain('Fluxo de caixa');
     }
+});
+
+const ACCOUNT_ROWS = [
+    'Reserva',
+    'Salário',
+    'Aluguel',
+    'Resgate',
+    'Internet',
+    'Fatura Nubank Roxinho',
+    'Aporte',
+    'Fatura Inter Black',
+];
+
+// AC-0015-18, INV-0015-08: com uma conta escolhida, todo número é daquela conta.
+test('the account filter shows only the account rows, the statements of the cards it pays and its transfers', async ({
+    page,
+}, testInfo) => {
+    const sent = await open(
+        page,
+        `/fluxo-de-caixa?mes=2026-10&conta=${CONTA_CORRENTE.id}`,
+        'ativo',
+        'Fluxo de caixa',
+        { accountCards: true },
+    );
+    await expect(page.getByLabel('Conta')).toHaveValue(CONTA_CORRENTE.id);
+
+    const items = entries(page, OCTOBER, testInfo);
+    await expect(items).toHaveCount(ACCOUNT_ROWS.length);
+    for (const [index, description] of ACCOUNT_ROWS.entries()) {
+        await expect(items.nth(index)).toContainText(description);
+    }
+    for (const outside of ['Freela', 'Fatura Itaú Visa', 'Fatura C6 Carbon']) {
+        await expect(page.getByText(outside, { exact: true })).toHaveCount(0);
+    }
+    // A transferência que sai com −R$, a que entra com +R$, origem → destino e o selo da spec 0018.
+    await expect(items.nth(0)).toContainText('−R$ 1.000,00');
+    await expect(items.nth(0)).toContainText('Conta corrente → Poupança');
+    await expect(items.nth(0)).toContainText('Concluída');
+    await expect(items.nth(0).getByRole('link')).toHaveAttribute(
+        'href',
+        `/transferencias/${RESERVA.id}`,
+    );
+    await expect(items.nth(3)).toContainText('+R$ 200,00');
+    await expect(items.nth(3)).toContainText('Poupança → Conta corrente');
+    await expect(items.nth(3)).toContainText('Agendada');
+
+    // As somas da lista, transferências inclusive: 5000 + 200; 1000 + 1800 + 99,90 + 350 + 50 +
+    // 150. O fim é o da conta: 2600 − 500.
+    await expect(summary(page, 'Entradas')).toContainText('+R$ 5.200,00');
+    await expect(summary(page, 'Saídas')).toContainText('−R$ 3.449,90');
+    await expect(summary(page, 'Saldo no início')).toContainText('R$ 2.000,00');
+    await expect(summary(page, 'Saldo no fim')).toContainText('R$ 2.100,00');
+    expect(sent.requests.find((r) => r.path === '/reports/balance')?.query).toEqual({
+        from: '2026-09',
+        to: '2026-10',
+        bankAccountId: CONTA_CORRENTE.id,
+    });
+    expect(sent.requests.filter((r) => r.path === '/bank-transfers').map((r) => r.query)).toEqual(
+        expect.arrayContaining([
+            { bankAccountId: CONTA_CORRENTE.id, from: '2026-10-01', to: '2026-10-31' },
+            { bankAccountId: CONTA_CORRENTE.id, status: 'SCHEDULED' },
+        ]),
+    );
+
+    // A nota das vencidas conta a despesa vencida e a transferência agendada de setembro da conta.
+    await expect(
+        page.getByText('O saldo previsto conta com 2 vencidas de meses anteriores.'),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ver despesas vencidas' })).toHaveAttribute(
+        'href',
+        `/despesas?status=OVERDUE&conta=${CONTA_CORRENTE.id}`,
+    );
+
+    // Vencidos: a agendada de 10/10 aparece e a de 20/10 não.
+    await page.getByLabel('Situação').selectOption('vencidos');
+    await expect(items).toHaveCount(1);
+    await expect(items.nth(0)).toContainText('Resgate');
+
+    // Ao ir para novembro, a conta e a situação se mantêm.
+    await page.getByRole('button', { name: 'Próximo mês' }).click();
+    await expect(page).toHaveURL(/mes=2026-11/);
+    await expect(page).toHaveURL(/situacao=vencidos/);
+    await expect(page).toHaveURL(new RegExp(`conta=${CONTA_CORRENTE.id}`));
+    await expect(page.getByLabel('Conta')).toHaveValue(CONTA_CORRENTE.id);
+
+    // Todas as contas: nenhuma transferência e a fatura do C6 Carbon volta.
+    await page.getByRole('button', { name: 'Mês anterior' }).click();
+    await page.getByLabel('Situação').selectOption('');
+    await page.getByLabel('Conta').selectOption('');
+    await expect(page).not.toHaveURL(/conta=/);
+    await expect(items.filter({ hasText: 'Fatura C6 Carbon' })).toHaveCount(1);
+    for (const description of ['Reserva', 'Resgate', 'Aporte']) {
+        await expect(items.filter({ hasText: description })).toHaveCount(0);
+    }
+    await expect(items.filter({ hasText: 'Freela' })).toHaveCount(1);
+});
+
+// AC-0015-18: id fora de `GET /bank-accounts` é descartado.
+test('an unknown account id is dropped', async ({ page }, testInfo) => {
+    const unknown = '21000000-0000-4000-8000-000000000099';
+    const sent = await open(page, `/fluxo-de-caixa?mes=2026-10&conta=${unknown}`);
+    await expect(page).not.toHaveURL(/conta=/);
+    await expect(page).toHaveURL(/mes=2026-10/);
+    await expect(entries(page, OCTOBER, testInfo)).toHaveCount(OCTOBER_ROWS.length);
+    await expect(page.getByLabel('Conta')).toHaveValue('');
+    expect(sent.requests.some((r) => r.query.bankAccountId === unknown)).toBe(false);
 });

@@ -12,7 +12,15 @@ import {
     type BalanceReport,
 } from './cash-flow-model';
 import {
+    ACCOUNT_ID,
     card,
+    OTHER_ACCOUNT_ID,
+    TRANSFER_IN_LATE,
+    TRANSFER_OUT,
+    TRANSFER_OUT_LATER,
+    transfer,
+    earning,
+    expense,
     CARD_EXPENSE,
     CLOSED_TO_PAY,
     FREELA,
@@ -29,12 +37,14 @@ import {
 } from './test-data';
 
 const VISA = card();
+const TODAY_DATE = '2026-10-15';
 
 const OCTOBER = cashFlowRows({
     month: '2026-10',
     earnings: [FREELA, SALARY, LATE_EARNING],
     expenses: [INTERNET, CARD_EXPENSE, RENT, PHARMACY, SEPTEMBER_OVERDUE],
     statements: [{ card: VISA, statements: [PAID_SEPTEMBER, CLOSED_TO_PAY, PROJECTED] }],
+    today: TODAY_DATE,
 });
 
 const describeRow = (row: (typeof OCTOBER)[number]) =>
@@ -42,7 +52,9 @@ const describeRow = (row: (typeof OCTOBER)[number]) =>
         ? row.earning.description
         : row.kind === 'expense'
           ? row.expense.description
-          : `Fatura ${row.statement.dueOn}`;
+          : row.kind === 'transfer'
+            ? row.transfer.description
+            : `Fatura ${row.statement.dueOn}`;
 
 // AC-0015-14, INV-0015-07.
 describe('cashFlowRows', () => {
@@ -63,6 +75,7 @@ describe('cashFlowRows', () => {
 
     it('lists the projected statement in its due month and never a rolled-over one', () => {
         const rows = cashFlowRows({
+            today: TODAY_DATE,
             month: '2026-11',
             earnings: [],
             expenses: [],
@@ -92,6 +105,113 @@ describe('cashFlowRows', () => {
     });
 });
 
+// AC-0015-18, INV-0015-08: com uma conta escolhida, só o que é dela, transferências inclusive.
+describe('cashFlowRows with an account', () => {
+    const OTHER_CARD = card({ id: 'c2', name: 'Outro', paymentBankAccountId: OTHER_ACCOUNT_ID });
+    const NO_PAYER = card({ id: 'c3', name: 'Sem conta', paymentBankAccountId: null });
+    const otherStatement = { ...CLOSED_TO_PAY, id: 's7', creditCardId: 'c2' };
+    const noPayerStatement = { ...CLOSED_TO_PAY, id: 's8', creditCardId: 'c3' };
+    const input = {
+        month: '2026-10',
+        today: TODAY_DATE,
+        earnings: [
+            SALARY,
+            earning({
+                id: 'e9',
+                description: 'De outra conta',
+                status: 'RECEIVED',
+                amountCents: 1,
+                occurredOn: '2026-10-02',
+                bankAccountId: OTHER_ACCOUNT_ID,
+            }),
+        ],
+        expenses: [
+            RENT,
+            CARD_EXPENSE,
+            expense({
+                id: 'x9',
+                description: 'De outra conta',
+                status: 'PAID',
+                amountCents: 1,
+                occurredOn: '2026-10-02',
+                bankAccountId: OTHER_ACCOUNT_ID,
+            }),
+        ],
+        statements: [
+            { card: VISA, statements: [CLOSED_TO_PAY] },
+            { card: card({ id: 'c4', name: 'Também paga' }), statements: [CLOSED_TO_PAY] },
+            { card: OTHER_CARD, statements: [otherStatement] },
+            { card: NO_PAYER, statements: [noPayerStatement] },
+        ],
+        transfers: [
+            TRANSFER_OUT_LATER,
+            TRANSFER_IN_LATE,
+            TRANSFER_OUT,
+            transfer({
+                id: 't9',
+                description: 'De setembro',
+                status: 'COMPLETED',
+                amountCents: 1,
+                occurredOn: '2026-09-30',
+            }),
+        ],
+    } as const;
+
+    const describeAny = (row: ReturnType<typeof cashFlowRows>[number]) =>
+        row.kind === 'transfer'
+            ? `${row.transfer.description} ${row.direction}`
+            : row.kind === 'statement'
+              ? `Fatura ${row.card.name}`
+              : describeRow(row);
+
+    it('keeps the account entries, the statements of the cards it pays and its transfers', () => {
+        const rows = cashFlowRows({ ...input, account: ACCOUNT_ID });
+        expect(rows.map(describeAny)).toEqual([
+            'Reserva out',
+            'Salário',
+            'Aluguel',
+            'Fatura Itaú Visa',
+            'Fatura Também paga',
+            'Resgate in',
+            'Aporte out',
+        ]);
+        expect(rows.map(rowAmount)).toEqual([
+            -20000, 500000, -180000, -102550, -102550, 15000, -5000,
+        ]);
+        expect(rows.filter((row) => row.kind === 'transfer').map((row) => row.situation)).toEqual([
+            'realizados',
+            'vencidos',
+            'a-vencer',
+        ]);
+        expect(filterRows(rows, 'vencidos').map(describeAny)).toEqual(['Resgate in']);
+    });
+
+    it('sums incoming transfers into inflows and outgoing ones into outflows', () => {
+        expect(summarizeRows(cashFlowRows({ ...input, account: ACCOUNT_ID }))).toEqual({
+            inflows: { totalCents: 515000, realized: 1, pending: 1 },
+            outflows: { totalCents: 410100, realized: 2, pending: 3 },
+        });
+    });
+
+    it('shows the other account side of a transfer with the opposite sign', () => {
+        const rows = cashFlowRows({ ...input, account: OTHER_ACCOUNT_ID });
+        expect(rows.map(describeAny)).toEqual([
+            'De outra conta',
+            'De outra conta',
+            'Reserva in',
+            'Fatura Outro',
+            'Resgate out',
+            'Aporte in',
+        ]);
+    });
+
+    it('lists no transfer and every statement for all the accounts', () => {
+        const rows = cashFlowRows(input);
+        expect(rows.some((row) => row.kind === 'transfer')).toBe(false);
+        expect(rows.filter((row) => row.kind === 'statement')).toHaveLength(4);
+    });
+});
+
 // AC-0015-14: o filtro de situação.
 describe('filterRows', () => {
     it('keeps every row without a filter', () => {
@@ -110,6 +230,7 @@ describe('filterRows', () => {
 
     it('treats a paid statement as realized and an overdue closed one as overdue', () => {
         const rows = cashFlowRows({
+            today: TODAY_DATE,
             month: '2026-10',
             earnings: [],
             expenses: [
@@ -245,10 +366,23 @@ describe('overdueBefore', () => {
                 [SEPTEMBER_OVERDUE, PHARMACY, cardOverdue],
                 [septemberEarning, LATE_EARNING],
             ),
-        ).toEqual({ expenses: 1, earnings: 1 });
+        ).toEqual({ expenses: 1, earnings: 1, transfers: 0 });
+        expect(
+            overdueBefore(
+                '2026-10',
+                [],
+                [],
+                [
+                    { ...TRANSFER_IN_LATE, occurredOn: '2026-09-30' },
+                    { ...TRANSFER_OUT, occurredOn: '2026-09-01' },
+                    TRANSFER_OUT_LATER,
+                ],
+            ),
+        ).toEqual({ expenses: 0, earnings: 0, transfers: 1 });
         expect(overdueBefore('2026-09', [SEPTEMBER_OVERDUE], [])).toEqual({
             expenses: 0,
             earnings: 0,
+            transfers: 0,
         });
     });
 });

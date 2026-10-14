@@ -2,19 +2,11 @@ import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query
 import { Link } from '@tanstack/react-router';
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight, Wallet } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, type ReactNode } from 'react';
 
 import { useAccountLookup } from '@/api/queries/lookups';
-import { useCreditCards } from '@/api/queries/reference';
-import {
-    addMonths,
-    formatDate,
-    formatMonth,
-    monthOf,
-    monthRange,
-    today,
-    type IsoMonth,
-} from '@/shared/dates';
+import { useBankAccounts, useCreditCards } from '@/api/queries/reference';
+import { addMonths, formatDate, formatMonth, monthOf, today, type IsoMonth } from '@/shared/dates';
 import { Button } from '@/ui/components/ui/button';
 import { EmptyState } from '@/ui/empty-state';
 import { EntryList, type EntryColumn } from '@/ui/entry-list';
@@ -22,10 +14,17 @@ import { Money } from '@/ui/money';
 import { EntryListSkeleton, Skeleton } from '@/ui/skeleton';
 import { SelectField } from '@/ui/select-field';
 import { StatusBadge } from '@/ui/status-badge';
-import { earningBadge, expenseBadge, statementBadge, type Badge } from '@/ui/status-labels';
+import {
+    bankTransferBadge,
+    earningBadge,
+    expenseBadge,
+    statementBadge,
+    type Badge,
+} from '@/ui/status-labels';
 
 import { activeCards, countLabel } from '../dashboard/dashboard-data';
-import { asApiError, expensesQuery, monthEarningsQuery } from '../dashboard/dashboard-queries';
+import { asApiError } from '../dashboard/dashboard-queries';
+import { AccountSelect, useAccountNotFound } from '../reports/parts';
 import { balanceReportQuery } from '../reports/queries';
 
 import {
@@ -44,7 +43,15 @@ import {
     type FlowTotal,
     type Statement,
 } from './cash-flow-model';
-import { monthStatementsQuery, overdueEarningsQuery } from './queries';
+import {
+    monthEarningsQuery,
+    monthExpensesQuery,
+    monthStatementsQuery,
+    monthTransfersQuery,
+    overdueEarningsQuery,
+    overdueExpensesQuery,
+    scheduledTransfersQuery,
+} from './queries';
 import { cashFlowMonth, SITUATIONS, type CashFlowSearch, type Situation } from './search';
 
 /** O menu de cada tipo de linha, que a rota compõe com as ações das outras features. */
@@ -56,8 +63,14 @@ export interface CashFlowRowActions {
 
 export interface CashFlowPageProps {
     search: CashFlowSearch;
-    /** Troca o mês ou o filtro; a rota mantém os demais parâmetros. */
-    onSearchChange: (next: Pick<CashFlowSearch, 'mes' | 'situacao'>) => void;
+    /**
+     * Troca o mês ou os filtros; a rota mantém os demais parâmetros. Com `replace`, a troca não
+     * cria uma entrada no histórico (o filtro de conta descartado).
+     */
+    onSearchChange: (
+        next: Partial<Pick<CashFlowSearch, 'mes' | 'situacao' | 'conta'>>,
+        options?: { replace?: boolean },
+    ) => void;
     /** O menu das linhas; sem ele (o `leitor`), nenhuma linha tem menu. */
     rowActions?: CashFlowRowActions;
     /** Os alertas de erro das transições sem diálogo, acima da lista. */
@@ -138,9 +151,22 @@ function FlowCard({ title, total, sign }: { title: string; total: FlowTotal; sig
     );
 }
 
-/** A nota das vencidas de meses anteriores, que o saldo previsto do mês corrente conta. */
-function OverdueNote({ expenses, earnings }: { expenses: number; earnings: number }) {
-    const total = expenses + earnings;
+/**
+ * A nota das vencidas de meses anteriores, que o saldo previsto do mês corrente conta; com uma
+ * conta escolhida, os links levam a conta e as transferências agendadas contam, sem link.
+ */
+function OverdueNote({
+    expenses,
+    earnings,
+    transfers,
+    account,
+}: {
+    expenses: number;
+    earnings: number;
+    transfers: number;
+    account: string | undefined;
+}) {
+    const total = expenses + earnings + transfers;
     if (total === 0) return null;
     return (
         <div className="flex flex-col gap-2 rounded-md border border-linha bg-superficie-elevada p-4 text-pequeno text-texto md:flex-row md:flex-wrap md:items-center md:gap-4">
@@ -151,7 +177,7 @@ function OverdueNote({ expenses, earnings }: { expenses: number; earnings: numbe
             {expenses > 0 && (
                 <Link
                     to="/despesas"
-                    search={{ status: 'OVERDUE' }}
+                    search={{ status: 'OVERDUE', conta: account }}
                     className={clsx('inline-flex min-h-11 items-center', LINK_CLASS)}
                 >
                     Ver despesas vencidas
@@ -160,7 +186,7 @@ function OverdueNote({ expenses, earnings }: { expenses: number; earnings: numbe
             {earnings > 0 && (
                 <Link
                     to="/receitas"
-                    search={{ status: 'OVERDUE' }}
+                    search={{ status: 'OVERDUE', conta: account }}
                     className={clsx('inline-flex min-h-11 items-center', LINK_CLASS)}
                 >
                     Ver receitas vencidas
@@ -186,24 +212,46 @@ function Summary({
     rows,
     month,
     current,
+    account,
     listQueries,
+    onAccountNotFound,
 }: {
     rows: readonly CashFlowRow[] | undefined;
     month: IsoMonth;
     current: IsoMonth;
+    account: AccountFilter;
     listQueries: readonly UseQueryResult[];
+    onAccountNotFound: () => void;
 }) {
-    const balance = useQuery(balanceReportQuery(balanceWindow(month, current)));
+    const ready = account.status !== 'pending';
+    const bankAccountId = account.status === 'chosen' ? account.id : undefined;
+    const balance = useQuery({
+        ...balanceReportQuery(balanceWindow(month, current), bankAccountId),
+        enabled: ready,
+    });
     const isCurrent = month === current;
     const overdueExpenses = useQuery({
-        ...expensesQuery({ status: 'OVERDUE' }),
-        enabled: isCurrent,
+        ...overdueExpensesQuery(bankAccountId),
+        enabled: ready && isCurrent,
     });
-    const overdueEarnings = useQuery({ ...overdueEarningsQuery, enabled: isCurrent });
+    const overdueEarnings = useQuery({
+        ...overdueEarningsQuery(bankAccountId),
+        enabled: ready && isCurrent,
+    });
+    const scheduledTransfers = useQuery({
+        ...scheduledTransfersQuery(bankAccountId ?? ''),
+        enabled: bankAccountId !== undefined && isCurrent,
+    });
+    // `404 BANK_ACCOUNT_NOT_FOUND`: o aviso e o filtro de conta sai (spec 0015, "Mapa de erros").
+    const notFound = useAccountNotFound(
+        bankAccountId === undefined ? null : balance.error,
+        onAccountNotFound,
+    );
     const state = groupState([balance, ...listQueries]);
+    const overdueTransfers = bankAccountId === undefined ? [] : scheduledTransfers.data;
 
     let content;
-    if (state.error) {
+    if (state.error && !notFound) {
         content = <EmptyState variant="erro" error={state.error} onRetry={state.retry} />;
     } else if (state.pending || !rows || !balance.data) {
         content = (
@@ -229,9 +277,15 @@ function Summary({
     return (
         <section aria-label="Resumo do mês" className="flex flex-col gap-3">
             {content}
-            {isCurrent && overdueExpenses.data && overdueEarnings.data && (
+            {isCurrent && overdueExpenses.data && overdueEarnings.data && overdueTransfers && (
                 <OverdueNote
-                    {...overdueBefore(month, overdueExpenses.data, overdueEarnings.data)}
+                    {...overdueBefore(
+                        month,
+                        overdueExpenses.data,
+                        overdueEarnings.data,
+                        overdueTransfers,
+                    )}
+                    account={bankAccountId}
                 />
             )}
         </section>
@@ -262,6 +316,8 @@ function rowBadge(row: CashFlowRow): Badge {
             return expenseBadge(row.expense);
         case 'statement':
             return statementBadge(row.statement);
+        case 'transfer':
+            return bankTransferBadge(row.transfer);
     }
 }
 
@@ -276,6 +332,8 @@ function rowHref(row: CashFlowRow): string {
             return row.statement.id
                 ? `/cartoes/${row.card.id}/faturas/${row.statement.id}`
                 : `/cartoes/${row.card.id}`;
+        case 'transfer':
+            return `/transferencias/${row.transfer.id}`;
     }
 }
 
@@ -287,6 +345,9 @@ function rowMenu(actions: CashFlowRowActions, row: CashFlowRow): ReactNode {
             return actions.expense?.(row.expense) ?? null;
         case 'statement':
             return actions.statement?.(row.statement) ?? null;
+        // A transferência não tem menu (spec 0015).
+        case 'transfer':
+            return null;
     }
 }
 
@@ -324,6 +385,11 @@ function RowList({
                     support: row.card.paymentBankAccountId
                         ? accounts.label(row.card.paymentBankAccountId)
                         : null,
+                };
+            case 'transfer':
+                return {
+                    title: row.transfer.description,
+                    support: `${accounts.label(row.transfer.fromBankAccountId)} → ${accounts.label(row.transfer.toBankAccountId)}`,
                 };
         }
     };
@@ -378,9 +444,38 @@ function RowList({
 }
 
 /**
+ * O filtro de conta (`?conta=`, revisão de 2026-10-14): todas as contas, a conta escolhida ou
+ * pendente, enquanto `GET /bank-accounts` carrega ou o id desconhecido sai da URL. Pendente, as
+ * consultas esperam, para não pedir os números de todas as contas no lugar dos da escolhida.
+ */
+type AccountFilter = { status: 'all' } | { status: 'pending' } | { status: 'chosen'; id: string };
+
+function useAccountFilter(
+    conta: string | undefined,
+    onDiscard: () => void,
+): { filter: AccountFilter; query: UseQueryResult } {
+    const accounts = useBankAccounts();
+    const unknown =
+        conta !== undefined &&
+        accounts.data !== undefined &&
+        !accounts.data.some((account) => account.id === conta);
+    // Id que não está em `GET /bank-accounts` é descartado.
+    useEffect(() => {
+        if (unknown) onDiscard();
+    }, [unknown, onDiscard]);
+
+    let filter: AccountFilter;
+    if (conta === undefined) filter = { status: 'all' };
+    else if (accounts.data === undefined || unknown) filter = { status: 'pending' };
+    else filter = { status: 'chosen', id: conta };
+    return { filter, query: accounts };
+}
+
+/**
  * Fluxo de caixa do mês (`/fluxo-de-caixa`, spec 0015): o resumo (saldos, entradas e saídas) e a
- * lista de receitas, despesas de conta e faturas com data no mês, com o filtro de situação. As
- * ações das linhas vêm da rota, que as compõe com `expenses`, `earnings` e `statements`: este
+ * lista de receitas, despesas de conta e faturas com data no mês, com os filtros de situação e
+ * de conta; com uma conta escolhida, só os números dela, transferências inclusive (INV-0015-08).
+ * As ações das linhas vêm da rota, que as compõe com `expenses`, `earnings` e `statements`: este
  * módulo não importa outra feature (INV-0015-06).
  */
 export function CashFlowPage({
@@ -392,23 +487,53 @@ export function CashFlowPage({
 }: CashFlowPageProps) {
     const current = monthOf(today());
     const month = cashFlowMonth(search);
-    const earnings = useQuery(monthEarningsQuery(month));
-    const expenses = useQuery(expensesQuery(monthRange(month)));
+    const dropAccount = useCallback(
+        () => onSearchChange({ conta: undefined }, { replace: true }),
+        [onSearchChange],
+    );
+    const account = useAccountFilter(search.conta, dropAccount);
+    const ready = account.filter.status !== 'pending';
+    const bankAccountId = account.filter.status === 'chosen' ? account.filter.id : undefined;
+
+    const earnings = useQuery({ ...monthEarningsQuery(month, bankAccountId), enabled: ready });
+    const expenses = useQuery({ ...monthExpensesQuery(month, bankAccountId), enabled: ready });
+    const transfers = useQuery({
+        ...monthTransfersQuery(bankAccountId ?? '', month),
+        enabled: bankAccountId !== undefined,
+    });
     const cards = useCreditCards();
-    const active = cards.data ? activeCards(cards.data) : [];
+    // Com uma conta escolhida, só os cartões que ela paga.
+    const active = cards.data
+        ? activeCards(cards.data).filter(
+              (card) => bankAccountId === undefined || card.paymentBankAccountId === bankAccountId,
+          )
+        : [];
     const statements = useQueries({
-        queries: active.map((card) => monthStatementsQuery(card.id, month)),
+        queries: active.map((card) => ({
+            ...monthStatementsQuery(card.id, month),
+            enabled: ready,
+        })),
     });
 
-    const listQueries: UseQueryResult[] = [earnings, expenses, cards, ...statements];
+    const listQueries: UseQueryResult[] = [
+        ...(search.conta === undefined ? [] : [account.query]),
+        earnings,
+        expenses,
+        ...(bankAccountId === undefined ? [] : [transfers]),
+        cards,
+        ...statements,
+    ];
     const list = groupState(listQueries);
     const rows =
         list.pending || list.error
             ? undefined
             : cashFlowRows({
                   month,
+                  today: today(),
+                  account: bankAccountId,
                   earnings: earnings.data ?? [],
                   expenses: expenses.data ?? [],
+                  transfers: bankAccountId === undefined ? [] : (transfers.data ?? []),
                   statements: active.map((card, index) => ({
                       card,
                       statements: statements[index]?.data ?? [],
@@ -437,28 +562,48 @@ export function CashFlowPage({
             <MonthNavigation
                 month={month}
                 onGo={(n) =>
-                    onSearchChange({ mes: addMonths(month, n), situacao: search.situacao })
+                    onSearchChange({
+                        mes: addMonths(month, n),
+                        situacao: search.situacao,
+                        conta: search.conta,
+                    })
                 }
             />
-            <Summary rows={rows} month={month} current={current} listQueries={listQueries} />
-            <div className="md:max-w-xs">
-                <SelectField
-                    label="Situação"
-                    placeholder="Todos"
-                    value={search.situacao ?? ''}
-                    onChange={(event) =>
-                        onSearchChange({
-                            mes: search.mes,
-                            situacao:
-                                event.target.value === ''
-                                    ? undefined
-                                    : (event.target.value as Situation),
-                        })
+            <Summary
+                rows={rows}
+                month={month}
+                current={current}
+                account={account.filter}
+                listQueries={listQueries}
+                onAccountNotFound={dropAccount}
+            />
+            <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                <div className="md:w-72">
+                    <SelectField
+                        label="Situação"
+                        placeholder="Todos"
+                        value={search.situacao ?? ''}
+                        onChange={(event) =>
+                            onSearchChange({
+                                mes: search.mes,
+                                situacao:
+                                    event.target.value === ''
+                                        ? undefined
+                                        : (event.target.value as Situation),
+                                conta: search.conta,
+                            })
+                        }
+                        options={SITUATIONS.map((value) => ({
+                            value,
+                            label: SITUATION_LABELS[value],
+                        }))}
+                    />
+                </div>
+                <AccountSelect
+                    value={search.conta}
+                    onChange={(conta) =>
+                        onSearchChange({ mes: search.mes, situacao: search.situacao, conta })
                     }
-                    options={SITUATIONS.map((value) => ({
-                        value,
-                        label: SITUATION_LABELS[value],
-                    }))}
                 />
             </div>
             {alerts}

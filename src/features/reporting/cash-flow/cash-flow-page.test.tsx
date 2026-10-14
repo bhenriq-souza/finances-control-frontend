@@ -6,19 +6,27 @@ import {
     RouterProvider,
 } from '@tanstack/react-router';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ GET: vi.fn() }));
 vi.mock('@/api/client', () => ({ api: mocks }));
 
 import { queryKeys } from '@/api/queries/keys';
+import type { CreditCard } from '@/api/queries/reference';
+import { createNoticeStore, NoticeProvider } from '@/ui/notice';
 
 import { CashFlowPage, type CashFlowRowActions } from './cash-flow-page';
 import type { BalanceReport } from './cash-flow-model';
 import type { CashFlowSearch } from './search';
 import {
     ACCOUNT,
+    ACCOUNT_ID,
+    OTHER_ACCOUNT,
+    OTHER_ACCOUNT_ID,
+    TRANSFER_IN_LATE,
+    TRANSFER_OUT,
+    TRANSFER_OUT_LATER,
     ARCHIVED_CARD_ID,
     card,
     CARD_EXPENSE,
@@ -48,13 +56,41 @@ const BALANCE: BalanceReport = {
     points: [point('2026-09', 'REALIZED', 487655), point('2026-10', 'FORECAST', 612345, 102550)],
 };
 
+const OTHER_CARD_ID = '33333333-3333-4333-8333-333333333335';
+/** O cartão pago pela poupança, com uma fatura que vence em outubro. */
+const OTHER_CARD = card({
+    id: OTHER_CARD_ID,
+    name: 'Nubank',
+    paymentBankAccountId: OTHER_ACCOUNT_ID,
+});
+const OTHER_STATEMENT = {
+    ...CLOSED_TO_PAY,
+    id: 's5',
+    creditCardId: OTHER_CARD_ID,
+    dueOn: '2026-10-10',
+};
+
 interface Overrides {
     earnings?: unknown;
     expenses?: unknown;
     balance?: unknown;
     statementsFail?: boolean;
     balanceFail?: boolean;
+    accountNotFound?: boolean;
 }
+
+/** As listas como o backend: com `bankAccountId`, só as da conta. */
+const ofAccount = <T extends { bankAccountId: string | null }>(
+    list: readonly T[],
+    query: Record<string, string>,
+) => list.filter((item) => !query.bankAccountId || item.bankAccountId === query.bankAccountId);
+
+/** Saldo da conta corrente: só os números dela. */
+const ACCOUNT_BALANCE: BalanceReport = {
+    from: '2026-09',
+    to: '2026-10',
+    points: [point('2026-09', 'REALIZED', 200000), point('2026-10', 'FORECAST', 300000, 102550)],
+};
 
 function routeApi(overrides: Overrides = {}) {
     mocks.GET.mockImplementation(
@@ -64,26 +100,59 @@ function routeApi(overrides: Overrides = {}) {
                 case '/earnings':
                     return Promise.resolve(
                         ok(
-                            query.status === 'OVERDUE'
-                                ? [LATE_EARNING]
-                                : (overrides.earnings ?? [FREELA, SALARY, LATE_EARNING]),
+                            ofAccount(
+                                query.status === 'OVERDUE'
+                                    ? [LATE_EARNING]
+                                    : ((overrides.earnings as (typeof SALARY)[] | undefined) ?? [
+                                          FREELA,
+                                          SALARY,
+                                          LATE_EARNING,
+                                      ]),
+                                query,
+                            ),
                         ),
                     );
                 case '/expenses':
                     return Promise.resolve(
                         ok(
-                            query.status === 'OVERDUE'
-                                ? [SEPTEMBER_OVERDUE, PHARMACY]
-                                : (overrides.expenses ?? [INTERNET, CARD_EXPENSE, RENT, PHARMACY]),
+                            ofAccount(
+                                query.status === 'OVERDUE'
+                                    ? [SEPTEMBER_OVERDUE, PHARMACY]
+                                    : ((overrides.expenses as (typeof RENT)[] | undefined) ?? [
+                                          INTERNET,
+                                          CARD_EXPENSE,
+                                          RENT,
+                                          PHARMACY,
+                                      ]),
+                                query,
+                            ),
+                        ),
+                    );
+                case '/bank-transfers':
+                    return Promise.resolve(
+                        ok(
+                            query.status === 'SCHEDULED'
+                                ? [{ ...TRANSFER_IN_LATE, id: 't0', occurredOn: '2026-09-20' }]
+                                : [TRANSFER_OUT, TRANSFER_IN_LATE, TRANSFER_OUT_LATER],
                         ),
                     );
                 case '/statements':
                     if (overrides.statementsFail) {
                         return Promise.resolve(fail(500, 'INTERNAL_ERROR'));
                     }
+                    if (query.creditCardId === OTHER_CARD_ID) {
+                        return Promise.resolve(ok([OTHER_STATEMENT]));
+                    }
                     return Promise.resolve(ok([PAID_SEPTEMBER, CLOSED_TO_PAY, PROJECTED]));
                 case '/reports/balance':
                     if (overrides.balanceFail) return Promise.resolve(fail(500, 'INTERNAL_ERROR'));
+                    if (query.bankAccountId) {
+                        return Promise.resolve(
+                            overrides.accountNotFound
+                                ? fail(404, 'BANK_ACCOUNT_NOT_FOUND')
+                                : ok(ACCOUNT_BALANCE),
+                        );
+                    }
                     return Promise.resolve(ok(overrides.balance ?? BALANCE));
                 default:
                     return Promise.resolve(fail(404, 'ROUTE_NOT_FOUND'));
@@ -92,25 +161,40 @@ function routeApi(overrides: Overrides = {}) {
     );
 }
 
-async function renderPage(initial: CashFlowSearch, rowActions?: CashFlowRowActions) {
+async function renderPage(
+    initial: CashFlowSearch,
+    rowActions?: CashFlowRowActions,
+    extraCards: readonly CreditCard[] = [],
+) {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    queryClient.setQueryData(queryKeys.bankAccounts.all, [ACCOUNT]);
+    queryClient.setQueryData(queryKeys.bankAccounts.all, [ACCOUNT, OTHER_ACCOUNT]);
     queryClient.setQueryData(queryKeys.creditCards.all, [
         card(),
+        ...extraCards,
         card({ id: ARCHIVED_CARD_ID, name: 'Antigo', archivedAt: '2026-09-01T00:00:00Z' }),
     ]);
+    const notices = createNoticeStore();
     const searches: CashFlowSearch[] = [];
+    const replaced: boolean[] = [];
 
     function Harness() {
         const [search, setSearch] = useState(initial);
+        // Estável como o da rota.
+        const onSearchChange = useCallback(
+            (next: Partial<CashFlowSearch>, options?: { replace?: boolean }) => {
+                setSearch((previous) => {
+                    const merged = { ...previous, ...next };
+                    searches.push(merged);
+                    replaced.push(options?.replace ?? false);
+                    return merged;
+                });
+            },
+            [],
+        );
         return (
             <CashFlowPage
                 search={search}
-                onSearchChange={(next) => {
-                    const merged = { ...search, ...next };
-                    searches.push(merged);
-                    setSearch(merged);
-                }}
+                onSearchChange={onSearchChange}
                 rowActions={rowActions}
                 alerts={<p>alerta das ações</p>}
                 dialogs={<p>diálogos das ações</p>}
@@ -126,11 +210,13 @@ async function renderPage(initial: CashFlowSearch, rowActions?: CashFlowRowActio
     await act(async () => {
         render(
             <QueryClientProvider client={queryClient}>
-                <RouterProvider router={router} />
+                <NoticeProvider store={notices}>
+                    <RouterProvider router={router} />
+                </NoticeProvider>
             </QueryClientProvider>,
         );
     });
-    return { searches };
+    return { searches, replaced, notices };
 }
 
 const TABLE = 'Fluxo de caixa de outubro de 2026';
@@ -319,5 +405,148 @@ describe('CashFlowPage (spec 0015)', () => {
                 name: 'Tentar de novo',
             }),
         ).toBeVisible();
+    });
+    // AC-0015-18, INV-0015-08: com uma conta escolhida, todo número é daquela conta.
+    it('shows only the chosen account rows, its cards statements and its transfers', async () => {
+        await renderPage({ conta: ACCOUNT_ID }, undefined, [OTHER_CARD]);
+        const list = await rows();
+        expect(list.map((row) => within(row).getAllByRole('cell')[1]?.textContent)).toEqual([
+            'ReservaConta corrente → Poupança',
+            'SalárioSalário · Conta corrente',
+            'AluguelMoradia · Conta corrente',
+            'Fatura Itaú VisaConta corrente',
+            'ReembolsoSalário · Conta corrente',
+            'FarmáciaMoradia · Conta corrente',
+            'ResgatePoupança → Conta corrente',
+            'InternetMoradia · Conta corrente',
+            'FreelaSalário · Conta corrente',
+            'AporteConta corrente → Poupança',
+        ]);
+        expect(screen.queryByText('Fatura Nubank')).toBeNull();
+        expect(within(list[0]!).getByText('−R$ 200,00')).toBeVisible();
+        expect(within(list[0]!).getByText('Concluída')).toBeVisible();
+        expect(within(list[0]!).getByRole('link')).toHaveAttribute('href', '/transferencias/t1');
+        expect(within(list[6]!).getByText('+R$ 150,00')).toBeVisible();
+        expect(within(list[6]!).getByText('Agendada')).toBeVisible();
+
+        // As consultas levam a conta; as faturas, só dos cartões que ela paga.
+        for (const path of ['/earnings', '/expenses']) {
+            expect(mocks.GET).toHaveBeenCalledWith(path, {
+                params: {
+                    query: { from: '2026-10-01', to: '2026-10-31', bankAccountId: ACCOUNT_ID },
+                },
+            });
+        }
+        expect(mocks.GET).toHaveBeenCalledWith('/bank-transfers', {
+            params: { query: { from: '2026-10-01', to: '2026-10-31', bankAccountId: ACCOUNT_ID } },
+        });
+        expect(mocks.GET).toHaveBeenCalledWith('/reports/balance', {
+            params: { query: { from: '2026-09', to: '2026-10', bankAccountId: ACCOUNT_ID } },
+        });
+        expect(
+            mocks.GET.mock.calls.filter(([path]) => path === '/statements').map(([, init]) => init),
+        ).toEqual([
+            {
+                params: {
+                    query: { creditCardId: card().id, from: '2026-08-01', to: '2026-10-31' },
+                },
+            },
+        ]);
+        // Sem conta, nenhuma consulta foi feita para todas as contas.
+        expect(mocks.GET).not.toHaveBeenCalledWith('/earnings', {
+            params: { query: { from: '2026-10-01', to: '2026-10-31' } },
+        });
+
+        // Entradas: 500000 + 10000 + 80000 + 15000; saídas: 180000 + 102550 + 4570 + 9990 +
+        // 20000 + 5000. O fim é o da conta: 300000 − 102550.
+        expect(summaryCard('Entradas')).toHaveTextContent('+R$ 6.050,00');
+        expect(summaryCard('Entradas')).toHaveTextContent('1 realizada · 3 pendentes');
+        expect(summaryCard('Saídas')).toHaveTextContent('−R$ 3.221,10');
+        expect(summaryCard('Saídas')).toHaveTextContent('2 realizadas · 4 pendentes');
+        expect(summaryCard('Saldo no início')).toHaveTextContent('R$ 2.000,00');
+        expect(summaryCard('Saldo no fim')).toHaveTextContent('R$ 1.974,50');
+
+        // A nota conta a despesa vencida e a transferência agendada de setembro; os links levam a
+        // conta.
+        expect(
+            await screen.findByText('O saldo previsto conta com 2 vencidas de meses anteriores.'),
+        ).toBeVisible();
+        expect(screen.getByRole('link', { name: 'Ver despesas vencidas' })).toHaveAttribute(
+            'href',
+            `/despesas?status=OVERDUE&conta=${ACCOUNT_ID}`,
+        );
+        expect(mocks.GET).toHaveBeenCalledWith('/bank-transfers', {
+            params: { query: { bankAccountId: ACCOUNT_ID, status: 'SCHEDULED' } },
+        });
+    });
+
+    // AC-0015-18: os filtros de situação e de conta se mantêm; em Todas as contas, sem transferências.
+    it('filters transfers by situation, keeps the account across months and drops it for all', async () => {
+        const { searches } = await renderPage(
+            { conta: ACCOUNT_ID, situacao: 'vencidos' },
+            undefined,
+            [OTHER_CARD],
+        );
+        const list = await rows();
+        expect(list.map((row) => within(row).getAllByRole('cell')[1]?.textContent)).toEqual([
+            'ReembolsoSalário · Conta corrente',
+            'FarmáciaMoradia · Conta corrente',
+            'ResgatePoupança → Conta corrente',
+        ]);
+        expect(screen.getByLabelText('Conta')).toHaveValue(ACCOUNT_ID);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Próximo mês' }));
+        });
+        expect(searches.at(-1)).toEqual({
+            mes: '2026-11',
+            situacao: 'vencidos',
+            conta: ACCOUNT_ID,
+        });
+
+        fireEvent.change(screen.getByLabelText('Situação'), { target: { value: '' } });
+        fireEvent.change(screen.getByLabelText('Conta'), { target: { value: '' } });
+        expect(searches.at(-1)).toEqual({ mes: '2026-11', situacao: undefined, conta: undefined });
+        const november = await screen.findByRole('table', {
+            name: 'Fluxo de caixa de novembro de 2026',
+        });
+        expect(within(november).queryByText('Reserva')).toBeNull();
+    });
+
+    it('brings back every statement and no transfer for all the accounts', async () => {
+        await renderPage({}, undefined, [OTHER_CARD]);
+        const list = await rows();
+        expect(list).toHaveLength(8);
+        expect(screen.getAllByText('Fatura Nubank').length).toBeGreaterThan(0);
+        expect(screen.queryByText('Reserva')).toBeNull();
+        expect(mocks.GET).not.toHaveBeenCalledWith('/bank-transfers', expect.anything());
+    });
+
+    // AC-0015-18: id fora de `GET /bank-accounts` é descartado, sem entrada no histórico.
+    it('drops an unknown account id', async () => {
+        const { searches, replaced } = await renderPage({ conta: 'desconhecida' });
+        expect(await rows()).toHaveLength(7);
+        expect(searches.at(-1)?.conta).toBeUndefined();
+        expect(replaced.at(-1)).toBe(true);
+        expect(mocks.GET).not.toHaveBeenCalledWith(
+            '/earnings',
+            expect.objectContaining({
+                params: { query: expect.objectContaining({ bankAccountId: 'desconhecida' }) },
+            }),
+        );
+    });
+
+    // Mapa de erros: `BANK_ACCOUNT_NOT_FOUND` → aviso e o filtro de conta é removido.
+    it('drops the account filter with a notice on BANK_ACCOUNT_NOT_FOUND', async () => {
+        routeApi({ accountNotFound: true });
+        const { notices, searches } = await renderPage({ conta: ACCOUNT_ID });
+        await vi.waitFor(() =>
+            expect(notices.getSnapshot()).toEqual([
+                expect.objectContaining({ tone: 'erro', message: 'Conta não encontrada.' }),
+            ]),
+        );
+        expect(searches.at(-1)?.conta).toBeUndefined();
+        expect(await rows()).toHaveLength(7);
+        expect(summaryCard('Saldo no fim')).toHaveTextContent('R$ 5.097,95');
     });
 });
