@@ -11,3 +11,12 @@ export { parseExpenseTypesSearch, type ExpenseTypesSearch } from './types/search
 export { ExpenseRecurrenceDetailPage } from './recurrences/expense-recurrence-detail';
 export { ExpenseRecurrences } from './recurrences/expense-recurrences';
 export { expenseRecurrenceSearchSchema, type ExpenseRecurrenceSearch } from './recurrences/search';
+
+// Ações rápidas da lista, para o fluxo de caixa (spec 0015, INV-0015-06).
+export {
+    EXPENSE_QUICK_PARAMS,
+    useExpenseQuickActions,
+    type ExpenseQuickParam,
+    type ExpenseQuickParams,
+    type QuickActions as ExpenseQuickActions,
+} from './list/expense-quick-actions';

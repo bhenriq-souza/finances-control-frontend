@@ -1,7 +1,7 @@
 ---
 id: '0015'
 title: Dashboard de saldo e relatórios
-status: approved
+status: implemented
 depends_on: ['0009', '0011', '0012', '0013', '0014']
 ---
 

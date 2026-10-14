@@ -11,6 +11,7 @@ import {
     type LucideIcon,
     Repeat,
     Users,
+    Wallet,
 } from 'lucide-react';
 
 import type { Profile } from '@/features/identity';
@@ -42,6 +43,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     { to: '/despesas', label: 'Despesas', icon: ArrowDown, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/receitas', label: 'Receitas', icon: ArrowUp, profiles: ALL_PROFILES, slot: 'barra' },
     { to: '/cartoes', label: 'Cartões', icon: CreditCard, profiles: ALL_PROFILES, slot: 'barra' },
+    {
+        to: '/fluxo-de-caixa',
+        label: 'Fluxo de caixa',
+        icon: Wallet,
+        profiles: ALL_PROFILES,
+        slot: 'mais',
+    },
     { to: '/contas', label: 'Contas', icon: Landmark, profiles: ALL_PROFILES, slot: 'mais' },
     {
         to: '/transferencias',

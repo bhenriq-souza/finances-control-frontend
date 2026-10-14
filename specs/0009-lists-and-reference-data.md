@@ -1,7 +1,7 @@
 ---
 id: '0009'
 title: Listas, formulários e dados de referência compartilhados
-status: approved
+status: implemented
 depends_on: ['0003', '0004', '0005', '0006', '0008']
 ---
 

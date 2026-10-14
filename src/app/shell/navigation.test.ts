@@ -34,6 +34,7 @@ describe('navItemsFor', () => {
             'Despesas',
             'Receitas',
             'Cartões',
+            'Fluxo de caixa',
             'Contas',
             'Transferências',
             'Séries fixas',
@@ -48,6 +49,7 @@ describe('navItemsFor', () => {
             '/despesas',
             '/receitas',
             '/cartoes',
+            '/fluxo-de-caixa',
             '/contas',
             '/transferencias',
             '/series',
@@ -141,6 +143,7 @@ describe('navigation slots', () => {
             slot: 'mais',
         });
         expect(labels(moreItems(navItemsFor('ADMIN')))).toEqual([
+            'Fluxo de caixa',
             'Contas',
             'Transferências',
             'Séries fixas',
@@ -148,6 +151,7 @@ describe('navigation slots', () => {
             'Usuários',
         ]);
         expect(labels(moreItems(navItemsFor('BILLER')))).toEqual([
+            'Fluxo de caixa',
             'Contas',
             'Transferências',
             'Séries fixas',

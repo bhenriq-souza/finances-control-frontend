@@ -134,7 +134,15 @@ export function ExpenseListPage({ search, onSearchChange }: ExpenseListPageProps
     const accounts = useAccountLookup();
     const cards = useCardLookup();
     const query = useExpenses(expenseListQuery(search));
-    const quick = useExpenseQuickActions(search, onSearchChange);
+    const quick = useExpenseQuickActions(
+        {
+            pagar: search.pagar,
+            editar: search.editar,
+            excluir: search.excluir,
+            desfazer: search.desfazer,
+        },
+        (next) => onSearchChange({ ...search, ...next }),
+    );
     const hasFilters = FILTER_KEYS.some((key) => key !== 'grupo' && search[key] !== undefined);
 
     let content;

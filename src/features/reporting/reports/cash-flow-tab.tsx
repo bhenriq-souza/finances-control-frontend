@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import { Fragment, useState } from 'react';
@@ -52,6 +53,18 @@ const Net = ({ cents }: { cents: number }) => <Money cents={cents} sign="always"
 
 const CELL = 'px-4 py-3 text-end';
 
+const MONTH_LINK =
+    'inline-flex min-h-11 items-center rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-foco';
+
+/** O mês leva ao fluxo de caixa dele (spec 0015, "Entradas para a tela"). */
+function MonthLink({ month, className }: { month: string; className?: string }) {
+    return (
+        <Link to="/fluxo-de-caixa" search={{ mes: month }} className={clsx(MONTH_LINK, className)}>
+            {formatMonth(month)}
+        </Link>
+    );
+}
+
 function CashFlowTable({ report }: { report: CashFlowReport }) {
     const accounts = useAccountLookup();
     const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
@@ -76,7 +89,7 @@ function CashFlowTable({ report }: { report: CashFlowReport }) {
                             className="flex flex-col gap-2 rounded-md border border-linha bg-superficie p-4 text-texto"
                         >
                             <div className="flex items-baseline justify-between gap-3">
-                                <span className="text-corpo-forte">{label}</span>
+                                <MonthLink month={month.month} className="text-corpo-forte" />
                                 <Net cents={totals.netCents} />
                             </div>
                             <dl className="flex flex-col gap-1">
@@ -154,21 +167,24 @@ function CashFlowTable({ report }: { report: CashFlowReport }) {
                             <Fragment key={month.month}>
                                 <tr className="border-t border-linha">
                                     <th scope="row" className="px-4 py-3 text-start text-corpo">
-                                        <button
-                                            type="button"
-                                            aria-expanded={open}
-                                            onClick={() => toggle(month.month)}
-                                            className="flex min-h-11 items-center gap-2 rounded-sm text-start outline-none hover:underline focus-visible:ring-2 focus-visible:ring-foco"
-                                        >
-                                            <ChevronDown
-                                                aria-hidden="true"
-                                                className={clsx(
-                                                    'size-4 shrink-0 text-texto-apoio',
-                                                    !open && '-rotate-90',
-                                                )}
-                                            />
-                                            {formatMonth(month.month)}
-                                        </button>
+                                        <span className="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                aria-expanded={open}
+                                                aria-label={formatMonth(month.month)}
+                                                onClick={() => toggle(month.month)}
+                                                className="flex size-11 shrink-0 items-center justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-foco"
+                                            >
+                                                <ChevronDown
+                                                    aria-hidden="true"
+                                                    className={clsx(
+                                                        'size-4 shrink-0 text-texto-apoio',
+                                                        !open && '-rotate-90',
+                                                    )}
+                                                />
+                                            </button>
+                                            <MonthLink month={month.month} />
+                                        </span>
                                     </th>
                                     {FIELDS.map((field) => (
                                         <td key={field.key} className={CELL}>

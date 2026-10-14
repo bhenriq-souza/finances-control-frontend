@@ -16,3 +16,12 @@ export { parseEarningTypesSearch, type EarningTypesSearch } from './types/search
 export { EarningRecurrenceDetailPage } from './recurrences/earning-recurrence-detail';
 export { EarningRecurrences } from './recurrences/earning-recurrences';
 export { earningRecurrenceSearchSchema, type EarningRecurrenceSearch } from './recurrences/search';
+
+// Ações rápidas da lista, para o fluxo de caixa (spec 0015, INV-0015-06).
+export {
+    ROW_DIALOGS as EARNING_QUICK_PARAMS,
+    useEarningQuickActions,
+    type EarningQuickActions,
+    type EarningQuickParams,
+    type RowDialog as EarningQuickParam,
+} from './list/row-actions';

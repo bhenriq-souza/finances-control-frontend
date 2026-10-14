@@ -26,7 +26,6 @@ import {
 import { expenseDetailQuery } from '../detail/expense-detail';
 import { ExpenseFormDialog } from '../form/expense-form';
 
-import type { ExpenseListSearch } from './expense-list-search';
 import type { Expense } from './expense-model';
 
 const DIRECT_NOTICES: Partial<Record<StatusAction, string>> = {
@@ -35,7 +34,16 @@ const DIRECT_NOTICES: Partial<Record<StatusAction, string>> = {
     reopen: 'Despesa de volta para pendente.',
 };
 
-type QuickParam = 'pagar' | 'editar' | 'excluir' | 'desfazer';
+/** As ações rápidas que abrem um diálogo, cada uma com o id da despesa. */
+export const EXPENSE_QUICK_PARAMS = ['pagar', 'editar', 'excluir', 'desfazer'] as const;
+export type ExpenseQuickParam = (typeof EXPENSE_QUICK_PARAMS)[number];
+type QuickParam = ExpenseQuickParam;
+
+/**
+ * Os diálogos abertos: `{ pagar: <id> }` etc. A lista os lê de `?pagar=<id>`; o fluxo de caixa
+ * (spec 0015) os traduz de `?acao=pagar&despesa=<id>`.
+ */
+export type ExpenseQuickParams = Partial<Record<ExpenseQuickParam, string | undefined>>;
 
 /** Se a ação do diálogo existe para a despesa no status atual (mesmo modelo do detalhe). */
 const ALLOWS: Record<QuickParam, (expense: Expense) => boolean> = {
@@ -52,17 +60,19 @@ export interface QuickActions {
     rowMenu: ((expense: Expense) => ReactNode) | undefined;
     /** O alerta de erro de uma transição sem diálogo, acima da lista. */
     alert: ReactNode;
-    /** Os diálogos abertos por `?pagar=<id>`, `?editar=<id>`, `?excluir=<id>`, `?desfazer=<id>`. */
+    /** Os diálogos abertos pelos parâmetros (na lista, `?pagar=<id>`, `?editar=<id>` etc.). */
     dialogs: ReactNode;
 }
 
 /**
  * As ações rápidas da lista de despesas (spec 0012, INV-0012-06): o mesmo modelo de ações, os
  * mesmos diálogos e as mesmas mutações do detalhe, sobre a própria lista. Só com `entries.write`.
+ * Os diálogos abertos vêm de `params`, independentes da rota: quem usa traduz os seus parâmetros
+ * de busca (a lista, `?pagar=<id>`; o fluxo de caixa, spec 0015, `?acao=pagar&despesa=<id>`).
  */
 export function useExpenseQuickActions(
-    search: ExpenseListSearch,
-    onSearchChange: (next: ExpenseListSearch) => void,
+    params: ExpenseQuickParams,
+    onParamsChange: (next: ExpenseQuickParams) => void,
 ): QuickActions {
     const canWrite = useCan('entries.write');
     const notify = useNotify();
@@ -74,9 +84,9 @@ export function useExpenseQuickActions(
 
     const open = (param: QuickParam, id: string) => {
         setFailure(null);
-        onSearchChange({ ...search, [param]: id });
+        onParamsChange({ ...params, [param]: id });
     };
-    const close = (param: QuickParam) => onSearchChange({ ...search, [param]: undefined });
+    const close = (param: QuickParam) => onParamsChange({ ...params, [param]: undefined });
 
     function send(expense: Expense, action: StatusAction) {
         setFailure(null);
@@ -114,7 +124,6 @@ export function useExpenseQuickActions(
         return <RowMenu label={`Ações de ${expense.description}`} items={items} />;
     }
 
-    const hosts: QuickParam[] = ['pagar', 'editar', 'excluir', 'desfazer'];
     return {
         rowMenu,
         alert: failure && (
@@ -127,8 +136,8 @@ export function useExpenseQuickActions(
                 </Button>
             </div>
         ),
-        dialogs: hosts.map((param) => {
-            const id = search[param];
+        dialogs: EXPENSE_QUICK_PARAMS.map((param) => {
+            const id = params[param];
             return id ? (
                 <QuickDialog key={param} param={param} id={id} onClose={() => close(param)} />
             ) : null;

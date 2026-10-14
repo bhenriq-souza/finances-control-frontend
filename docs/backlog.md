@@ -244,7 +244,7 @@ Tarefas da [spec 0015](../specs/0015-dashboard-and-reports.md), da issue de entr
     - What: `/contas/$contaId` com o extrato do mês (revisão de 2026-10-13, FCF-021), o link **Extrato** na lista de contas e o contrato fixado na tag `v1.2.0` do backend
     - Where: `sources.json`, `src/api/queries/keys.ts`, `src/features/reporting/account-statement/`, `src/features/accounts/bank-accounts-page.tsx`, `src/routes/_app/contas.$contaId.tsx`, `e2e/account-statement.spec.ts`
     - Done when: `AC-0015-11` a `AC-0015-13` cobertos; `INV-0015-05` verificado
-- [ ] **T-0015-04 — Fluxo de caixa** · #155
+- [x] **T-0015-04 — Fluxo de caixa** · #155
     - What: `/fluxo-de-caixa` (revisão de 2026-10-13, FCF-020): resumo do mês, lista de receitas, despesas de conta e faturas, ações rápidas das listas e **Pagar fatura** sobre a tela, item na navegação e link de cada mês na aba **Fluxo de caixa**; specs `0009` e `0015` voltam a `implemented`
     - Where: `src/features/reporting/cash-flow/`, `src/features/reporting/reports/`, `src/features/{expenses,earnings,statements}/index.ts` e o que eles exportam, `src/app/shell/navigation.ts`, `src/routes/_app/fluxo-de-caixa.tsx`, `e2e/cash-flow.spec.ts`
     - Done when: `AC-0015-14` a `AC-0015-17` cobertos; `INV-0015-06` e `INV-0015-07` verificados
