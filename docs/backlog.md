@@ -315,7 +315,7 @@ Tarefas da revisão das specs [0009](../specs/0009-lists-and-reference-data.md),
 
 Tarefa da revisão da spec [0006](../specs/0006-auth-and-shell.md) de 2026-10-14, da issue de entrega [FCF-022](https://github.com/bhenriq-souza/finances-control-frontend/issues/124). Depende da tag `v1.3.0` do backend.
 
-- [ ] **T-0006-05 — Foto do usuário** · #160
+- [x] **T-0006-05 — Foto do usuário** · #160
     - What: a foto no menu do usuário, com recorte, zoom e redução no navegador antes do envio, e a remoção; o contrato em `sources.json` passa para a tag `v1.3.0` do backend
     - Where: `src/features/identity/avatar/`, `src/features/identity/index.ts`, `src/app/shell/`, `src/api/errors/catalog.ts`, `sources.json`, `e2e/user-avatar.spec.ts`
     - Done when: `AC-0006-15` a `AC-0006-19` cobertos; `INV-0006-07` verificado; spec `0006` volta a `implemented`; fecha FCF-022

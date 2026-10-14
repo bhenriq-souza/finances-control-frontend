@@ -14,6 +14,7 @@ export {
     type CurrentUser,
     type Profile,
 } from '@/api/queries/current-user';
+export { AvatarDialog, RemoveAvatarDialog, UserAvatar, type UserAvatarProps } from './avatar';
 export { safeRedirect } from './redirect';
 export { PasswordResetPage } from './pages/password-reset-page';
 export { PendingApprovalPage } from './pages/pending-approval-page';

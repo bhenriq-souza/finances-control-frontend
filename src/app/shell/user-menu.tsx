@@ -1,8 +1,15 @@
 import { useNavigate } from '@tanstack/react-router';
-import { LogOut } from 'lucide-react';
+import { Camera, LogOut, Trash2 } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 
-import { PROFILE_LABELS, useAuthSession, type CurrentUser } from '@/features/identity';
+import {
+    AvatarDialog,
+    PROFILE_LABELS,
+    RemoveAvatarDialog,
+    useAuthSession,
+    UserAvatar,
+    type CurrentUser,
+} from '@/features/identity';
 import { Button } from '@/ui/components/ui/button';
 import { useTheme, type Tema } from '@/ui/theme/theme-provider';
 
@@ -15,11 +22,14 @@ const THEME_OPTIONS: readonly { value: Tema; label: string }[] = [
 ];
 
 /**
- * Menu do usuário (spec 0006): nome, email, perfil em pt-BR, seletor de tema e **Sair**. Um
- * botão de abrir e fechar (disclosure); fecha com Esc (devolvendo o foco) e com clique fora.
+ * Menu do usuário (spec 0006): a foto (ou as iniciais), nome, email, perfil em pt-BR, as ações da
+ * foto, seletor de tema e **Sair**. Um botão de abrir e fechar (disclosure); fecha com Esc
+ * (devolvendo o foco) e com clique fora. As ações da foto fecham o painel e abrem o diálogo, que
+ * fica fora dele.
  */
 export function UserMenu({ user }: { user: CurrentUser }) {
     const [open, setOpen] = useState(false);
+    const [photoDialog, setPhotoDialog] = useState<'alterar' | 'remover' | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const panelId = useId();
@@ -45,6 +55,14 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         };
     }, [open]);
 
+    const fallback = initials(user.name, user.email);
+    const hasPhoto = Boolean(user.avatarUpdatedAt);
+
+    function openPhotoDialog(dialog: 'alterar' | 'remover') {
+        setOpen(false);
+        setPhotoDialog(dialog);
+    }
+
     /** Sair limpa todo o cache de consultas (INV-0006-04) e volta a `/entrar`. */
     async function signOut() {
         await session.signOut();
@@ -64,12 +82,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
                 }}
                 className="flex size-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-foco"
             >
-                <span
-                    aria-hidden="true"
-                    className="flex size-8 items-center justify-center rounded-full border border-linha bg-superficie-elevada text-rotulo text-texto"
-                >
-                    {initials(user.name, user.email)}
-                </span>
+                <UserAvatar avatarUpdatedAt={user.avatarUpdatedAt} fallback={fallback} size="sm" />
             </button>
             {open && (
                 <section
@@ -77,14 +90,43 @@ export function UserMenu({ user }: { user: CurrentUser }) {
                     aria-label="Conta do usuário"
                     className="absolute top-full right-0 z-30 mt-2 flex w-72 flex-col gap-4 rounded-lg border border-linha bg-superficie-elevada p-4 text-texto shadow-[var(--ft-sombra-flutuante)]"
                 >
-                    <div className="flex flex-col gap-1">
-                        <p className="truncate text-corpo-forte">{user.name}</p>
-                        <p className="truncate text-pequeno text-texto-apoio">{user.email}</p>
-                        {user.profile && (
-                            <p className="text-pequeno text-texto-apoio">
-                                Perfil:{' '}
-                                <span className="text-texto">{PROFILE_LABELS[user.profile]}</span>
-                            </p>
+                    <div className="flex items-center gap-3">
+                        <UserAvatar
+                            avatarUpdatedAt={user.avatarUpdatedAt}
+                            fallback={fallback}
+                            size="lg"
+                        />
+                        <div className="flex min-w-0 flex-col gap-1">
+                            <p className="truncate text-corpo-forte">{user.name}</p>
+                            <p className="truncate text-pequeno text-texto-apoio">{user.email}</p>
+                            {user.profile && (
+                                <p className="text-pequeno text-texto-apoio">
+                                    Perfil:{' '}
+                                    <span className="text-texto">
+                                        {PROFILE_LABELS[user.profile]}
+                                    </span>
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex flex-col border-t border-linha pt-2">
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={() => openPhotoDialog('alterar')}
+                        >
+                            <Camera aria-hidden="true" strokeWidth={1.75} />
+                            {hasPhoto ? 'Alterar foto' : 'Adicionar foto'}
+                        </Button>
+                        {hasPhoto && (
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start"
+                                onClick={() => openPhotoDialog('remover')}
+                            >
+                                <Trash2 aria-hidden="true" strokeWidth={1.75} />
+                                Remover foto
+                            </Button>
                         )}
                     </div>
                     <div className="border-t border-linha pt-4">
@@ -123,6 +165,10 @@ export function UserMenu({ user }: { user: CurrentUser }) {
                         </Button>
                     </div>
                 </section>
+            )}
+            {photoDialog === 'alterar' && <AvatarDialog onClose={() => setPhotoDialog(null)} />}
+            {photoDialog === 'remover' && (
+                <RemoveAvatarDialog onClose={() => setPhotoDialog(null)} />
             )}
         </div>
     );

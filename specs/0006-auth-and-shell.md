@@ -1,7 +1,7 @@
 ---
 id: '0006'
 title: Autenticação, estados da conta e app shell
-status: approved
+status: implemented
 depends_on: ['0003', '0004', '0005']
 ---
 
