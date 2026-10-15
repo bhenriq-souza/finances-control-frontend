@@ -54,12 +54,31 @@ describe('balance (AC-0015-01, INV-0015-02)', () => {
         expect(activeCards(cards).map((c) => c.id)).toEqual(['c3', 'c1']);
     });
 
-    it('reads accountsTotalCents of the FORECAST point of the month', () => {
+    it('discounts the statements due in the month from the FORECAST point', () => {
         const report = balanceReport([
             balancePoint({ month: '2026-09', kind: 'REALIZED', accountsTotalCents: 1 }),
-            balancePoint({ month: '2026-10', kind: 'FORECAST', accountsTotalCents: 612345 }),
+            balancePoint({
+                month: '2026-10',
+                kind: 'FORECAST',
+                accountsTotalCents: 612345,
+                cardDueCents: 37550,
+            }),
+            balancePoint({ month: '2026-11', kind: 'REALIZED', accountsTotalCents: 2 }),
         ]);
-        expect(forecastBalance(report, '2026-10')).toBe(612345);
+        // 612345 − 37550, the cash flow end of 2026-10 (AC-0015-15).
+        expect(forecastBalance(report, '2026-10')).toBe(574795);
+        expect(
+            forecastBalance(
+                balanceReport([
+                    balancePoint({
+                        month: '2026-10',
+                        kind: 'FORECAST',
+                        accountsTotalCents: 612345,
+                    }),
+                ]),
+                '2026-10',
+            ),
+        ).toBe(612345);
         expect(forecastBalance(report, '2026-11')).toBeNull();
         expect(forecastBalance(report, '2026-09')).toBeNull();
     });

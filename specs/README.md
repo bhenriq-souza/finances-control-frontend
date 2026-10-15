@@ -21,7 +21,7 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0012](0012-expenses.md)                 | Despesas e tipos de despesa                                        | implemented |
 | [0013](0013-statements.md)               | Faturas de cartão, pagamentos e estornos                           | implemented |
 | [0014](0014-earnings.md)                 | Receitas e tipos de receita                                        | implemented |
-| [0015](0015-dashboard-and-reports.md)    | Dashboard de saldo e relatórios                                    | approved    |
+| [0015](0015-dashboard-and-reports.md)    | Dashboard de saldo e relatórios                                    | implemented |
 | [0017](0017-recurrences.md)              | Séries fixas de despesas e receitas                                | implemented |
 | [0018](0018-transfers.md)                | Transferências entre contas próprias                               | implemented |
 | [0020](0020-statement-reconciliation.md) | Conferência da fatura                                              | implemented |

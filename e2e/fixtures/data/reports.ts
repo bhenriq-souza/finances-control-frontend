@@ -255,9 +255,10 @@ export const EXPENSES_BY_TYPE_OCTOBER: Schemas['ByTypeReport'] = {
 export const DASHBOARD_TEXT = {
     /** `500000 + (−12345)`; a conta arquivada fica de fora. */
     realized: 'R$ 4.876,55',
-    forecast: 'R$ 6.123,45',
-    /** `612345 − 487655`. */
-    variation: '+R$ 1.246,90',
+    /** `612345 − 37550`: as contas menos a fatura que vence em outubro. */
+    forecast: 'R$ 5.747,95',
+    /** `574795 − 487655`. */
+    variation: '+R$ 871,40',
     /** As três receitas de outubro de `earnings.ts`. */
     earnings: '+R$ 7.300,50',
     earningsCounts: '1 recebida · 2 pendentes',
