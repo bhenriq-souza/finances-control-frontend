@@ -252,6 +252,10 @@ Tarefas da [spec 0015](../specs/0015-dashboard-and-reports.md), da issue de entr
     - What: `?conta=` em `/fluxo-de-caixa` (revisão de 2026-10-14): lista, somas e saldos só da conta, faturas dos cartões que ela paga e transferências da conta; o contrato em `sources.json` passa para a tag `v1.3.0` do backend
     - Where: `src/features/reporting/cash-flow/`, `src/routes/_app/fluxo-de-caixa.tsx`, `e2e/cash-flow.spec.ts`, `sources.json`
     - Done when: `AC-0015-18` coberto; `INV-0015-08` verificado; spec `0015` volta a `implemented`
+- [ ] **T-0015-06 — Previsto do dashboard com as faturas do mês** · #172
+    - What: o "Previsto" do dashboard desconta `cardDueCents` do ponto `FORECAST` do mês corrente (revisão de 2026-10-15, FCF-024)
+    - Where: `src/features/reporting/dashboard/dashboard-data.ts`, `src/features/reporting/dashboard/dashboard-data.test.ts`, `e2e/dashboard.spec.ts`
+    - Done when: `AC-0015-01` revisado coberto; spec `0015` volta a `implemented`; fecha FCF-024
 
 ## Séries fixas
 
