@@ -102,6 +102,7 @@ export function occurrence(overrides: Partial<Expense> & Pick<Expense, 'id'>): E
         postedOn: null,
         installment: null,
         recurrenceId: SERIES_ID,
+        reconciledAt: null,
         createdAt: CREATED,
         updatedAt: CREATED,
         ...overrides,

@@ -24,6 +24,8 @@ export const statementsPanelSearchSchema = z.object({
     estorno: flag,
     /** A despesa de origem do estorno, junto com `estorno`. */
     despesa: z.uuid().optional().catch(undefined),
+    /** **Só o que falta conferir** ligado (spec 0020). */
+    conferir: flag,
 });
 
 export type StatementsPanelSearch = z.infer<typeof statementsPanelSearchSchema>;
@@ -33,6 +35,8 @@ export const statementDetailSearchSchema = z.object({
     pagar: flag,
     minimo: flag,
     estorno: flag,
+    /** **Só o que falta conferir** ligado (spec 0020). */
+    conferir: flag,
 });
 
 export type StatementDetailSearch = z.infer<typeof statementDetailSearchSchema>;

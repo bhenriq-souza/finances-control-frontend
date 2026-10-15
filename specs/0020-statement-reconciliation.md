@@ -1,7 +1,7 @@
 ---
 id: '0020'
 title: Conferência da fatura
-status: approved
+status: implemented
 depends_on: ['0009', '0013']
 ---
 

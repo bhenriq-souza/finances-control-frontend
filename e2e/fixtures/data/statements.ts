@@ -25,6 +25,7 @@ export const NOTEBOOK: StatementExpense = {
     status: 'OPEN',
     expenseType: ELETRONICOS,
     installment: { groupId: '50000000-0000-4000-8000-000000000101', number: 2, total: 3 },
+    reconciledAt: '2026-10-12T12:00:00Z',
 };
 
 const FEIRA: StatementExpense = {
@@ -36,6 +37,7 @@ const FEIRA: StatementExpense = {
     status: 'OPEN',
     expenseType: MERCADO,
     installment: null,
+    reconciledAt: null,
 };
 
 const BY_TYPE: Statement['byExpenseType'] = [
@@ -54,6 +56,8 @@ export const CURRENT: Statement = {
     purchasesCents: 52345,
     refundsCents: 2000,
     totalCents: 50345,
+    reconciledCents: 38000,
+    pendingReconciliationCents: 12345,
     previousBalanceCents: 0,
     amountDueCents: 50345,
     paidCents: 10000,
