@@ -11,6 +11,13 @@ import { Money } from '@/ui/money';
 import { StatusBadge } from '@/ui/status-badge';
 import { expenseBadge, statementBadge } from '@/ui/status-labels';
 
+import {
+    pendingExpenses,
+    ReconcileFilter,
+    ReconcileToggle,
+    useReconcileFilter,
+} from '../reconciliation/reconcile-toggle';
+
 import type {
     Statement,
     StatementExpense,
@@ -71,11 +78,22 @@ function DateItem({ label, children }: { label: string; children: ReactNode }) {
     );
 }
 
-function ValueRow({ label, children }: { label: string; children: ReactNode }) {
+function ValueRow({
+    label,
+    help,
+    children,
+}: {
+    label: string;
+    help?: string;
+    children: ReactNode;
+}) {
     return (
         <div className="flex items-baseline justify-between gap-4 border-t border-linha py-2.5 first:border-t-0">
-            <dt className="text-corpo text-texto-apoio">{label}</dt>
-            <dd className="text-end">{children}</dd>
+            <dt className="flex flex-col gap-0.5 text-corpo text-texto-apoio">
+                {label}
+                {help && <span className="text-pequeno">{help}</span>}
+            </dt>
+            <dd className="shrink-0 text-end whitespace-nowrap">{children}</dd>
         </div>
     );
 }
@@ -100,6 +118,21 @@ export function StatementValues({ statement }: { statement: Statement }) {
             )}
             <ValueRow label="Total da fatura">
                 <Money cents={statement.amountDueCents} size="valor-destaque" />
+            </ValueRow>
+            <ValueRow
+                label="Conferido"
+                help="Some as despesas marcadas. Deve bater com o app do banco."
+            >
+                <Money cents={statement.reconciledCents} />
+            </ValueRow>
+            <ValueRow label="Falta conferir">
+                {statement.pendingReconciliationCents > 0 ? (
+                    <span data-tone="atencao" className="text-valor text-atencao tabular-nums">
+                        {formatBRL(statement.pendingReconciliationCents)}
+                    </span>
+                ) : (
+                    <Money cents={statement.pendingReconciliationCents} />
+                )}
             </ValueRow>
             <ValueRow label="Pago">
                 <Money cents={statement.paidCents} />
@@ -227,7 +260,10 @@ function NoneText({ children }: { children: string }) {
     return <p className="text-corpo text-texto-apoio">{children}</p>;
 }
 
-/** **Despesas** da fatura; cada uma leva ao detalhe dela (`/despesas/$despesaId`). */
+/**
+ * **Despesas** da fatura; cada uma leva ao detalhe dela (`/despesas/$despesaId`), com o botão
+ * **Incluída** e o filtro **Só o que falta conferir** da conferência (spec 0020).
+ */
 export function StatementExpenses({
     expenses,
     level,
@@ -235,10 +271,15 @@ export function StatementExpenses({
     expenses: readonly StatementExpense[];
     level: HeadingLevel;
 }) {
+    const filter = useReconcileFilter();
+    const visible = filter.pendingOnly ? pendingExpenses(expenses) : expenses;
     return (
         <Block title="Despesas" level={level}>
+            {expenses.length > 0 && (
+                <ReconcileFilter checked={filter.pendingOnly} onChange={filter.set} />
+            )}
             <EntryList
-                items={expenses}
+                items={visible}
                 getKey={(expense) => expense.id}
                 caption="Despesas da fatura"
                 columns={EXPENSE_COLUMNS}
@@ -256,12 +297,17 @@ export function StatementExpenses({
                     />
                 )}
                 href={(expense) => `/despesas/${expense.id}`}
+                actions={(expense) => <ReconcileToggle expense={expense} />}
                 empty={
-                    <EmptyState
-                        variant="vazio"
-                        title="Nenhuma despesa nesta fatura."
-                        description="As compras no cartão aparecem aqui."
-                    />
+                    expenses.length > 0 ? (
+                        <EmptyState variant="vazio" title="Tudo conferido nesta fatura." />
+                    ) : (
+                        <EmptyState
+                            variant="vazio"
+                            title="Nenhuma despesa nesta fatura."
+                            description="As compras no cartão aparecem aqui."
+                        />
+                    )
                 }
             />
         </Block>

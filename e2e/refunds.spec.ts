@@ -217,6 +217,7 @@ const NOTEBOOK_EXPENSE: Expense = {
     postedOn: NOTEBOOK.postedOn,
     installment: NOTEBOOK.installment,
     recurrenceId: null,
+    reconciledAt: null,
     createdAt: '2026-08-10T12:00:00Z',
     updatedAt: '2026-10-10T12:00:00Z',
 };

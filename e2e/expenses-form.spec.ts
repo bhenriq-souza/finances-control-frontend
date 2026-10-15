@@ -46,6 +46,7 @@ const NEW_INSTALLMENTS: Expense[] = [1, 2, 3].map((number) => ({
     postedOn: `2026-${String(9 + number).padStart(2, '0')}-20`,
     installment: { groupId: GROUP_ID, number, total: 3 },
     recurrenceId: null,
+    reconciledAt: null,
     createdAt: '2026-10-20T12:00:00Z',
     updatedAt: '2026-10-20T12:00:00Z',
 }));

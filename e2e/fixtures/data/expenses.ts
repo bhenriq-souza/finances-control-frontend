@@ -93,6 +93,7 @@ function expense(fields: Partial<Expense> & Pick<Expense, 'id' | 'description'>)
         postedOn: null,
         installment: null,
         recurrenceId: null,
+        reconciledAt: null,
         createdAt: CREATED,
         updatedAt: CREATED,
         ...fields,
