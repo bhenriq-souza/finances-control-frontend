@@ -23,6 +23,7 @@ export function expenseFixture(fields: Partial<Expense> = {}): Expense {
         postedOn: null,
         installment: null,
         recurrenceId: null,
+        reconciledAt: null,
         createdAt: '2026-10-01T12:00:00Z',
         updatedAt: '2026-10-01T12:00:00Z',
         ...fields,

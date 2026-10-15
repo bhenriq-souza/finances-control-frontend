@@ -202,12 +202,12 @@ describe('checkCatalog (step 4, AC-0005-05)', () => {
         expect((await checkCatalog(ctx)).status).toBe('FAIL');
     });
 
-    it('reads the 58 keys of the real catalog', async () => {
+    it('reads the 59 keys of the real catalog', async () => {
         const source = await readFile(
             new URL('../src/api/errors/catalog.ts', import.meta.url),
             'utf8',
         );
-        expect(extractCatalogKeys(source)).toHaveLength(58);
+        expect(extractCatalogKeys(source)).toHaveLength(59);
     });
 });
 

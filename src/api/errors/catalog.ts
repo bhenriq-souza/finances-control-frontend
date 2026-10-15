@@ -46,6 +46,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
     EXPENSE_ALREADY_PAID:
         'Essa despesa já foi paga e não pode mais ter o valor alterado nem ser excluída.',
     EXPENSE_NOT_FOUND: 'Não encontramos essa despesa. Atualize a página e tente de novo.',
+    EXPENSE_NOT_ON_CREDIT_CARD: 'Só despesas de cartão podem ser conferidas com a fatura.',
     EXPENSE_RECURRENCE_NOT_FOUND:
         'Não encontramos essa despesa recorrente. Atualize a página e tente de novo.',
     EXPENSE_STATUS_TRANSITION_NOT_ALLOWED:

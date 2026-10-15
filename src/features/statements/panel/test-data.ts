@@ -41,6 +41,7 @@ export function expenseFixture(overrides: Partial<StatementExpense> = {}): State
         status: 'OPEN',
         expenseType: { id: '30000000-0000-4000-8000-000000000001', name: 'Eletrônicos' },
         installment: { groupId: '50000000-0000-4000-8000-000000000001', number: 2, total: 3 },
+        reconciledAt: null,
         ...overrides,
     };
 }
@@ -56,6 +57,8 @@ export function statementFixture(overrides: Partial<Statement> = {}): Statement 
         purchasesCents: 52345,
         refundsCents: 2000,
         totalCents: 50345,
+        reconciledCents: 38000,
+        pendingReconciliationCents: 12345,
         previousBalanceCents: 0,
         amountDueCents: 50345,
         paidCents: 10000,
