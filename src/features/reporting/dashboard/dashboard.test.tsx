@@ -119,6 +119,7 @@ function stubApi(override: Responder = () => undefined) {
                                 month: '2026-10',
                                 kind: 'FORECAST',
                                 accountsTotalCents: 612345,
+                                cardDueCents: 37550,
                             }),
                         ]),
                     ),
@@ -202,8 +203,9 @@ describe('Dashboard (spec 0015)', () => {
         expect(screen.getByRole('heading', { name: 'Início', level: 1 })).toBeInTheDocument();
         const saldo = await region('Saldo realizado · outubro de 2026');
         expect(await within(saldo).findByText('R$ 4.876,55')).toBeInTheDocument();
-        expect(await within(saldo).findByText('R$ 6.123,45')).toBeInTheDocument();
-        expect(within(saldo).getByText('+R$ 1.246,90')).toBeInTheDocument();
+        // 612345 − 37550 and 574795 − 487655.
+        expect(await within(saldo).findByText('R$ 5.747,95')).toBeInTheDocument();
+        expect(within(saldo).getByText('+R$ 871,40')).toBeInTheDocument();
         expect(within(saldo).getByText('Previsto para 31 out.')).toBeInTheDocument();
 
         const receitas = await region('Receitas do mês');
