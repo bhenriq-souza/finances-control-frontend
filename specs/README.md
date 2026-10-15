@@ -25,5 +25,6 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0017](0017-recurrences.md)              | Séries fixas de despesas e receitas                                | implemented |
 | [0018](0018-transfers.md)                | Transferências entre contas próprias                               | implemented |
 | [0020](0020-statement-reconciliation.md) | Conferência da fatura                                              | implemented |
+| [0021](0021-workspaces.md)               | Espaços na aprovação de usuários e no menu                         | approved    |
 
 Decisões de arquitetura: as de **produto** vivem em [`docs/adr/` do hub](https://github.com/bhenriq-souza/finances-control/tree/main/docs/adr); as **locais do frontend**, em `adr/` (ainda vazia).

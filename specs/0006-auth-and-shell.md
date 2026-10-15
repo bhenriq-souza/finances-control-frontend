@@ -11,6 +11,9 @@ depends_on: ['0003', '0004', '0005']
 
 Levar o usuário do primeiro acesso até o app: entrar por email e senha ou pelo Google no Firebase `dev-financial-control`, criar conta com verificação de email, redefinir a senha, e ser encaminhado conforme o estado da conta que o backend devolve (sem perfil, email por verificar, ativo) — tudo dentro de um app shell responsivo, com a escolha de tema. Antes disso, validar no spike que o login Google funciona numa origem HTTP fora de `localhost`, risco registrado no [ADR-0006](https://github.com/bhenriq-souza/finances-control/blob/main/docs/adr/ADR-0006-auth.md).
 
+> **Revisão de 2026-10-15 (spec `0021`, FCF-025):** o admin da plataforma sem espaço não vai para
+> `/aguardando-aprovacao`; onde esta spec e a `0021` divergem, vale a `0021`.
+
 ## Scope / Non-goals
 
 - **Em escopo:** o spike (T-0006-01); a porta `AuthClient` completa; as rotas públicas (entrar, criar conta, redefinir senha) e as de estado da conta (verificar email, aguardando aprovação); a guarda das rotas autenticadas por `GET /users/me`; o registro do token no cliente da API (spec 0005); o app shell (cabeçalho, navegação, menu do usuário, seletor de tema) nos três tamanhos; a foto do usuário no menu (revisão de 2026-10-14, FCF-022); uma tela inicial provisória; a remoção da página do spike da spec 0003.
@@ -118,7 +121,7 @@ Segue o componente `AppShell` do [Design System](https://claude.ai/artifact/DxDn
 ## Invariants
 
 - **INV-0006-01:** nenhuma rota de `_app` renderiza antes de `GET /users/me` responder com perfil.
-- **INV-0006-02:** usuário sem perfil só vê `/aguardando-aprovacao`, e com email por verificar (sinalizado pelo backend) só vê `/verificar-email` — além de poder sair.
+- **INV-0006-02:** usuário sem perfil (e que não é admin da plataforma, spec `0021`) só vê `/aguardando-aprovacao`, e com email por verificar (sinalizado pelo backend) só vê `/verificar-email` — além de poder sair.
 - **INV-0006-03:** a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
 - **INV-0006-04:** sair da sessão apaga o cache de consultas; nenhum dado do usuário anterior aparece para o seguinte.
 - **INV-0006-05:** mensagens de autenticação vêm do catálogo de erros do Firebase (pt-BR), nunca do texto do SDK.
