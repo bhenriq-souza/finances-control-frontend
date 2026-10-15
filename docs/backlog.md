@@ -319,3 +319,12 @@ Tarefa da revisão da spec [0006](../specs/0006-auth-and-shell.md) de 2026-10-14
     - What: a foto no menu do usuário, com recorte, zoom e redução no navegador antes do envio, e a remoção; o contrato em `sources.json` passa para a tag `v1.3.0` do backend
     - Where: `src/features/identity/avatar/`, `src/features/identity/index.ts`, `src/app/shell/`, `src/api/errors/catalog.ts`, `sources.json`, `e2e/user-avatar.spec.ts`
     - Done when: `AC-0006-15` a `AC-0006-19` cobertos; `INV-0006-07` verificado; spec `0006` volta a `implemented`; fecha FCF-022
+
+## Conferência da fatura
+
+Tarefa da spec [0020](../specs/0020-statement-reconciliation.md), da issue de entrega [FCF-023](https://github.com/bhenriq-souza/finances-control-frontend/issues/166) (2026-10-15). Depende da tag `v1.4.0` do backend, com a spec 0020 dele implementada.
+
+- [ ] **T-0020-01 — Conferência na tela da fatura** · #167
+    - What: **Conferido** e **Falta conferir**, o botão **Incluída** em cada despesa, o filtro **Só o que falta conferir** e o contrato em `sources.json` na tag `v1.4.0`
+    - Where: `src/features/statements/`, `src/api/errors/catalog.ts`, `sources.json`, `e2e/statement-reconciliation.spec.ts`
+    - Done when: `AC-0020-01` a `AC-0020-08` cobertos; `INV-0020-01` a `INV-0020-03` verificados; spec `0020` vai a `implemented`; fecha FCF-023
