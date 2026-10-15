@@ -340,4 +340,4 @@ Tarefa da spec [0021](../specs/0021-workspaces.md), da issue de entrega [FCF-025
 - [ ] **T-0021-01 — Espaços na aprovação e no menu** · #177
     - What: aprovação com espaço novo ou existente na tela de usuários; coluna **Espaço**; **Remover do espaço**; painel de espaços com renomear; nome do espaço no menu; tela **Usuários** e escrita de bancos e tipos só para o admin da plataforma; contrato em `sources.json` na tag `v1.5.0`
     - Where: `src/features/identity/users-admin/`, `src/api/permissions.ts`, `src/app/shell/`, telas de bancos e de tipos, `src/api/errors/catalog.ts`, `sources.json`, `e2e/workspaces.spec.ts`
-    - Done when: `AC-0021-01` a `AC-0021-10` cobertos; `INV-0021-01` a `INV-0021-04` verificados; spec `0021` vai a `implemented`; fecha FCF-025
+    - Done when: `AC-0021-01` a `AC-0021-11` cobertos; `INV-0021-01` a `INV-0021-04` verificados; spec `0021` vai a `implemented`; fecha FCF-025

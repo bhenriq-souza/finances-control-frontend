@@ -58,8 +58,30 @@ espaço.
 | `workspace`       | `{ id, name } \| null` | nome do espaço no menu                    |
 | `isPlatformAdmin` | `boolean`              | tela **Usuários** e escrita dos catálogos |
 
-`profile` continua sendo o perfil no espaço, e a regra de aguardando aprovação da spec 0006 não
-muda: sem `profile`, o usuário vê a tela de aguardando.
+`profile` continua sendo o perfil no espaço. A regra de aguardando aprovação da spec 0006 passa a
+olhar também a marca: o usuário vê a tela de aguardando só quando não tem `profile` **e** não é
+admin da plataforma.
+
+### Admin da plataforma sem espaço
+
+O backend aceita um admin da plataforma sem espaço (`workspace: null`, `isPlatformAdmin: true`):
+ele continua com as rotas de usuário, de espaço e de catálogo, e recebe `403 PROFILE_PENDING` só
+nas rotas de domínio. Na tela:
+
+- a guarda de `_app` **não** o leva a `/aguardando-aprovacao`; ele entra no app com o shell
+  normal;
+- alcança `/usuarios`, o painel de espaços, `/contas/bancos`, `/despesas/tipos` e
+  `/receitas/tipos`, com leitura e escrita;
+- toda outra tela de `_app` (Início, despesas, receitas, cartões, contas, transferências, séries,
+  fluxo de caixa, relatórios) mostra, no lugar do conteúdo e sem chamar a API, o `EmptyState`
+  `sem-espaco`: "Você ainda não está em um espaço. Para ver e lançar registros, entre em um
+  espaço pela tela Usuários." com o botão **Ir para Usuários**;
+- a navegação mostra só os itens que ele alcança: **Usuários** e os catálogos ficam visíveis, e
+  os demais itens somem; `/` leva a `/usuarios`;
+- o menu do usuário não mostra a linha do espaço.
+
+Para entrar num espaço, outro admin da plataforma o aprova; ele mesmo não pode, porque o backend
+recusa alterar o próprio membro (`CANNOT_CHANGE_OWN_PROFILE`).
 
 ### Permissões
 
@@ -85,7 +107,8 @@ A tabela de permissões da spec 0009 muda assim:
 ### Navegação
 
 - `NavItem` ganha `platformAdmin?: true`. Item com a marca só aparece para quem tem
-  `isPlatformAdmin`, e o campo `profiles` passa a ser ignorado nele.
+  `isPlatformAdmin`, e o campo `profiles` passa a ser ignorado nele. Sem espaço, o admin da
+  plataforma vê só os itens com a marca (ver "Admin da plataforma sem espaço").
 - O item **Usuários** fica `{ to: '/usuarios', label: 'Usuários', icon: Users, platformAdmin: true,
 slot: 'mais' }`.
 - `/usuarios` confere `can(user, 'users.manage')` no `beforeLoad`; sem a permissão, `EmptyState`
@@ -196,11 +219,12 @@ Catálogo:
 
 ## Error cases
 
-| Código      | Situação                | Comportamento exigido                                                                           |
-| ----------- | ----------------------- | ----------------------------------------------------------------------------------------------- |
-| ERR-0021-01 | Erros do mapa           | conforme o mapa                                                                                 |
-| ERR-0021-02 | `GET /workspaces` falha | ERR-0009-01 dentro do diálogo; **Espaço existente** fica desabilitado, **Novo espaço** continua |
-| ERR-0021-03 | Usuário sem espaço      | tela de aguardando aprovação (spec 0006)                                                        |
+| Código      | Situação                                                                                       | Comportamento exigido                                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| ERR-0021-01 | Erros do mapa                                                                                  | conforme o mapa                                                                                 |
+| ERR-0021-02 | `GET /workspaces` falha                                                                        | ERR-0009-01 dentro do diálogo; **Espaço existente** fica desabilitado, **Novo espaço** continua |
+| ERR-0021-03 | Usuário sem espaço e sem a marca                                                               | tela de aguardando aprovação (spec 0006)                                                        |
+| ERR-0021-04 | Admin da plataforma sem espaço numa tela de domínio, ou `403 PROFILE_PENDING` recebido por ele | `EmptyState` `sem-espaco`, sem ir para `/aguardando-aprovacao`                                  |
 
 ## Acceptance criteria
 
@@ -227,7 +251,12 @@ Catálogo:
 - **AC-0021-09:** nos três projetos do e2e, o diálogo de aprovação segue o `FormDialog`, e a
   coluna **Espaço** aparece na tabela (`tablet`, `desktop`) e na segunda linha do cartão
   (`celular`).
-- **AC-0021-10:** `sources.json` aponta para a tag `v1.5.0` do backend; o catálogo traduz os três
+- **AC-0021-10:** com o usuário `admin-sem-espaco` (`workspace: null`, `isPlatformAdmin: true`),
+  nenhuma rota leva a `/aguardando-aprovacao`; `/` leva a `/usuarios`, que lista os usuários;
+  `/contas/bancos` mostra **Novo banco**; `/despesas` mostra o `EmptyState` `sem-espaco` com
+  **Ir para Usuários**, sem chamar `GET /expenses`; a navegação mostra só **Usuários** e os
+  catálogos, e o menu do usuário não mostra a linha do espaço.
+- **AC-0021-11:** `sources.json` aponta para a tag `v1.5.0` do backend; o catálogo traduz os três
   códigos novos e não tem mais `LAST_ADMIN`.
 
 ## Test mapping
@@ -241,7 +270,8 @@ Catálogo:
 | AC-0021-07                          | `src/app/shell/user-menu.test.tsx`                                                                   |
 | AC-0021-08, INV-0021-02             | `src/features/accounts/banks-page.test.tsx`, os testes das telas de tipos e `e2e/workspaces.spec.ts` |
 | AC-0021-09                          | `e2e/workspaces.spec.ts` (três projetos)                                                             |
-| AC-0021-10                          | gate de contrato (spec 0002) e `src/api/errors/catalog.test.ts`                                      |
+| AC-0021-10                          | `e2e/workspaces.spec.ts`, `src/app/routes/guard.test.ts` e `src/app/shell/navigation.test.ts`        |
+| AC-0021-11                          | gate de contrato (spec 0002) e `src/api/errors/catalog.test.ts`                                      |
 
 ## Open questions
 
