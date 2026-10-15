@@ -31,10 +31,14 @@ export function realizedBalance(accounts: readonly BankAccount[]): Cents {
     return accounts.filter(isActive).reduce((sum, account) => sum + account.currentBalanceCents, 0);
 }
 
-/** `accountsTotalCents` do ponto `FORECAST` do mês; `null` se a resposta não o tiver. */
+/**
+ * O previsto do mês (revisão de 2026-10-15): `accountsTotalCents − cardDueCents` do ponto
+ * `FORECAST`, as contas menos as faturas que vencem no mês, o mesmo fim do mês corrente do fluxo
+ * de caixa. `null` se a resposta não tiver o ponto.
+ */
 export function forecastBalance(report: BalanceReport, month: IsoMonth): Cents | null {
     const point = report.points.find((p) => p.month === month && p.kind === 'FORECAST');
-    return point ? point.accountsTotalCents : null;
+    return point ? point.accountsTotalCents - (point.cardDueCents ?? 0) : null;
 }
 
 export interface EarningsSummary {
