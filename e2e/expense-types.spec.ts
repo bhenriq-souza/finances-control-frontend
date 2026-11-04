@@ -86,7 +86,7 @@ test('marks the name when the type already exists', async ({ page }) => {
     await openPage(
         page,
         [{ method: 'POST', path: '/expense-types', status: 409, body: expenseTypeAlreadyExists }],
-        'lancador',
+        'ativo',
         '?novo=1',
     );
 

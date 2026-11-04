@@ -58,7 +58,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
     FORBIDDEN: 'Você não tem permissão para fazer isso.',
     INTERNAL_ERROR: 'Algo deu errado do nosso lado. Tente de novo em instantes.',
     INVALID_JSON: 'Não foi possível enviar os dados. Atualize a página e tente de novo.',
-    LAST_ADMIN: 'Essa ação deixaria o sistema sem administrador. Mantenha ao menos um.',
+    LAST_WORKSPACE_ADMIN: 'Esse espaço ficaria sem administrador. Mantenha ao menos um.',
     NOT_READY: 'O serviço ainda está iniciando. Tente de novo em instantes.',
     PAYLOAD_TOO_LARGE: 'Os dados enviados são grandes demais. Reduza o conteúdo e tente de novo.',
     PROFILE_GUARD_WITHOUT_AUTHENTICATION:
@@ -84,8 +84,12 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
     STATEMENT_ROLLED_OVER: 'Essa fatura foi rolada para a seguinte. Pague a fatura seguinte.',
     TOKEN_EXPIRED: 'Sua sessão expirou. Entre de novo para continuar.',
     UNAUTHENTICATED: 'Você precisa entrar para continuar.',
+    USER_ALREADY_IN_WORKSPACE:
+        'Esse usuário já está em um espaço. Remova-o antes de colocá-lo em outro.',
     USER_NOT_FOUND: 'Não encontramos esse usuário. Atualize a página e tente de novo.',
     VALIDATION_ERROR: 'Alguns dados são inválidos. Corrija os campos indicados e tente de novo.',
+    WORKSPACE_CONTEXT_MISSING: 'Algo deu errado do nosso lado. Tente de novo em instantes.',
+    WORKSPACE_NOT_FOUND: 'Não encontramos esse espaço. Atualize a página e tente de novo.',
 };
 
 /** Erros que nascem no cliente, sem corpo da API (spec 0005). */

@@ -1,7 +1,8 @@
-import { Link, Outlet } from '@tanstack/react-router';
+import { Link, Outlet, useLocation } from '@tanstack/react-router';
 
 import { useCurrentUser } from '@/features/identity';
 import { BrandSymbol } from '@/ui/brand/brand';
+import { EmptyState } from '@/ui/empty-state';
 
 import {
     bottomBarEntries,
@@ -9,6 +10,7 @@ import {
     NAV_ITEMS,
     navItemsFor,
     type BottomBarEntry,
+    reachableWithoutWorkspace,
     type NavItem,
 } from './navigation';
 import { UserMenu } from './user-menu';
@@ -52,9 +54,12 @@ function NavEntry({ entry, className }: { entry: BottomBarEntry; className: stri
  */
 export function AppShell({ items = NAV_ITEMS }: { items?: readonly NavItem[] }) {
     const user = useCurrentUser();
-    const visible = navItemsFor(user.profile, items);
+    const visible = navItemsFor(user, items);
     const bottomBar = bottomBarEntries(visible);
     const hasMore = bottomBar.includes(MORE_ENTRY);
+    const pathname = useLocation({ select: (location) => location.pathname });
+    // Admin da plataforma sem espaço (spec 0021): telas de domínio mostram o estado, sem a API.
+    const noWorkspace = user.profile === null && !reachableWithoutWorkspace(pathname);
 
     return (
         <div className="min-h-dvh bg-fundo text-texto lg:pl-60">
@@ -84,7 +89,7 @@ export function AppShell({ items = NAV_ITEMS }: { items?: readonly NavItem[] }) 
                 <UserMenu user={user} />
             </header>
             <main className="px-4 pt-4 pb-20 md:px-6 md:pt-6 md:pb-22 lg:px-8 lg:pt-8 lg:pb-8">
-                <Outlet />
+                {noWorkspace ? <EmptyState variant="sem-espaco" /> : <Outlet />}
             </main>
         </div>
     );

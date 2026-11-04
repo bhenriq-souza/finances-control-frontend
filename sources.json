@@ -1,9 +1,9 @@
 {
     "openapi": {
         "repository": "bhenriq-souza/finances-control-backend",
-        "ref": "v1.4.0",
+        "ref": "v1.5.0",
         "path": "docs/openapi.yaml",
-        "sha256": "11ffe3737f541fc6a2acc741a4c9f71914b3f45173e581227557ba7cb5f3139d"
+        "sha256": "5903ec1164acf64c1ae48bebf7c2c4a43bb7d8b5b9ef4c59d71cf6cb59ea8fec"
     },
     "tokens": {
         "repository": "bhenriq-souza/finances-control",

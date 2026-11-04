@@ -1,66 +1,11 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-import { stubApi } from './fixtures/api';
-import { chooseUser, signInWithEmail, stubUsersMe, type E2EUser } from './fixtures/auth';
-import {
-    BILLER_USER,
-    PENDING_USER,
-    USERS,
-    usersList,
-    type UserResponse,
-} from './fixtures/data/users';
+import { chooseUser, signInWithEmail, type E2EUser } from './fixtures/auth';
+import { BILLER_USER, PENDING_USER } from './fixtures/data/users';
 import { stubRuntime } from './fixtures/runtime-config';
+import { stubUsersBackend } from './fixtures/users-backend';
 
-// Spec 0010: `/usuarios`, só `ADMIN`.
-
-interface UsersBackend {
-    /** Requisições a `/users` e `/users/{id}/profile` (sem `/users/me`). */
-    requests: { method: string; path: string; body: unknown }[];
-    /** Próxima resposta de erro de uma escrita, ex.: `409 LAST_ADMIN`. */
-    failNextWrite?: { status: number; code: string };
-}
-
-/**
- * Um backend em memória para os usuários: `GET /users` devolve o estado atual, e `PATCH`/`DELETE`
- * de `/users/{id}/profile` o alteram — a lista só muda pela resposta do backend (INV-0010-03).
- */
-async function stubUsersBackend(page: Page, user: E2EUser): Promise<UsersBackend> {
-    let users: UserResponse[] = [...USERS];
-    const backend: UsersBackend = { requests: [] };
-
-    await stubApi(page, []);
-    await page.route('**/api/users**', async (route) => {
-        const request = route.request();
-        const path = new URL(request.url()).pathname.replace(/^\/api/, '');
-        const body = request.postData() ? (JSON.parse(request.postData()!) as unknown) : null;
-        backend.requests.push({ method: request.method(), path, body });
-
-        if (request.method() === 'GET' && path === '/users') {
-            return route.fulfill({ status: 200, json: usersList(users) });
-        }
-        const match = /^\/users\/([^/]+)\/profile$/.exec(path);
-        if (!match) return route.fallback();
-        if (backend.failNextWrite) {
-            const { status, code } = backend.failNextWrite;
-            backend.failNextWrite = undefined;
-            return route.fulfill({ status, json: { error: { code, message: code } } });
-        }
-        const id = match[1];
-        const profile =
-            request.method() === 'PATCH'
-                ? (body as { profile: UserResponse['profile'] }).profile
-                : null;
-        users = users.map((u) =>
-            u.id === id
-                ? { ...u, profile, profileGrantedAt: profile ? '2026-10-12T12:00:00Z' : null }
-                : u,
-        );
-        return route.fulfill({ status: 200, json: { data: users.find((u) => u.id === id) } });
-    });
-    // Por último: tem precedência sobre `**/api/users**`.
-    await stubUsersMe(page, user);
-    return backend;
-}
+// Specs 0010 e 0021: `/usuarios`, só o admin da plataforma.
 
 async function signInTo(page: Page, user: E2EUser, path: string) {
     await stubRuntime(page);
@@ -172,8 +117,8 @@ for (const user of ['lancador', 'leitor'] as const) {
     });
 }
 
-// AC-0010-02, INV-0010-03: liberar acesso com Lançador.
-test('granting Lançador to a pending user sends the PATCH and updates the row', async ({
+// AC-0021-03, INV-0010-03: liberar acesso em espaço existente, com Lançador.
+test('granting Lançador in an existing space sends the PATCH and updates the row', async ({
     page,
 }, testInfo) => {
     const backend = await signInTo(page, 'ativo', '/usuarios');
@@ -184,6 +129,10 @@ test('granting Lançador to a pending user sends the PATCH and updates the row',
     const dialog = page.getByRole('dialog', { name: 'Liberar acesso de Paula Nunes' });
     await expect(dialog).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`perfil=${PENDING_USER.id}`));
+    await dialog.getByRole('radio', { name: 'Espaço existente' }).check();
+    await dialog
+        .getByLabel('Espaço', { exact: true })
+        .selectOption({ label: 'Principal (2 membros)' });
     await dialog.getByRole('radio', { name: /Lançador/ }).check();
     await dialog.getByRole('button', { name: 'Salvar' }).click();
 
@@ -191,17 +140,19 @@ test('granting Lançador to a pending user sends the PATCH and updates the row',
     expect(backend.requests).toContainEqual({
         method: 'PATCH',
         path: `/users/${PENDING_USER.id}/profile`,
-        body: { profile: 'BILLER' },
+        body: { profile: 'BILLER', workspaceId: '00000000-0000-4000-8000-0000000000a1' },
     });
     await expect(entry(page, testInfo, 'Paula Nunes')).toContainText('Lançador');
     await expect(entry(page, testInfo, 'Paula Nunes')).not.toContainText('Aguardando');
     await expect(
-        page.getByRole('region', { name: 'Avisos' }).getByText('Perfil de Paula Nunes atualizado.'),
+        page
+            .getByRole('region', { name: 'Avisos' })
+            .getByText('Acesso de Paula Nunes liberado no espaço Principal.'),
     ).toBeVisible();
 });
 
-// AC-0010-03: revogar pede confirmação, envia DELETE e a linha volta a Aguardando.
-test('revoking the access asks for confirmation and turns the row into Aguardando', async ({
+// AC-0021-04: remover do espaço pede confirmação, envia DELETE e a linha volta a Aguardando.
+test('removing from the space asks for confirmation and turns the row into Aguardando', async ({
     page,
 }, testInfo) => {
     const backend = await signInTo(page, 'ativo', '/usuarios');
@@ -209,16 +160,18 @@ test('revoking the access asks for confirmation and turns the row into Aguardand
         .getByRole('button', { name: 'Alterar perfil de Lucas Martins' })
         .click();
 
-    const dialog = page.getByRole('dialog', { name: 'Alterar perfil de Lucas Martins' });
+    const dialog = page.getByRole('dialog', {
+        name: 'Alterar perfil de Lucas Martins em Principal',
+    });
     await expect(dialog.getByRole('radio', { name: /Lançador/ })).toBeChecked();
     await expect(dialog.getByRole('button', { name: 'Salvar' })).toBeDisabled();
-    await dialog.getByRole('button', { name: 'Revogar acesso' }).click();
+    await dialog.getByRole('button', { name: 'Remover do espaço' }).click();
 
-    const confirm = page.getByRole('alertdialog', { name: 'Revogar o acesso de Lucas Martins?' });
+    const confirm = page.getByRole('alertdialog', { name: 'Remover Lucas Martins do espaço?' });
     await expect(confirm).toContainText(
-        'Lucas Martins volta para a tela de aguardando aprovação e perde o acesso a tudo até receber um perfil de novo.',
+        'Lucas Martins sai do espaço Principal e volta para a tela de aguardando aprovação. Os registros do espaço continuam lá.',
     );
-    await confirm.getByRole('button', { name: 'Revogar' }).click();
+    await confirm.getByRole('button', { name: 'Remover' }).click();
 
     await expect(confirm).toBeHidden();
     await expect(dialog).toBeHidden();
@@ -229,23 +182,29 @@ test('revoking the access asks for confirmation and turns the row into Aguardand
     });
     await expect(entry(page, testInfo, 'Lucas Martins')).toContainText('Aguardando');
     await expect(
-        page.getByRole('region', { name: 'Avisos' }).getByText('Acesso de Lucas Martins revogado.'),
+        page
+            .getByRole('region', { name: 'Avisos' })
+            .getByText('Lucas Martins removido do espaço Principal.'),
     ).toBeVisible();
 });
 
-// AC-0010-04: `409 LAST_ADMIN` no diálogo, que continua aberto.
-test('LAST_ADMIN keeps the dialog open with the catalog message', async ({ page }, testInfo) => {
+// AC-0021-05: `409 LAST_WORKSPACE_ADMIN` no diálogo, que continua aberto.
+test('LAST_WORKSPACE_ADMIN keeps the dialog open with the catalog message', async ({
+    page,
+}, testInfo) => {
     const backend = await signInTo(page, 'ativo', '/usuarios');
     await entry(page, testInfo, 'Lucas Martins')
         .getByRole('button', { name: 'Alterar perfil de Lucas Martins' })
         .click();
-    const dialog = page.getByRole('dialog', { name: 'Alterar perfil de Lucas Martins' });
-    backend.failNextWrite = { status: 409, code: 'LAST_ADMIN' };
+    const dialog = page.getByRole('dialog', {
+        name: 'Alterar perfil de Lucas Martins em Principal',
+    });
+    backend.failNextWrite = { status: 409, code: 'LAST_WORKSPACE_ADMIN' };
     await dialog.getByRole('radio', { name: /Leitor/ }).check();
     await dialog.getByRole('button', { name: 'Salvar' }).click();
 
     await expect(dialog.getByRole('alert')).toHaveText(
-        'Essa ação deixaria o sistema sem administrador. Mantenha ao menos um.',
+        'Esse espaço ficaria sem administrador. Mantenha ao menos um.',
     );
     await expect(dialog).toBeVisible();
 });

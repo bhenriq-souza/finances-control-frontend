@@ -87,7 +87,7 @@ export const CARTAO_ANTIGO: CreditCard = {
 };
 export const CARDS: CreditCard[] = [ROXINHO, CARTAO_ANTIGO];
 
-function user(profile: Profile): CurrentUser {
+function user(profile: Profile, isPlatformAdmin: boolean): CurrentUser {
     return {
         id: 'id',
         email: 'ana@example.com',
@@ -95,6 +95,8 @@ function user(profile: Profile): CurrentUser {
         name: 'Ana Souza',
         profile,
         profileGrantedAt: null,
+        workspace: null,
+        isPlatformAdmin,
         avatarUpdatedAt: null,
         createdAt: '2026-10-01T00:00:00Z',
     };
@@ -113,9 +115,13 @@ export const fail = (status: number, code: string, details?: unknown) => ({
 });
 
 /** Monta `node` com cache semeado (usuário, bancos, contas, cartões), avisos e roteador. */
-export async function renderWithApp(node: ReactNode, profile: Profile = 'ADMIN') {
+export async function renderWithApp(
+    node: ReactNode,
+    profile: Profile = 'ADMIN',
+    isPlatformAdmin: boolean = profile === 'ADMIN',
+) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(CURRENT_USER_QUERY_KEY, user(profile));
+    client.setQueryData(CURRENT_USER_QUERY_KEY, user(profile, isPlatformAdmin));
     client.setQueryData(queryKeys.banks.all, BANKS);
     client.setQueryData(queryKeys.bankAccounts.all, ACCOUNTS);
     client.setQueryData(queryKeys.creditCards.all, CARDS);

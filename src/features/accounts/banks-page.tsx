@@ -39,7 +39,7 @@ export interface BanksPageProps {
     /** `?arquivados=1`. */
     showArchived: boolean;
     onShowArchivedChange: (showArchived: boolean) => void;
-    /** `?novo=1` e `?editar=<id>`: o formulário aberto (só com `accounts.write`). */
+    /** `?novo=1` e `?editar=<id>`: o formulário aberto (só com `catalog.write`). */
     form?: AccountsFormSearch;
     onFormChange?: (form: AccountsFormSearch) => void;
 }
@@ -52,7 +52,7 @@ export function BanksPage({
     onFormChange = () => undefined,
 }: BanksPageProps) {
     const query = useBanks();
-    const canWrite = useCan('accounts.write');
+    const canWrite = useCan('catalog.write');
     const actions = (bank: Bank) => (
         <WriteActions
             kind="bank"

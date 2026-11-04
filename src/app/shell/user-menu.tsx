@@ -99,6 +99,11 @@ export function UserMenu({ user }: { user: CurrentUser }) {
                         <div className="flex min-w-0 flex-col gap-1">
                             <p className="truncate text-corpo-forte">{user.name}</p>
                             <p className="truncate text-pequeno text-texto-apoio">{user.email}</p>
+                            {user.workspace && (
+                                <p className="truncate text-pequeno text-texto-apoio">
+                                    Espaço: {user.workspace.name}
+                                </p>
+                            )}
                             {user.profile && (
                                 <p className="text-pequeno text-texto-apoio">
                                     Perfil:{' '}

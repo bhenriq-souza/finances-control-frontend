@@ -6,7 +6,8 @@ import { queryKeys, type QueryRoot } from './keys';
 
 /** A matriz da spec 0009, transcrita para o teste. */
 const EXPECTED: Record<WriteDomain, QueryRoot[]> = {
-    profile: ['users'],
+    profile: ['users', 'workspaces'],
+    workspace: ['workspaces', 'users'],
     accounts: ['banks', 'bank-accounts', 'credit-cards', 'statements', 'reports'],
     'expense-types': ['expense-types', 'expenses', 'statements', 'reports'],
     'earning-types': ['earning-types', 'earnings', 'reports'],
@@ -30,6 +31,7 @@ const EXPECTED: Record<WriteDomain, QueryRoot[]> = {
 const SAMPLE_KEYS: readonly (readonly unknown[])[] = [
     queryKeys.users.me(),
     queryKeys.users.list(),
+    queryKeys.workspaces.list(),
     queryKeys.banks.all,
     queryKeys.bankAccounts.all,
     queryKeys.creditCards.all,

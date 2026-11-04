@@ -22,6 +22,8 @@ export function platformUser(overrides: Partial<PlatformUser> & { id: string }):
         name: overrides.id,
         profile: null,
         profileGrantedAt: null,
+        workspace: null,
+        isPlatformAdmin: false,
         avatarUpdatedAt: null,
         createdAt: '2026-10-01T12:00:00Z',
         ...overrides,
@@ -33,6 +35,8 @@ export const ADMIN_ME = platformUser({
     name: 'Ana Souza',
     profile: 'ADMIN',
     profileGrantedAt: '2026-10-01T12:00:00Z',
+    workspace: { id: 'ws-principal', name: 'Principal' },
+    isPlatformAdmin: true,
     avatarUpdatedAt: null,
 });
 
@@ -48,13 +52,22 @@ export const fail = (status: number, code: string) => ({
     response: new Response(null, { status }),
 });
 
-function Harness({ initialProfileUserId }: { initialProfileUserId?: string }) {
+function Harness({
+    initialProfileUserId,
+    initialWorkspacesOpen,
+}: {
+    initialProfileUserId?: string;
+    initialWorkspacesOpen?: boolean;
+}) {
     const [filter, setFilter] = useState<UsersFilter>('todos');
+    const [workspacesOpen, setWorkspacesOpen] = useState(initialWorkspacesOpen ?? false);
     const [profileUserId, setProfileUserId] = useState(initialProfileUserId);
     return (
         <UsersPage
             filter={filter}
             profileUserId={profileUserId}
+            workspacesOpen={workspacesOpen}
+            onWorkspacesChange={setWorkspacesOpen}
             onFilterChange={setFilter}
             onProfileUserChange={setProfileUserId}
         />
@@ -64,7 +77,7 @@ function Harness({ initialProfileUserId }: { initialProfileUserId?: string }) {
 /** Só para testes: `/usuarios` com o usuário atual no cache, avisos e um roteador em memória. */
 export async function renderUsersPage(
     me: CurrentUser = ADMIN_ME,
-    options: { profileUserId?: string } = {},
+    options: { profileUserId?: string; workspacesOpen?: boolean } = {},
 ) {
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false, staleTime: Infinity } },
@@ -72,7 +85,12 @@ export async function renderUsersPage(
     queryClient.setQueryData(CURRENT_USER_QUERY_KEY, me);
     const router = createRouter({
         routeTree: createRootRoute({
-            component: () => <Harness initialProfileUserId={options.profileUserId} />,
+            component: () => (
+                <Harness
+                    initialProfileUserId={options.profileUserId}
+                    initialWorkspacesOpen={options.workspacesOpen}
+                />
+            ),
         }),
         history: createMemoryHistory(),
     });

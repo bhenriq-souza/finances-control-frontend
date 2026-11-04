@@ -11,6 +11,7 @@ import { Button, buttonVariants } from '@/ui/components/ui/button';
  *   novo**, que chama `refetch` (ERR-0009-01);
  * - `nao-encontrado`: detalhe com `*_NOT_FOUND` e um link de volta para a lista (ERR-0009-02);
  * - `sem-acesso`: rota que exige uma permissão que o perfil não tem (ERR-0009-05).
+ * - `sem-espaco`: admin da plataforma sem espaço numa tela de domínio (spec 0021, ERR-0021-04).
  */
 export type EmptyStateProps =
     | {
@@ -33,7 +34,8 @@ export type EmptyStateProps =
           /** Padrão: "Voltar para a lista". */
           backLabel?: string;
       }
-    | { variant: 'sem-acesso' };
+    | { variant: 'sem-acesso' }
+    | { variant: 'sem-espaco' };
 
 interface Content {
     icon: LucideIcon;
@@ -74,6 +76,18 @@ function contentOf(props: EmptyStateProps): Content {
             };
         case 'sem-acesso':
             return { icon: Lock, title: 'Seu perfil não dá acesso a esta tela.' };
+        case 'sem-espaco':
+            return {
+                icon: Lock,
+                title: 'Você ainda não está em um espaço.',
+                description:
+                    'Você ainda não está em um espaço. Para ver e lançar registros, entre em um espaço pela tela Usuários.',
+                action: (
+                    <Link to="/usuarios" className={buttonVariants({ variant: 'outline' })}>
+                        Ir para Usuários
+                    </Link>
+                ),
+            };
     }
 }
 

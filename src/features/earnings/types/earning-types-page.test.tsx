@@ -74,6 +74,9 @@ async function setup({ profile = 'ADMIN', search = {}, types = TYPES }: Setup = 
         name: 'Ana',
         profile,
         profileGrantedAt: null,
+        workspace: null,
+        isPlatformAdmin: profile === 'ADMIN',
+        avatarUpdatedAt: null,
         createdAt: '2026-10-01T00:00:00Z',
     });
     if (types) queryClient.setQueryData(queryKeys.earningTypes.all, types);
@@ -207,7 +210,7 @@ describe('EarningTypesPage', () => {
     // AC-0014-08: criar.
     it('creates a type from Novo tipo, closes, invalidates and notifies', async () => {
         mocks.post.mockResolvedValue(ok({ ...SALARIO, id: 'novo', name: 'Dividendos' }, 201));
-        const { store, searches, invalidate } = await setup({ profile: 'BILLER' });
+        const { store, searches, invalidate } = await setup();
 
         fireEvent.click(screen.getByRole('button', { name: 'Novo tipo' }));
         expect(searches.at(-1)).toEqual({ novo: 1, editar: undefined });

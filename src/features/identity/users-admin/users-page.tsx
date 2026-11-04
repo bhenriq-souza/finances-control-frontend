@@ -5,8 +5,8 @@ import { useState } from 'react';
 
 import { ApiError } from '@/api/errors/api-error';
 import { CLIENT_ERROR_MESSAGES } from '@/api/errors/catalog';
-import { can, useCan } from '@/api/permissions';
-import { PROFILE_LABELS, useCurrentUser, type Profile } from '@/api/queries/current-user';
+import { can, useCan, type PermissionSubject } from '@/api/permissions';
+import { PROFILE_LABELS, useCurrentUser } from '@/api/queries/current-user';
 import { BUSINESS_TIME_ZONE, formatDate, type IsoDate } from '@/shared/dates';
 import { Button } from '@/ui/components/ui/button';
 import { EmptyState } from '@/ui/empty-state';
@@ -15,8 +15,10 @@ import { EntryListSkeleton } from '@/ui/skeleton';
 import { StatusBadge } from '@/ui/status-badge';
 import { DERIVED_BADGES, type Badge } from '@/ui/status-labels';
 
+import { ApproveDialog } from './approve-dialog';
 import { ProfileDialog } from './profile-dialog';
 import { sortUsers, usersListQuery, type PlatformUser } from './users-api';
+import { WorkspacesPanel } from './workspaces-panel';
 
 /** Filtro da lista, na URL como `?filtro=aguardando` (spec 0010). */
 export type UsersFilter = 'todos' | 'aguardando';
@@ -37,16 +39,19 @@ function businessDateOf(instant: string): IsoDate {
 }
 
 /** O `beforeLoad` de `/usuarios` confere a permissão (spec 0010). */
-export function canManageUsers(profile: Profile | null): boolean {
-    return can(profile, 'users.manage');
+export function canManageUsers(user: PermissionSubject): boolean {
+    return can(user, 'users.manage');
 }
 
 export interface UsersPageProps {
     filter: UsersFilter;
     /** `?perfil=<userId>`: o diálogo de perfil daquele usuário. */
     profileUserId?: string;
+    /** `?espacos=1`: o painel de espaços aberto. */
+    workspacesOpen?: boolean;
     onFilterChange: (filter: UsersFilter) => void;
     onProfileUserChange: (userId: string | undefined) => void;
+    onWorkspacesChange?: (open: boolean) => void;
 }
 
 /**
@@ -67,8 +72,10 @@ export function UsersPage(props: UsersPageProps) {
 function UsersAdmin({
     filter,
     profileUserId,
+    workspacesOpen = false,
     onFilterChange,
     onProfileUserChange,
+    onWorkspacesChange,
 }: UsersPageProps) {
     const me = useCurrentUser();
     const { data, error, refetch } = useQuery(usersListQuery);
@@ -141,6 +148,7 @@ function UsersAdmin({
         { header: 'Nome', cell: nameCell },
         { header: 'Email', cell: emailCell },
         { header: 'Perfil', cell: profileCell },
+        { header: 'Espaço', cell: (user) => user.workspace?.name ?? '' },
         {
             header: 'Desde',
             cell: (user) => formatDate(businessDateOf(user.createdAt), 'curta'),
@@ -156,27 +164,32 @@ function UsersAdmin({
 
     return (
         <>
-            <div
-                role="group"
-                aria-label="Filtro"
-                className="flex w-full gap-1 rounded-md border border-linha bg-superficie p-1 md:w-auto md:self-start"
-            >
-                {segments.map((segment) => (
-                    <button
-                        key={segment.value}
-                        type="button"
-                        aria-pressed={filter === segment.value}
-                        onClick={() => onFilterChange(segment.value)}
-                        className={clsx(
-                            'min-h-11 flex-1 rounded-sm px-3 text-corpo-forte whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-foco md:flex-none',
-                            filter === segment.value
-                                ? 'bg-superficie-elevada text-texto'
-                                : 'text-texto-apoio hover:text-texto',
-                        )}
-                    >
-                        {segment.label}
-                    </button>
-                ))}
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div
+                    role="group"
+                    aria-label="Filtro"
+                    className="flex w-full gap-1 rounded-md border border-linha bg-superficie p-1 md:w-auto md:self-start"
+                >
+                    {segments.map((segment) => (
+                        <button
+                            key={segment.value}
+                            type="button"
+                            aria-pressed={filter === segment.value}
+                            onClick={() => onFilterChange(segment.value)}
+                            className={clsx(
+                                'min-h-11 flex-1 rounded-sm px-3 text-corpo-forte whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-foco md:flex-none',
+                                filter === segment.value
+                                    ? 'bg-superficie-elevada text-texto'
+                                    : 'text-texto-apoio hover:text-texto',
+                            )}
+                        >
+                            {segment.label}
+                        </button>
+                    ))}
+                </div>
+                <Button variant="outline" onClick={() => onWorkspacesChange?.(true)}>
+                    Espaços
+                </Button>
             </div>
             <EntryList
                 items={items}
@@ -189,7 +202,10 @@ function UsersAdmin({
                             {nameCell(user)}
                             <span className="text-corpo">{profileCell(user)}</span>
                         </div>
-                        <div className="text-corpo text-texto-apoio">{emailCell(user)}</div>
+                        <div className="text-corpo text-texto-apoio">
+                            {emailCell(user)}
+                            {user.workspace && <span> · {user.workspace.name}</span>}
+                        </div>
                         {action(user, 'w-full')}
                     </div>
                 )}
@@ -205,7 +221,19 @@ function UsersAdmin({
                     />
                 }
             />
-            {selected && (
+            {workspacesOpen && <WorkspacesPanel onClose={() => onWorkspacesChange?.(false)} />}
+            {selected && selected.profile === null && (
+                <ApproveDialog
+                    key={selected.id}
+                    user={selected}
+                    onClose={() => onProfileUserChange(undefined)}
+                    onStale={() => {
+                        setMissing(selected);
+                        void refetch();
+                    }}
+                />
+            )}
+            {selected && selected.profile !== null && (
                 <ProfileDialog
                     key={selected.id}
                     user={selected}

@@ -3,6 +3,7 @@ import {
     ArrowDown,
     ArrowLeftRight,
     ArrowUp,
+    Building2,
     ChartColumn,
     CreditCard,
     Ellipsis,
@@ -10,6 +11,8 @@ import {
     Landmark,
     type LucideIcon,
     Repeat,
+    Tag,
+    Tags,
     Users,
     Wallet,
 } from 'lucide-react';
@@ -27,8 +30,12 @@ export interface NavItem {
     to: NonNullable<LinkProps['to']>;
     label: string;
     icon: LucideIcon;
-    /** Perfis que veem o item (INV-0006-03). */
+    /** Perfis que veem o item (INV-0006-03); ignorado quando `platformAdmin` está marcado. */
     profiles: readonly Profile[];
+    /** Item só do admin da plataforma (spec 0021); `profiles` não vale para ele. */
+    platformAdmin?: true;
+    /** Com `platformAdmin`: só aparece para quem ainda não tem espaço (atalho para os catálogos). */
+    withoutWorkspace?: true;
     slot: NavSlot;
 }
 
@@ -66,7 +73,41 @@ export const NAV_ITEMS: readonly NavItem[] = [
         profiles: ALL_PROFILES,
         slot: 'mais',
     },
-    { to: '/usuarios', label: 'Usuários', icon: Users, profiles: ['ADMIN'], slot: 'mais' },
+    {
+        to: '/usuarios',
+        label: 'Usuários',
+        icon: Users,
+        profiles: [],
+        platformAdmin: true,
+        slot: 'mais',
+    },
+    {
+        to: '/contas/bancos',
+        label: 'Bancos',
+        icon: Building2,
+        profiles: [],
+        platformAdmin: true,
+        withoutWorkspace: true,
+        slot: 'mais',
+    },
+    {
+        to: '/despesas/tipos',
+        label: 'Tipos de despesa',
+        icon: Tags,
+        profiles: [],
+        platformAdmin: true,
+        withoutWorkspace: true,
+        slot: 'mais',
+    },
+    {
+        to: '/receitas/tipos',
+        label: 'Tipos de receita',
+        icon: Tag,
+        profiles: [],
+        platformAdmin: true,
+        withoutWorkspace: true,
+        slot: 'mais',
+    },
 ];
 
 /** Máximo de itens de `slot: 'barra'` na barra inferior, sem contar o **Mais**. */
@@ -75,13 +116,40 @@ export const BOTTOM_BAR_LIMIT = 4;
 /** O item **Mais** da barra inferior (celular e tablet). */
 export const MORE_ENTRY: BottomBarEntry = { to: '/mais', label: 'Mais', icon: Ellipsis };
 
-/** Só os itens cujo `profiles` inclui o perfil do usuário; sem perfil, nenhum (INV-0006-03). */
+/** O recorte do usuário que decide a navegação. */
+export interface NavSubject {
+    profile: Profile | null;
+    isPlatformAdmin?: boolean;
+}
+
+/**
+ * Os itens do usuário (INV-0006-03, spec 0021): item com `platformAdmin` só para o admin da
+ * plataforma (e os de `withoutWorkspace`, só sem espaço); os demais, só quando `profiles` inclui
+ * o perfil. Sem perfil (admin da plataforma sem espaço), só os itens marcados.
+ */
 export function navItemsFor(
-    profile: Profile | null,
+    user: NavSubject | Profile | null,
     items: readonly NavItem[] = NAV_ITEMS,
 ): NavItem[] {
-    if (!profile) return [];
-    return items.filter((item) => item.profiles.includes(profile));
+    if (!user) return [];
+    const { profile, isPlatformAdmin } =
+        typeof user === 'string' ? { profile: user, isPlatformAdmin: false } : user;
+    return items.filter((item) => {
+        if (!item.platformAdmin) return profile !== null && item.profiles.includes(profile);
+        if (item.withoutWorkspace && profile !== null) return false;
+        return isPlatformAdmin === true;
+    });
+}
+
+/** Rotas que o admin da plataforma sem espaço alcança (spec 0021). */
+export function reachableWithoutWorkspace(pathname: string): boolean {
+    return (
+        pathname === '/usuarios' ||
+        pathname === '/mais' ||
+        pathname === '/contas/bancos' ||
+        pathname === '/despesas/tipos' ||
+        pathname === '/receitas/tipos'
+    );
 }
 
 /** Os itens visíveis de `slot: 'mais'`, na ordem da lista: o conteúdo da página `/mais`. */

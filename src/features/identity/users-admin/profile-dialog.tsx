@@ -13,16 +13,10 @@ import { FormAlert } from '@/ui/form-alert';
 import { FormDialog } from '@/ui/form-dialog';
 import { useNotify } from '@/ui/notice';
 
+import { PROFILE_OPTIONS } from './profile-options';
 import { grantProfile, revokeProfile, type PlatformUser } from './users-api';
 
 const FORM_ID = 'perfil-usuario';
-
-/** Os três perfis, com a descrição de uma linha de `docs/user-profiles.md` do hub (spec 0010). */
-export const PROFILE_OPTIONS: readonly { value: Profile; description: string }[] = [
-    { value: 'ADMIN', description: 'Tudo, inclusive usuários, bancos, contas e cartões' },
-    { value: 'BILLER', description: 'Lança e altera despesas, receitas, faturas e transferências' },
-    { value: 'VIEWER', description: 'Só consulta' },
-];
 
 interface Values {
     profile: Profile | '';
@@ -36,9 +30,9 @@ export interface ProfileDialogProps {
 }
 
 /**
- * Diálogo de perfil (spec 0010): liberar acesso de quem está aguardando, ou trocar o perfil e
- * revogar o acesso de quem já tem um. A lista só muda pela resposta do backend, depois de
- * `invalidateAfter` (INV-0010-03); num erro o diálogo continua aberto com o alerta do catálogo.
+ * Diálogo de perfil (specs 0010 e 0021): trocar o perfil de um membro ou removê-lo do espaço.
+ * A aprovação de quem aguarda é o `ApproveDialog`. A lista só muda pela resposta do backend, depois de
+ * `invalidateAfter` (INV-0010-03, INV-0021-04); num erro o diálogo continua aberto com o alerta do catálogo.
  */
 export function ProfileDialog({ user, onClose, onStale }: ProfileDialogProps) {
     const queryClient = useQueryClient();
@@ -46,6 +40,7 @@ export function ProfileDialog({ user, onClose, onStale }: ProfileDialogProps) {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [revokeError, setRevokeError] = useState<string | null>(null);
     const current = user.profile;
+    const space = user.workspace?.name ?? '';
 
     const {
         register,
@@ -61,7 +56,7 @@ export function ProfileDialog({ user, onClose, onStale }: ProfileDialogProps) {
     }
 
     const grant = useMutation({
-        mutationFn: (profile: Profile) => grantProfile(user.id, profile),
+        mutationFn: (profile: Profile) => grantProfile(user.id, { profile }),
         onSuccess: async () => {
             await invalidateAfter(queryClient, 'profile');
             onClose();
@@ -79,7 +74,7 @@ export function ProfileDialog({ user, onClose, onStale }: ProfileDialogProps) {
             await invalidateAfter(queryClient, 'profile');
             setConfirmOpen(false);
             onClose();
-            notify({ tone: 'sucesso', message: `Acesso de ${user.name} revogado.` });
+            notify({ tone: 'sucesso', message: `${user.name} removido do espaço ${space}.` });
         },
         onError: (error) => {
             setRevokeError(
@@ -91,7 +86,7 @@ export function ProfileDialog({ user, onClose, onStale }: ProfileDialogProps) {
         },
     });
 
-    const title = current ? `Alterar perfil de ${user.name}` : `Liberar acesso de ${user.name}`;
+    const title = `Alterar perfil de ${user.name} em ${space}`;
 
     return (
         <>
@@ -156,7 +151,7 @@ export function ProfileDialog({ user, onClose, onStale }: ProfileDialogProps) {
                     {current && (
                         <div className="flex flex-col items-start gap-2 border-t border-linha pt-4">
                             <p className="text-corpo text-texto-apoio">
-                                Sem perfil, {user.name} não acessa nada até receber um de novo.
+                                {user.name} sai do espaço e volta a aguardar aprovação.
                             </p>
                             <Button
                                 variant="outline"
@@ -165,7 +160,7 @@ export function ProfileDialog({ user, onClose, onStale }: ProfileDialogProps) {
                                     setConfirmOpen(true);
                                 }}
                             >
-                                Revogar acesso
+                                Remover do espaço
                             </Button>
                         </div>
                     )}
@@ -175,9 +170,9 @@ export function ProfileDialog({ user, onClose, onStale }: ProfileDialogProps) {
                 <ConfirmDialog
                     open={confirmOpen}
                     onOpenChange={setConfirmOpen}
-                    title={`Revogar o acesso de ${user.name}?`}
-                    description={`${user.name} volta para a tela de aguardando aprovação e perde o acesso a tudo até receber um perfil de novo.`}
-                    confirmLabel="Revogar"
+                    title={`Remover ${user.name} do espaço?`}
+                    description={`${user.name} sai do espaço ${space} e volta para a tela de aguardando aprovação. Os registros do espaço continuam lá.`}
+                    confirmLabel="Remover"
                     destructive
                     pending={revoke.isPending}
                     onConfirm={() => {

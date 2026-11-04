@@ -33,7 +33,7 @@ export function MorePage({ items = NAV_ITEMS }: { items?: readonly NavItem[] }) 
     const desktop = useIsDesktop();
     if (desktop) return <Navigate to="/" replace />;
 
-    const entries = moreItems(navItemsFor(user.profile, items));
+    const entries = moreItems(navItemsFor(user, items));
     return (
         <div className="flex flex-col gap-4">
             <h1 className="text-titulo-1">Mais</h1>

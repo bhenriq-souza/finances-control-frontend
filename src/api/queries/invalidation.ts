@@ -5,6 +5,7 @@ import type { QueryRoot } from './keys';
 /** Domínio de uma escrita (spec 0009, "Invalidação depois de uma escrita"). */
 export type WriteDomain =
     | 'profile'
+    | 'workspace'
     | 'accounts'
     | 'expense-types'
     | 'earning-types'
@@ -18,7 +19,8 @@ export type WriteDomain =
 
 /** Raízes invalidadas por domínio da escrita. */
 export const INVALIDATION_MATRIX: Readonly<Record<WriteDomain, readonly QueryRoot[]>> = {
-    profile: ['users'],
+    profile: ['users', 'workspaces'],
+    workspace: ['workspaces', 'users'],
     accounts: ['banks', 'bank-accounts', 'credit-cards', 'statements', 'reports'],
     'expense-types': ['expense-types', 'expenses', 'statements', 'reports'],
     'earning-types': ['earning-types', 'earnings', 'reports'],

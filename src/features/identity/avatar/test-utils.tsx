@@ -15,6 +15,8 @@ export function currentUser(overrides: Partial<CurrentUser> = {}): CurrentUser {
         name: 'Ana Souza',
         profile: 'ADMIN',
         profileGrantedAt: '2026-10-01T12:00:00Z',
+        workspace: null,
+        isPlatformAdmin: false,
         avatarUpdatedAt: null,
         createdAt: '2026-10-01T12:00:00Z',
         ...overrides,

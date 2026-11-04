@@ -78,7 +78,7 @@ test('lists the active types by name and shows the archived ones with the badge'
 // AC-0014-08: criar.
 test('creates a type from Novo tipo', async ({ page }) => {
     const api = await openTypes(page, {
-        user: 'lancador',
+        user: 'ativo',
         routes: [
             {
                 method: 'POST',

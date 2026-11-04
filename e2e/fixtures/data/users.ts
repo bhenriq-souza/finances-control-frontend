@@ -1,6 +1,24 @@
 import type { components } from '../../../src/api/generated/schema';
 
 export type UserResponse = components['schemas']['UserResponse'];
+export type WorkspaceResponse = components['schemas']['WorkspaceResponse'];
+
+/** O espaço em que ficam os usuários com perfil (spec 0021). */
+export const MAIN_WORKSPACE: WorkspaceResponse = {
+    id: '00000000-0000-4000-8000-0000000000a1',
+    name: 'Principal',
+    memberCount: 2,
+    createdAt: '2026-09-01T12:00:00Z',
+};
+
+export const SECOND_WORKSPACE: WorkspaceResponse = {
+    id: '00000000-0000-4000-8000-0000000000a2',
+    name: 'Casa',
+    memberCount: 1,
+    createdAt: '2026-09-10T12:00:00Z',
+};
+
+const IN_MAIN = { id: MAIN_WORKSPACE.id, name: MAIN_WORKSPACE.name };
 
 // Usuários da plataforma para `GET /users` (spec 0010), na ordem da API (`createdAt`). O primeiro
 // é o usuário `ativo` do fake de autenticação (o próprio ADMIN).
@@ -12,6 +30,8 @@ export const ADMIN_SELF: UserResponse = {
     name: 'Ana Souza',
     profile: 'ADMIN',
     profileGrantedAt: '2026-09-01T12:00:00Z',
+    workspace: IN_MAIN,
+    isPlatformAdmin: true,
     avatarUpdatedAt: null,
     createdAt: '2026-09-01T12:00:00Z',
 };
@@ -23,6 +43,8 @@ export const BILLER_USER: UserResponse = {
     name: 'Lucas Martins',
     profile: 'BILLER',
     profileGrantedAt: '2026-09-05T12:00:00Z',
+    workspace: IN_MAIN,
+    isPlatformAdmin: false,
     avatarUpdatedAt: null,
     createdAt: '2026-09-05T12:00:00Z',
 };
@@ -34,6 +56,8 @@ export const PENDING_USER: UserResponse = {
     name: 'Paula Nunes',
     profile: null,
     profileGrantedAt: null,
+    workspace: null,
+    isPlatformAdmin: false,
     avatarUpdatedAt: null,
     createdAt: '2026-10-10T12:00:00Z',
 };
@@ -45,6 +69,8 @@ export const UNVERIFIED_USER: UserResponse = {
     name: 'Rafael Costa',
     profile: null,
     profileGrantedAt: null,
+    workspace: null,
+    isPlatformAdmin: false,
     avatarUpdatedAt: null,
     createdAt: '2026-10-11T12:00:00Z',
 };

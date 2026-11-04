@@ -29,6 +29,8 @@ function me(profile: CurrentUser['profile'], name = 'Ana Souza'): CurrentUser {
         name,
         profile,
         profileGrantedAt: null,
+        workspace: null,
+        isPlatformAdmin: false,
         avatarUpdatedAt: null,
         createdAt: '2026-10-01T00:00:00Z',
     };
@@ -98,6 +100,33 @@ const trigger = () => screen.getByRole('button', { name: 'Menu do usuário' });
 afterEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-tema');
+});
+
+// AC-0021-10, ERR-0021-04: admin da plataforma sem espaço.
+describe('AppShell without a workspace (spec 0021)', () => {
+    const admin = { ...me(null), isPlatformAdmin: true };
+
+    it('shows the sem-espaco state in place of a domain screen and only the marked items', async () => {
+        await renderShell(admin);
+
+        expect(screen.queryByRole('heading', { name: 'Conteúdo' })).toBeNull();
+        expect(
+            screen.getByText(/Você ainda não está em um espaço\. Para ver e lançar registros/),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Ir para Usuários' })).toHaveAttribute(
+            'href',
+            '/usuarios',
+        );
+        const nav = screen.getByRole('navigation', { name: 'Principal' });
+        expect(within(nav).queryByRole('link', { name: 'Início' })).toBeNull();
+    });
+
+    it('keeps the normal content for a member', async () => {
+        await renderShell(me('VIEWER'));
+
+        expect(screen.getByRole('heading', { name: 'Conteúdo' })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Ir para Usuários' })).toBeNull();
+    });
 });
 
 describe('AppShell (spec 0006)', () => {

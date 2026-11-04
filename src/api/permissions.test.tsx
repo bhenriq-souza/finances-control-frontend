@@ -5,13 +5,34 @@ import { describe, expect, it } from 'vitest';
 import { can, type Permission, useCan } from './permissions';
 import { CURRENT_USER_QUERY_KEY, type CurrentUser, type Profile } from './queries/current-user';
 
+// Spec 0021: `users.manage` e `catalog.write` são da marca de admin da plataforma; as outras, do perfil.
 const TABLE: Record<Profile, Record<Permission, boolean>> = {
-    ADMIN: { 'users.manage': true, 'accounts.write': true, 'entries.write': true },
-    BILLER: { 'users.manage': false, 'accounts.write': false, 'entries.write': true },
-    VIEWER: { 'users.manage': false, 'accounts.write': false, 'entries.write': false },
+    ADMIN: {
+        'users.manage': false,
+        'catalog.write': false,
+        'accounts.write': true,
+        'entries.write': true,
+    },
+    BILLER: {
+        'users.manage': false,
+        'catalog.write': false,
+        'accounts.write': false,
+        'entries.write': true,
+    },
+    VIEWER: {
+        'users.manage': false,
+        'catalog.write': false,
+        'accounts.write': false,
+        'entries.write': false,
+    },
 };
 
-const PERMISSIONS: Permission[] = ['users.manage', 'accounts.write', 'entries.write'];
+const PERMISSIONS: Permission[] = [
+    'users.manage',
+    'catalog.write',
+    'accounts.write',
+    'entries.write',
+];
 
 function user(profile: Profile | null): CurrentUser {
     return {
@@ -21,6 +42,8 @@ function user(profile: Profile | null): CurrentUser {
         name: 'Ana',
         profile,
         profileGrantedAt: null,
+        workspace: null,
+        isPlatformAdmin: false,
         avatarUpdatedAt: null,
         createdAt: '2026-10-01T00:00:00Z',
     };
@@ -51,17 +74,33 @@ describe('permissions', () => {
     // AC-0009-02: a tabela para os três perfis.
     it.each(Object.keys(TABLE) as Profile[])('can() follows the table for %s', (profile) => {
         for (const permission of PERMISSIONS) {
-            expect({ permission, allowed: can(profile, permission) }).toEqual({
+            expect({
+                permission,
+                allowed: can({ profile, isPlatformAdmin: false }, permission),
+            }).toEqual({
                 permission,
                 allowed: TABLE[profile][permission],
             });
         }
     });
 
-    it('can() is false without a profile', () => {
+    // AC-0021-01, INV-0021-01: a marca dá `users.manage` e `catalog.write`, com ou sem espaço.
+    it.each<Profile | null>(['ADMIN', 'BILLER', 'VIEWER', null])(
+        'the platform mark grants users.manage and catalog.write to %s',
+        (profile) => {
+            const marked = { profile, isPlatformAdmin: true };
+            expect(can(marked, 'users.manage')).toBe(true);
+            expect(can(marked, 'catalog.write')).toBe(true);
+            expect(can(marked, 'accounts.write')).toBe(profile === 'ADMIN');
+            expect(can(marked, 'entries.write')).toBe(profile === 'ADMIN' || profile === 'BILLER');
+        },
+    );
+
+    it('can() is false without a user or a profile', () => {
         for (const permission of PERMISSIONS) {
             expect(can(null, permission)).toBe(false);
             expect(can(undefined, permission)).toBe(false);
+            expect(can({ profile: null, isPlatformAdmin: false }, permission)).toBe(false);
         }
     });
 

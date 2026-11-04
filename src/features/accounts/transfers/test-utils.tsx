@@ -73,6 +73,8 @@ function user(profile: Profile): CurrentUser {
         name: 'Ana Souza',
         profile,
         profileGrantedAt: null,
+        workspace: null,
+        isPlatformAdmin: false,
         avatarUpdatedAt: null,
         createdAt: '2026-10-01T00:00:00Z',
     };

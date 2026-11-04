@@ -39,7 +39,10 @@ export async function guardApp({
         }
         throw error;
     }
-    if (currentUser.profile === null) throw redirect({ to: '/aguardando-aprovacao' });
+    // Admin da plataforma sem espaço entra no app (spec 0021); só quem não tem nenhum dos dois espera.
+    if (currentUser.profile === null && !currentUser.isPlatformAdmin) {
+        throw redirect({ to: '/aguardando-aprovacao' });
+    }
     return { currentUser };
 }
 

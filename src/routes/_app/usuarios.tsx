@@ -8,20 +8,21 @@ import { EmptyState } from '@/ui/empty-state';
 const searchSchema = z.object({
     filtro: z.literal('aguardando').optional().catch(undefined),
     perfil: z.string().min(1).optional().catch(undefined),
+    espacos: z.literal(1).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_app/usuarios')({
     validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
     // Sem `users.manage`, o estado sem acesso, sem chamar a API (INV-0010-01).
     beforeLoad: ({ context }) => ({
-        canManageUsers: canManageUsers(context.currentUser.profile),
+        canManageUsers: canManageUsers(context.currentUser),
     }),
     component: Users,
 });
 
 function Users() {
     const { canManageUsers: allowed } = Route.useRouteContext();
-    const { filtro, perfil } = Route.useSearch();
+    const { filtro, perfil, espacos } = Route.useSearch();
     const navigate = Route.useNavigate();
 
     if (!allowed) {
@@ -36,6 +37,10 @@ function Users() {
         <UsersPage
             filter={filtro === 'aguardando' ? 'aguardando' : 'todos'}
             profileUserId={perfil}
+            workspacesOpen={espacos === 1}
+            onWorkspacesChange={(open) =>
+                void navigate({ search: (prev) => ({ ...prev, espacos: open ? 1 : undefined }) })
+            }
             onFilterChange={(filter) =>
                 void navigate({
                     search: (prev) => ({

@@ -27,6 +27,8 @@ function me(profile: CurrentUser['profile']): CurrentUser {
         name: 'Ana',
         profile,
         profileGrantedAt: null,
+        workspace: null,
+        isPlatformAdmin: false,
         avatarUpdatedAt: null,
         createdAt: '2026-10-01T00:00:00Z',
     };
@@ -84,6 +86,16 @@ describe('_app guard (spec 0006)', () => {
         const options = await redirectOf(guardApp({ context: contextWith(USER), location }));
 
         expect(options).toMatchObject({ to: '/aguardando-aprovacao' });
+    });
+
+    // AC-0021-10, ERR-0021-03: sem espaço e sem a marca espera; com a marca entra no app.
+    it('lets a platform admin without a space into the app (AC-0021-10)', async () => {
+        const admin = { ...me(null), isPlatformAdmin: true };
+        mocks.queryFn.mockResolvedValue(admin);
+
+        await expect(guardApp({ context: contextWith(USER), location })).resolves.toEqual({
+            currentUser: admin,
+        });
     });
 
     it('sends EMAIL_NOT_VERIFIED to /verificar-email (AC-0006-04, INV-0006-02)', async () => {
