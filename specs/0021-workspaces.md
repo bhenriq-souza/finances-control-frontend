@@ -261,17 +261,17 @@ Catálogo:
 
 ## Test mapping
 
-| Item                                | Teste                                                                                                |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| AC-0021-01, INV-0021-01             | `e2e/workspaces.spec.ts`, `src/app/shell/navigation.test.ts` e `src/api/permissions.test.tsx`        |
-| AC-0021-02, AC-0021-03, INV-0021-03 | `src/features/identity/users-admin/approve-dialog.test.tsx` e `e2e/workspaces.spec.ts`               |
-| AC-0021-04, AC-0021-05, INV-0021-04 | `src/features/identity/users-admin/profile-dialog.test.tsx`                                          |
-| AC-0021-06                          | `src/features/identity/users-admin/workspaces-panel.test.tsx`                                        |
-| AC-0021-07                          | `src/app/shell/user-menu.test.tsx`                                                                   |
-| AC-0021-08, INV-0021-02             | `src/features/accounts/banks-page.test.tsx`, os testes das telas de tipos e `e2e/workspaces.spec.ts` |
-| AC-0021-09                          | `e2e/workspaces.spec.ts` (três projetos)                                                             |
-| AC-0021-10                          | `e2e/workspaces.spec.ts`, `src/app/routes/guard.test.ts` e `src/app/shell/navigation.test.ts`        |
-| AC-0021-11                          | gate de contrato (spec 0002) e `src/api/errors/catalog.test.ts`                                      |
+| Item                                | Teste                                                                                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| AC-0021-01, INV-0021-01             | `e2e/workspaces.spec.ts`, `src/app/shell/navigation.test.ts` e `src/api/permissions.test.tsx`                  |
+| AC-0021-02, AC-0021-03, INV-0021-03 | `src/features/identity/users-admin/approve-dialog.test.tsx` e `e2e/workspaces.spec.ts`                         |
+| AC-0021-04, AC-0021-05, INV-0021-04 | `src/features/identity/users-admin/profile-dialog.test.tsx`                                                    |
+| AC-0021-06                          | `src/features/identity/users-admin/workspaces-panel.test.tsx`                                                  |
+| AC-0021-07                          | `src/app/shell/user-menu.test.tsx`                                                                             |
+| AC-0021-08, INV-0021-02             | `src/features/accounts/forms/write-controls.test.tsx`, os testes das telas de tipos e `e2e/workspaces.spec.ts` |
+| AC-0021-09                          | `e2e/workspaces.spec.ts` (três projetos)                                                                       |
+| AC-0021-10                          | `e2e/workspaces.spec.ts`, `src/app/routes/guard.test.ts` e `src/app/shell/navigation.test.ts`                  |
+| AC-0021-11                          | gate de contrato (spec 0002) e `src/api/errors/catalog.test.ts`                                                |
 
 ## Open questions
 
