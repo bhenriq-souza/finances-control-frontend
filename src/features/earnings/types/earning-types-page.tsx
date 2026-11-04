@@ -97,7 +97,7 @@ function ArchivedBadge({ earningType }: { earningType: EarningType }) {
  * (INV-0009-03).
  */
 export function EarningTypesPage({ search, onSearchChange }: EarningTypesPageProps) {
-    const canWrite = useCan('entries.write');
+    const canWrite = useCan('catalog.write');
     const query = useEarningTypes();
     const toggleId = useId();
     const showArchived = search.arquivados === 1;

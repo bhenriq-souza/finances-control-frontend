@@ -39,7 +39,7 @@ const userMessageOf = (error: unknown) =>
  * parâmetros `novo` e `editar` não têm efeito (INV-0009-03).
  */
 export function ExpenseTypesPage({ search, onSearchChange }: ExpenseTypesPageProps) {
-    const canWrite = useCan('entries.write');
+    const canWrite = useCan('catalog.write');
     const notify = useNotify();
     const query = useExpenseTypes();
     const archive = useArchiveExpenseType();

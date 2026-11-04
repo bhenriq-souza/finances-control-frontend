@@ -315,3 +315,27 @@ describe.each<Profile>(['BILLER', 'VIEWER'])('without accounts.write (%s)', (pro
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 });
+
+// AC-0021-08, INV-0021-01: bancos são catálogo global; um ADMIN de espaço sem a marca só lê.
+describe('without catalog.write (ADMIN of a space, no platform mark)', () => {
+    it('renders the banks read-only, ignores ?novo, and keeps accounts.write elsewhere', async () => {
+        await renderWithApp(
+            <>
+                <BanksPage
+                    showArchived
+                    onShowArchivedChange={vi.fn()}
+                    form={{ novo: 1, editar: BANKS[0]!.id }}
+                />
+                <CreditCardsPage onShowArchivedChange={vi.fn()} showArchived={false} form={{}} />
+            </>,
+            'ADMIN',
+            false,
+        );
+
+        expect(
+            screen.queryByRole('button', { name: /^(Novo banco|Editar|Arquivar|Desarquivar)/ }),
+        ).toBeNull();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^Novo cartão/ })).toBeInTheDocument();
+    });
+});

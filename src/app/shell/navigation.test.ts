@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     BOTTOM_BAR_LIMIT,
+    reachableWithoutWorkspace,
     bottomBarEntries,
     MORE_ENTRY,
     moreItems,
@@ -24,6 +25,9 @@ const item = (
 });
 
 const ALL = ['ADMIN', 'BILLER', 'VIEWER'] as const;
+const PLATFORM_ADMIN = { profile: 'ADMIN', isPlatformAdmin: true } as const;
+// Sem espaço, o admin da plataforma vê também os atalhos dos catálogos.
+const PLATFORM_ONLY = ['Usuários', 'Bancos', 'Tipos de despesa', 'Tipos de receita'];
 const labels = (entries: readonly { label: string }[]) => entries.map(({ label }) => label);
 
 // INV-0006-03: a navegação mostra só itens cujo `profiles` inclui o perfil do usuário.
@@ -43,7 +47,8 @@ describe('navItemsFor', () => {
         for (const profile of ['BILLER', 'VIEWER'] as const) {
             expect(labels(navItemsFor(profile))).toEqual(common);
         }
-        expect(labels(navItemsFor('ADMIN'))).toEqual([...common, 'Usuários']);
+        expect(labels(navItemsFor('ADMIN'))).toEqual(common);
+        expect(labels(navItemsFor(PLATFORM_ADMIN))).toEqual([...common, 'Usuários']);
         expect(NAV_ITEMS.map(({ to }) => to)).toEqual([
             '/',
             '/despesas',
@@ -55,16 +60,48 @@ describe('navItemsFor', () => {
             '/series',
             '/relatorios',
             '/usuarios',
+            '/contas/bancos',
+            '/despesas/tipos',
+            '/receitas/tipos',
         ]);
     });
 
-    // INV-0010-01: só `ADMIN` vê **Usuários**, na página Mais (spec 0010).
-    it('shows Usuários only to ADMIN, in the mais slot', () => {
+    // AC-0021-01, INV-0021-01: só o admin da plataforma vê **Usuários**, na página Mais.
+    it('shows Usuários only to the platform admin, in the mais slot', () => {
         const users = NAV_ITEMS.find(({ to }) => to === '/usuarios');
-        expect(users).toMatchObject({ label: 'Usuários', profiles: ['ADMIN'], slot: 'mais' });
-        expect(labels(moreItems(navItemsFor('ADMIN')))).toContain('Usuários');
-        for (const profile of ['BILLER', 'VIEWER'] as const) {
-            expect(labels(navItemsFor(profile))).not.toContain('Usuários');
+        expect(users).toMatchObject({ label: 'Usuários', platformAdmin: true, slot: 'mais' });
+        expect(labels(moreItems(navItemsFor(PLATFORM_ADMIN)))).toContain('Usuários');
+        for (const profile of ['ADMIN', 'BILLER', 'VIEWER'] as const) {
+            expect(labels(navItemsFor({ profile, isPlatformAdmin: false })), profile).not.toContain(
+                'Usuários',
+            );
+        }
+    });
+
+    // AC-0021-10: sem espaço, o admin da plataforma vê só os itens com a marca.
+    it('shows a platform admin without a space only the marked items', () => {
+        const visible = navItemsFor({ profile: null, isPlatformAdmin: true });
+        expect(labels(visible)).toEqual(PLATFORM_ONLY);
+        expect(visible.every((entry) => entry.platformAdmin)).toBe(true);
+        expect(navItemsFor({ profile: null, isPlatformAdmin: false })).toEqual([]);
+    });
+
+    it('ignores profiles on a marked item', () => {
+        const items: NavItem[] = [{ ...item('Marcado', []), platformAdmin: true }];
+        expect(labels(navItemsFor({ profile: 'VIEWER', isPlatformAdmin: true }, items))).toEqual([
+            'Marcado',
+        ]);
+        expect(labels(navItemsFor({ profile: 'ADMIN', isPlatformAdmin: false }, items))).toEqual(
+            [],
+        );
+    });
+
+    it('knows which routes a platform admin without a space reaches', () => {
+        for (const path of ['/usuarios', '/contas/bancos', '/despesas/tipos', '/receitas/tipos']) {
+            expect(reachableWithoutWorkspace(path), path).toBe(true);
+        }
+        for (const path of ['/', '/despesas', '/contas', '/cartoes', '/relatorios']) {
+            expect(reachableWithoutWorkspace(path), path).toBe(false);
         }
     });
 
@@ -142,7 +179,7 @@ describe('navigation slots', () => {
             profiles: ALL,
             slot: 'mais',
         });
-        expect(labels(moreItems(navItemsFor('ADMIN')))).toEqual([
+        expect(labels(moreItems(navItemsFor(PLATFORM_ADMIN)))).toEqual([
             'Fluxo de caixa',
             'Contas',
             'Transferências',

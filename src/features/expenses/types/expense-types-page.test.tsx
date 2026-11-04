@@ -55,6 +55,7 @@ function user(profile: Profile) {
         name: 'Ana',
         profile,
         profileGrantedAt: null,
+        isPlatformAdmin: profile === 'ADMIN',
         createdAt: '2026-10-01T00:00:00Z',
     };
 }
@@ -286,9 +287,11 @@ describe('ExpenseTypesPage', () => {
         expect(within(cards()).getByText('Moradia')).toBeInTheDocument();
     });
 
-    it('lets a BILLER write', async () => {
-        await renderPage({ profile: 'BILLER' });
-        expect(screen.getByRole('button', { name: 'Novo tipo' })).toBeInTheDocument();
+    // AC-0021-08: tipos são catálogo global; só `catalog.write` (admin da plataforma) escreve.
+    it('does not let a BILLER write', async () => {
+        await renderPage({ profile: 'BILLER', search: { novo: 1 } });
+        expect(screen.queryByRole('button', { name: 'Novo tipo' })).toBeNull();
+        expect(screen.queryByRole('dialog')).toBeNull();
     });
 
     it('shows the empty state without types', async () => {

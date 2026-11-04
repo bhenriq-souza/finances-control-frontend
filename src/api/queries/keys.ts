@@ -23,6 +23,7 @@ export function normalizeParams(params: QueryParams = {}): NormalizedParams {
 /** Raízes das chaves; `invalidateAfter` invalida por elas. */
 export type QueryRoot =
     | 'users'
+    | 'workspaces'
     | 'banks'
     | 'bank-accounts'
     | 'credit-cards'
@@ -54,6 +55,10 @@ export const queryKeys = {
         all: ['users'] as const,
         me: () => ['users', 'me'] as const,
         list: () => ['users', 'list'] as const,
+    },
+    workspaces: {
+        all: ['workspaces'] as const,
+        list: () => ['workspaces', 'list'] as const,
     },
     banks: { all: ['banks'] as const },
     bankAccounts: { all: ['bank-accounts'] as const },

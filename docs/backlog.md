@@ -337,7 +337,7 @@ Tarefa da spec [0020](../specs/0020-statement-reconciliation.md), da issue de en
 
 Tarefa da spec [0021](../specs/0021-workspaces.md), da issue de entrega [FCF-025](https://github.com/bhenriq-souza/finances-control-frontend/issues/176) (2026-10-15, Fase 5 do hub, FC-013). Depende da tag `v1.5.0` do backend, com a spec 0021 dele implementada; pode começar com mocks pelo contrato da spec antes da tag.
 
-- [ ] **T-0021-01 — Espaços na aprovação e no menu** · #177
+- [x] **T-0021-01 — Espaços na aprovação e no menu** · #177
     - What: aprovação com espaço novo ou existente na tela de usuários; coluna **Espaço**; **Remover do espaço**; painel de espaços com renomear; nome do espaço no menu; tela **Usuários** e escrita de bancos e tipos só para o admin da plataforma; contrato em `sources.json` na tag `v1.5.0`
     - Where: `src/features/identity/users-admin/`, `src/api/permissions.ts`, `src/app/shell/`, telas de bancos e de tipos, `src/api/errors/catalog.ts`, `sources.json`, `e2e/workspaces.spec.ts`
     - Done when: `AC-0021-01` a `AC-0021-11` cobertos; `INV-0021-01` a `INV-0021-04` verificados; spec `0021` vai a `implemented`; fecha FCF-025

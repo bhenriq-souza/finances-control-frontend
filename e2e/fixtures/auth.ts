@@ -5,14 +5,28 @@ import type { Page, Route } from '@playwright/test';
  * e `leitor` são da spec 0009.
  */
 export type E2EUser =
-    'ativo' | 'lancador' | 'leitor' | 'sem-perfil' | 'email-nao-verificado' | 'nenhum';
+    | 'ativo'
+    | 'lancador'
+    | 'leitor'
+    | 'admin-sem-espaco'
+    | 'admin-de-espaco'
+    | 'sem-perfil'
+    | 'email-nao-verificado'
+    | 'nenhum';
 
 type Person = { id: string; email: string; name: string };
+
+type Workspace = { id: string; name: string } | null;
+
+/** O espaço `Principal`, em que ficam os usuários com perfil (spec 0021). */
+export const MAIN_WORKSPACE = { id: '00000000-0000-4000-8000-0000000000a1', name: 'Principal' };
 
 /** Perfil e pessoa que `GET /users/me` devolve para cada usuário que tem conta no backend. */
 const BACKEND_USERS = {
     ativo: {
         profile: 'ADMIN',
+        workspace: MAIN_WORKSPACE,
+        isPlatformAdmin: true,
         person: {
             id: '00000000-0000-4000-8000-000000000001',
             email: 'ativo@example.com',
@@ -21,6 +35,8 @@ const BACKEND_USERS = {
     },
     lancador: {
         profile: 'BILLER',
+        workspace: MAIN_WORKSPACE,
+        isPlatformAdmin: false,
         person: {
             id: '00000000-0000-4000-8000-000000000003',
             email: 'lancador@example.com',
@@ -29,14 +45,38 @@ const BACKEND_USERS = {
     },
     leitor: {
         profile: 'VIEWER',
+        workspace: MAIN_WORKSPACE,
+        isPlatformAdmin: false,
         person: {
             id: '00000000-0000-4000-8000-000000000004',
             email: 'leitor@example.com',
             name: 'Lívia Rocha',
         },
     },
+    'admin-sem-espaco': {
+        profile: null,
+        workspace: null,
+        isPlatformAdmin: true,
+        person: {
+            id: '00000000-0000-4000-8000-000000000001',
+            email: 'admin-sem-espaco@example.com',
+            name: 'Ana Souza',
+        },
+    },
+    'admin-de-espaco': {
+        profile: 'ADMIN',
+        workspace: MAIN_WORKSPACE,
+        isPlatformAdmin: false,
+        person: {
+            id: '00000000-0000-4000-8000-000000000005',
+            email: 'admin-de-espaco@example.com',
+            name: 'Daniel Alves',
+        },
+    },
     'sem-perfil': {
         profile: null,
+        workspace: null,
+        isPlatformAdmin: false,
         person: {
             id: '00000000-0000-4000-8000-000000000001',
             email: 'ativo@example.com',
@@ -45,7 +85,12 @@ const BACKEND_USERS = {
     },
 } as const satisfies Record<
     string,
-    { profile: 'ADMIN' | 'BILLER' | 'VIEWER' | null; person: Person }
+    {
+        profile: 'ADMIN' | 'BILLER' | 'VIEWER' | null;
+        workspace: Workspace;
+        isPlatformAdmin: boolean;
+        person: Person;
+    }
 >;
 
 /** Escolhe o usuário do fake antes do carregamento; `extra` grava outras chaves do e2e. */
@@ -74,6 +119,10 @@ export const OTHER_PERSON = {
 export function userResponse(
     profile: 'ADMIN' | 'BILLER' | 'VIEWER' | null,
     person: Person = BACKEND_USERS.ativo.person,
+    space: { workspace: Workspace; isPlatformAdmin: boolean } = {
+        workspace: profile ? MAIN_WORKSPACE : null,
+        isPlatformAdmin: false,
+    },
 ) {
     return {
         data: {
@@ -81,6 +130,9 @@ export function userResponse(
             emailVerified: true,
             profile,
             profileGrantedAt: profile ? '2026-10-01T12:00:00Z' : null,
+            workspace: space.workspace,
+            isPlatformAdmin: space.isPlatformAdmin,
+            avatarUpdatedAt: null,
             createdAt: '2026-10-01T12:00:00Z',
         },
     };
@@ -91,7 +143,12 @@ export const emailNotVerified = {
 };
 
 /** Simula `GET /api/users/me` coerente com o usuário escolhido. */
-export async function stubUsersMe(page: Page, user: E2EUser): Promise<void> {
+export async function stubUsersMe(
+    page: Page,
+    user: E2EUser,
+    /** Dá o espaço atual do usuário (ex.: depois de renomeado); o padrão é o fixo. */
+    currentWorkspace: (fixed: Workspace) => Workspace = (fixed) => fixed,
+): Promise<void> {
     await page.route('**/api/users/me', (route: Route) => {
         if (user === 'email-nao-verificado') {
             return route.fulfill({ status: 403, json: emailNotVerified });
@@ -102,8 +159,14 @@ export async function stubUsersMe(page: Page, user: E2EUser): Promise<void> {
                 json: { error: { code: 'UNAUTHENTICATED', message: 'no token' } },
             });
         }
-        const { profile, person } = BACKEND_USERS[user];
-        return route.fulfill({ status: 200, json: userResponse(profile, person) });
+        const { profile, person, workspace, isPlatformAdmin } = BACKEND_USERS[user];
+        return route.fulfill({
+            status: 200,
+            json: userResponse(profile, person, {
+                workspace: currentWorkspace(workspace),
+                isPlatformAdmin,
+            }),
+        });
     });
 }
 

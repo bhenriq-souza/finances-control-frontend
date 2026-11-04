@@ -1,7 +1,7 @@
 ---
 id: '0021'
 title: Espaços na aprovação de usuários e no menu
-status: approved
+status: implemented
 depends_on: ['0006', '0009', '0010', '0011', '0012', '0014']
 ---
 

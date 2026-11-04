@@ -12,9 +12,20 @@ import { ADMIN_ME, fail, ok, platformUser, renderUsersPage } from './test-utils'
 import { sortUsers } from './users-api';
 import { canManageUsers } from './users-page';
 
-const BRUNO = platformUser({ id: 'bruno', name: 'Bruno Lima', profile: 'ADMIN' });
+const PRINCIPAL = { id: 'ws-principal', name: 'Principal' };
+const BRUNO = platformUser({
+    id: 'bruno',
+    name: 'Bruno Lima',
+    profile: 'ADMIN',
+    workspace: PRINCIPAL,
+});
 const CARLA = platformUser({ id: 'carla', name: 'Carla Dias', emailVerified: false });
-const DIEGO = platformUser({ id: 'diego', name: 'Diego Reis', profile: 'VIEWER' });
+const DIEGO = platformUser({
+    id: 'diego',
+    name: 'Diego Reis',
+    profile: 'VIEWER',
+    workspace: PRINCIPAL,
+});
 const ELISA = platformUser({ id: 'elisa', name: 'Elisa Prado' });
 const USERS = [ADMIN_ME, BRUNO, CARLA, DIEGO, ELISA];
 
@@ -33,7 +44,11 @@ beforeEach(() => {
     mocks.get
         .mockReset()
         .mockImplementation((path: string) =>
-            path === '/users/me' ? Promise.resolve(ok({ data: ADMIN_ME })) : mocks.users(path),
+            path === '/users/me'
+                ? Promise.resolve(ok({ data: ADMIN_ME }))
+                : path === '/workspaces'
+                  ? Promise.resolve(ok({ data: [] }))
+                  : mocks.users(path),
         );
     mocks.users.mockReset().mockResolvedValue(ok({ data: USERS }));
     mocks.patch.mockReset();
@@ -52,19 +67,20 @@ describe('sortUsers', () => {
     });
 });
 
-// INV-0010-01: só `ADMIN` tem a permissão e só ele dispara `GET /users`.
+// INV-0010-01, INV-0021-01: só o admin da plataforma tem a permissão e dispara `GET /users`.
 describe('access', () => {
-    it('grants users.manage only to ADMIN', () => {
-        expect(canManageUsers('ADMIN')).toBe(true);
-        expect(canManageUsers('BILLER')).toBe(false);
-        expect(canManageUsers('VIEWER')).toBe(false);
-        expect(canManageUsers(null)).toBe(false);
+    it('grants users.manage only to the platform admin', () => {
+        expect(canManageUsers({ profile: 'ADMIN', isPlatformAdmin: true })).toBe(true);
+        expect(canManageUsers({ profile: null, isPlatformAdmin: true })).toBe(true);
+        expect(canManageUsers({ profile: 'ADMIN', isPlatformAdmin: false })).toBe(false);
+        expect(canManageUsers({ profile: 'BILLER', isPlatformAdmin: false })).toBe(false);
+        expect(canManageUsers({ profile: 'VIEWER', isPlatformAdmin: false })).toBe(false);
     });
 
-    it.each(['BILLER', 'VIEWER'] as const)(
-        'shows the no-access state to %s without calling GET /users',
+    it.each(['BILLER', 'VIEWER', 'ADMIN'] as const)(
+        'shows the no-access state to %s without the mark and without calling GET /users',
         async (profile) => {
-            await renderUsersPage({ ...ADMIN_ME, profile });
+            await renderUsersPage({ ...ADMIN_ME, profile, isPlatformAdmin: false });
             expect(screen.getByText('Seu perfil não dá acesso a esta tela.')).toBeInTheDocument();
             expect(mocks.users).not.toHaveBeenCalled();
         },
@@ -100,6 +116,21 @@ describe('UsersPage', () => {
         expect(
             within(row('Bruno Lima')).getByRole('button', { name: 'Alterar perfil de Bruno Lima' }),
         ).toBeInTheDocument();
+    });
+
+    // AC-0021-09: a coluna Espaço na tabela e a segunda linha do cartão; vazia para quem aguarda.
+    it('shows the Espaço column and the space on the card second line', async () => {
+        await renderUsersPage();
+        await screen.findByRole('table', { name: 'Usuários da plataforma' });
+
+        expect(within(table()).getByRole('columnheader', { name: 'Espaço' })).toBeInTheDocument();
+        const cells = within(row('Bruno Lima')).getAllByRole('cell');
+        expect(cells[3]).toHaveTextContent('Principal');
+        expect(within(row('Carla Dias')).getAllByRole('cell')[3]).toBeEmptyDOMElement();
+        const card = screen
+            .getByRole('list', { name: 'Usuários da plataforma' })
+            .querySelectorAll('li')[3]!;
+        expect(card).toHaveTextContent('bruno@example.com · Principal');
     });
 
     // AC-0010-05, INV-0010-02: a própria linha mostra "Você" e nenhuma ação.
@@ -160,18 +191,20 @@ describe('UsersPage', () => {
         expect(await screen.findByRole('table', { name: 'Usuários da plataforma' })).toBeVisible();
     });
 
-    // AC-0010-04, ERR-0010-01: `409 LAST_ADMIN` no diálogo, que continua aberto; nada muda.
-    it('keeps the dialog open with the LAST_ADMIN message', async () => {
-        mocks.patch.mockResolvedValue(fail(409, 'LAST_ADMIN'));
+    // AC-0010-04, ERR-0010-01: `409 LAST_WORKSPACE_ADMIN` no diálogo (AC-0021-05), que continua aberto; nada muda.
+    it('keeps the dialog open with the LAST_WORKSPACE_ADMIN message', async () => {
+        mocks.patch.mockResolvedValue(fail(409, 'LAST_WORKSPACE_ADMIN'));
         await renderUsersPage();
         fireEvent.click(await rowAction('Alterar perfil de Bruno Lima'));
 
-        const dialog = screen.getByRole('dialog', { name: 'Alterar perfil de Bruno Lima' });
+        const dialog = screen.getByRole('dialog', {
+            name: 'Alterar perfil de Bruno Lima em Principal',
+        });
         fireEvent.click(within(dialog).getByRole('radio', { name: /Leitor/ }));
         fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
 
         expect(await within(dialog).findByRole('alert')).toHaveTextContent(
-            ERROR_MESSAGES.LAST_ADMIN,
+            ERROR_MESSAGES.LAST_WORKSPACE_ADMIN,
         );
         expect(dialog).toBeInTheDocument();
         expect(mocks.users).toHaveBeenCalledTimes(1);
@@ -183,7 +216,9 @@ describe('UsersPage', () => {
         mocks.patch.mockResolvedValue(fail(409, 'CANNOT_CHANGE_OWN_PROFILE'));
         await renderUsersPage(ADMIN_ME, { profileUserId: 'diego' });
 
-        const dialog = await screen.findByRole('dialog', { name: 'Alterar perfil de Diego Reis' });
+        const dialog = await screen.findByRole('dialog', {
+            name: 'Alterar perfil de Diego Reis em Principal',
+        });
         fireEvent.click(within(dialog).getByRole('radio', { name: /Lançador/ }));
         fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
 
@@ -198,7 +233,6 @@ describe('UsersPage', () => {
         await renderUsersPage(ADMIN_ME, { profileUserId: 'elisa' });
 
         const dialog = await screen.findByRole('dialog', { name: 'Liberar acesso de Elisa Prado' });
-        fireEvent.click(within(dialog).getByRole('radio', { name: /Leitor/ }));
         fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
 
         expect(await within(dialog).findByRole('alert')).toHaveTextContent(

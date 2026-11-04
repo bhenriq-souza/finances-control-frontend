@@ -6,9 +6,9 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 
 | ID                                       | Título                                                             | Status      |
 | ---------------------------------------- | ------------------------------------------------------------------ | ----------- |
-| [0000](0000-spec-process.md)             | Processo de specs e convenções                                     | approved    |
-| [0001](0001-development-workflow.md)     | Fluxo de desenvolvimento (branches, commits, pull requests)        | approved    |
-| [0002](0002-quality-gates.md)            | Portões de qualidade e orquestrador único                          | approved    |
+| [0000](0000-spec-process.md)             | Processo de specs e convenções                                     | implemented |
+| [0001](0001-development-workflow.md)     | Fluxo de desenvolvimento (branches, commits, pull requests)        | implemented |
+| [0002](0002-quality-gates.md)            | Portões de qualidade e orquestrador único                          | implemented |
 | [0003](0003-scaffold.md)                 | Scaffold, estrutura de pastas e configuração de runtime            | implemented |
 | [0004](0004-theme.md)                    | Tema gerado do tokens.json do hub                                  | implemented |
 | [0005](0005-api-client.md)               | Cliente da API gerado do contrato e erros por code                 | implemented |
@@ -25,6 +25,6 @@ Faixas: `0000`–`0009` processo e plataforma · `0010`+ telas de domínio, com 
 | [0017](0017-recurrences.md)              | Séries fixas de despesas e receitas                                | implemented |
 | [0018](0018-transfers.md)                | Transferências entre contas próprias                               | implemented |
 | [0020](0020-statement-reconciliation.md) | Conferência da fatura                                              | implemented |
-| [0021](0021-workspaces.md)               | Espaços na aprovação de usuários e no menu                         | approved    |
+| [0021](0021-workspaces.md)               | Espaços na aprovação de usuários e no menu                         | implemented |
 
 Decisões de arquitetura: as de **produto** vivem em [`docs/adr/` do hub](https://github.com/bhenriq-souza/finances-control/tree/main/docs/adr); as **locais do frontend**, em `adr/` (ainda vazia).

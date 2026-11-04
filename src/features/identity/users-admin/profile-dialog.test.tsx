@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { screen, waitFor, within, fireEvent } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), users: vi.fn(), patch: vi.fn(), del: vi.fn() }));
@@ -11,7 +11,12 @@ import { ERROR_MESSAGES } from '@/api/errors/catalog';
 import { ADMIN_ME, fail, ok, platformUser, renderUsersPage } from './test-utils';
 
 const ELISA = platformUser({ id: 'elisa', name: 'Elisa Prado' });
-const DIEGO = platformUser({ id: 'diego', name: 'Diego Reis', profile: 'VIEWER' });
+const DIEGO = platformUser({
+    id: 'diego',
+    name: 'Diego Reis',
+    profile: 'VIEWER',
+    workspace: { id: 'ws-principal', name: 'Principal' },
+});
 
 // Com um diálogo aberto o resto da página fica `aria-hidden`: `hidden: true` ainda acha a tabela.
 const table = () => screen.getByRole('table', { name: 'Usuários da plataforma', hidden: true });
@@ -22,13 +27,6 @@ const rowAction = async (name: string) =>
         { name },
     );
 const row = (name: string) => within(table()).getByText(name).closest('tr')!;
-
-/** Promessa resolvida à mão: prova que a lista espera a resposta do backend (INV-0010-03). */
-function deferred<T>() {
-    let resolve!: (value: T) => void;
-    const promise = new Promise<T>((r) => (resolve = r));
-    return { promise, resolve };
-}
 
 beforeEach(() => {
     // `invalidateAfter(…, 'profile')` também recarrega `GET /users/me`; `mocks.users` é só `GET /users`.
@@ -47,7 +45,9 @@ describe('ProfileDialog', () => {
         await renderUsersPage();
         fireEvent.click(await rowAction('Alterar perfil de Diego Reis'));
 
-        const dialog = screen.getByRole('dialog', { name: 'Alterar perfil de Diego Reis' });
+        const dialog = screen.getByRole('dialog', {
+            name: 'Alterar perfil de Diego Reis em Principal',
+        });
         const admin = within(dialog).getByRole('radio', { name: /Administrador/ });
         expect(admin).toHaveAccessibleDescription(
             'Tudo, inclusive usuários, bancos, contas e cartões',
@@ -71,58 +71,45 @@ describe('ProfileDialog', () => {
         expect(mocks.patch).not.toHaveBeenCalled();
     });
 
-    // AC-0010-02, INV-0010-03: PATCH com o perfil escolhido; a linha muda pela resposta do backend.
-    it('grants a profile and shows it only after the backend list answers', async () => {
-        mocks.patch.mockResolvedValue(ok({ data: { ...ELISA, profile: 'BILLER' } }));
-        const refetched = deferred<unknown>();
-        await renderUsersPage();
-        fireEvent.click(await rowAction('Liberar acesso de Elisa Prado'));
-
-        const dialog = screen.getByRole('dialog', { name: 'Liberar acesso de Elisa Prado' });
-        expect(within(dialog).queryByRole('radio', { checked: true })).not.toBeInTheDocument();
-        expect(within(dialog).queryByRole('button', { name: 'Revogar acesso' })).toBeNull();
-        expect(within(dialog).getByRole('button', { name: 'Salvar' })).toBeDisabled();
-        mocks.users.mockReturnValueOnce(refetched.promise);
+    // AC-0021-04: trocar o perfil envia só `{ profile }`.
+    it('changes the profile of a member sending only the profile', async () => {
+        mocks.patch.mockResolvedValue(ok({ data: { ...DIEGO, profile: 'BILLER' } }));
+        await renderUsersPage(ADMIN_ME, { profileUserId: 'diego' });
+        const dialog = await screen.findByRole('dialog', {
+            name: 'Alterar perfil de Diego Reis em Principal',
+        });
 
         fireEvent.click(within(dialog).getByRole('radio', { name: /Lançador/ }));
         fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
 
         await waitFor(() =>
             expect(mocks.patch).toHaveBeenCalledWith('/users/{id}/profile', {
-                params: { path: { id: 'elisa' } },
+                params: { path: { id: 'diego' } },
                 body: { profile: 'BILLER' },
             }),
         );
-        await waitFor(() => expect(mocks.users).toHaveBeenCalledTimes(2));
-        // Sem atualização otimista: até o GET responder, a linha continua como antes.
-        expect(within(row('Elisa Prado')).getByText('Aguardando')).toBeInTheDocument();
-
-        await act(async () =>
-            refetched.resolve(ok({ data: [ADMIN_ME, DIEGO, { ...ELISA, profile: 'BILLER' }] })),
-        );
-
-        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-        expect(within(row('Elisa Prado')).getByText('Lançador')).toBeInTheDocument();
-        expect(screen.getByText('Perfil de Elisa Prado atualizado.')).toBeInTheDocument();
+        expect(await screen.findByText('Perfil de Diego Reis atualizado.')).toBeInTheDocument();
     });
 
-    // AC-0010-03, INV-0010-03: revogar pede confirmação, envia DELETE e a linha volta a Aguardando.
-    it('revokes the access after a confirmation', async () => {
+    // AC-0021-04, INV-0021-04: remover do espaço pede confirmação, envia DELETE e a linha volta a Aguardando.
+    it('removes the member from the space after a confirmation', async () => {
         mocks.del.mockResolvedValue(ok({ data: { ...DIEGO, profile: null } }));
         await renderUsersPage();
         fireEvent.click(await rowAction('Alterar perfil de Diego Reis'));
-        const dialog = screen.getByRole('dialog', { name: 'Alterar perfil de Diego Reis' });
+        const dialog = screen.getByRole('dialog', {
+            name: 'Alterar perfil de Diego Reis em Principal',
+        });
         mocks.users.mockResolvedValue(ok({ data: [ADMIN_ME, { ...DIEGO, profile: null }, ELISA] }));
 
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Revogar acesso' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Remover do espaço' }));
         const confirm = screen.getByRole('alertdialog', {
-            name: 'Revogar o acesso de Diego Reis?',
+            name: 'Remover Diego Reis do espaço?',
         });
         expect(confirm).toHaveTextContent(
-            'Diego Reis volta para a tela de aguardando aprovação e perde o acesso a tudo até receber um perfil de novo.',
+            'Diego Reis sai do espaço Principal e volta para a tela de aguardando aprovação. Os registros do espaço continuam lá.',
         );
         expect(mocks.del).not.toHaveBeenCalled();
-        fireEvent.click(within(confirm).getByRole('button', { name: 'Revogar' }));
+        fireEvent.click(within(confirm).getByRole('button', { name: 'Remover' }));
 
         await waitFor(() =>
             expect(mocks.del).toHaveBeenCalledWith('/users/{id}/profile', {
@@ -132,21 +119,23 @@ describe('ProfileDialog', () => {
         await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         expect(within(row('Diego Reis')).getByText('Aguardando')).toBeInTheDocument();
-        expect(screen.getByText('Acesso de Diego Reis revogado.')).toBeInTheDocument();
+        expect(screen.getByText('Diego Reis removido do espaço Principal.')).toBeInTheDocument();
     });
 
-    // ERR-0010-01 na revogação: a mensagem do catálogo na confirmação, que continua aberta.
+    // ERR-0021-01 (AC-0021-05) na remoção: a mensagem do catálogo na confirmação, que continua aberta.
     it('keeps the confirmation open with the catalog message when revoking fails', async () => {
-        mocks.del.mockResolvedValue(fail(409, 'LAST_ADMIN'));
+        mocks.del.mockResolvedValue(fail(409, 'LAST_WORKSPACE_ADMIN'));
         await renderUsersPage(ADMIN_ME, { profileUserId: 'diego' });
-        const dialog = await screen.findByRole('dialog', { name: 'Alterar perfil de Diego Reis' });
+        const dialog = await screen.findByRole('dialog', {
+            name: 'Alterar perfil de Diego Reis em Principal',
+        });
 
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Revogar acesso' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Remover do espaço' }));
         const confirm = screen.getByRole('alertdialog');
-        fireEvent.click(within(confirm).getByRole('button', { name: 'Revogar' }));
+        fireEvent.click(within(confirm).getByRole('button', { name: 'Remover' }));
 
         expect(await within(confirm).findByRole('alert')).toHaveTextContent(
-            ERROR_MESSAGES.LAST_ADMIN,
+            ERROR_MESSAGES.LAST_WORKSPACE_ADMIN,
         );
         expect(within(row('Diego Reis')).getByText('Leitor')).toBeInTheDocument();
         expect(mocks.users).toHaveBeenCalledTimes(1);
@@ -156,12 +145,14 @@ describe('ProfileDialog', () => {
     it('keeps the USER_NOT_FOUND alert after the reloaded list drops the user', async () => {
         mocks.del.mockResolvedValue(fail(404, 'USER_NOT_FOUND'));
         await renderUsersPage(ADMIN_ME, { profileUserId: 'diego' });
-        const dialog = await screen.findByRole('dialog', { name: 'Alterar perfil de Diego Reis' });
+        const dialog = await screen.findByRole('dialog', {
+            name: 'Alterar perfil de Diego Reis em Principal',
+        });
         mocks.users.mockResolvedValue(ok({ data: [ADMIN_ME, ELISA] }));
 
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Revogar acesso' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Remover do espaço' }));
         fireEvent.click(
-            within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Revogar' }),
+            within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Remover' }),
         );
 
         await waitFor(() => expect(mocks.users).toHaveBeenCalledTimes(2));

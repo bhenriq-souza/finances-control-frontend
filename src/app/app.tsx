@@ -7,6 +7,7 @@ import {
     createAuthSession,
     CURRENT_USER_QUERY_KEY,
     getAuthClient,
+    type CurrentUser,
 } from '@/features/identity';
 import { createNoticeStore } from '@/ui/notice';
 import { ThemeProvider } from '@/ui/theme/theme-provider';
@@ -31,6 +32,10 @@ export function createAppContext() {
             });
         },
         onProfilePending: () => {
+            // Admin da plataforma sem espaço não espera aprovação (ERR-0021-04): a tela de
+            // domínio já mostra o estado `sem-espaco`.
+            const cached = queryClient.getQueryData<CurrentUser>(CURRENT_USER_QUERY_KEY);
+            if (cached?.isPlatformAdmin) return;
             // O `/users/me` guardado ficou velho: a guarda precisa consultar de novo.
             queryClient.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY });
             void router.navigate({ to: '/aguardando-aprovacao' });

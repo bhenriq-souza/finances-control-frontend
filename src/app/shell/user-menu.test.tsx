@@ -25,6 +25,8 @@ function me(avatarUpdatedAt: string | null): CurrentUser {
         name: 'Ana Souza',
         profile: 'VIEWER',
         profileGrantedAt: null,
+        workspace: null,
+        isPlatformAdmin: false,
         avatarUpdatedAt,
         createdAt: '2026-10-01T00:00:00Z',
     };
@@ -63,6 +65,23 @@ beforeEach(() => {
     let next = 0;
     URL.createObjectURL = vi.fn(() => `blob:foto-${++next}`);
     URL.revokeObjectURL = vi.fn();
+});
+
+// AC-0021-07, AC-0021-10: "Espaço: <nome>" para quem é membro; sem espaço, sem a linha.
+describe('UserMenu workspace line (spec 0021)', () => {
+    it('shows the workspace name under the email for a member', async () => {
+        await renderMenu({ ...me(null), workspace: { id: 'ws', name: 'Casa' } });
+
+        fireEvent.click(trigger());
+        expect(within(panel()).getByText('Espaço: Casa')).toBeVisible();
+    });
+
+    it('shows no workspace line without a workspace', async () => {
+        await renderMenu(me(null));
+
+        fireEvent.click(trigger());
+        expect(within(panel()).queryByText(/Espaço:/)).toBeNull();
+    });
 });
 
 describe('UserMenu photo (spec 0006)', () => {
