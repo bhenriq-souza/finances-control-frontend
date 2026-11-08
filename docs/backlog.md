@@ -341,3 +341,12 @@ Tarefa da spec [0021](../specs/0021-workspaces.md), da issue de entrega [FCF-025
     - What: aprovação com espaço novo ou existente na tela de usuários; coluna **Espaço**; **Remover do espaço**; painel de espaços com renomear; nome do espaço no menu; tela **Usuários** e escrita de bancos e tipos só para o admin da plataforma; contrato em `sources.json` na tag `v1.5.0`
     - Where: `src/features/identity/users-admin/`, `src/api/permissions.ts`, `src/app/shell/`, telas de bancos e de tipos, `src/api/errors/catalog.ts`, `sources.json`, `e2e/workspaces.spec.ts`
     - Done when: `AC-0021-01` a `AC-0021-11` cobertos; `INV-0021-01` a `INV-0021-04` verificados; spec `0021` vai a `implemented`; fecha FCF-025
+
+## Receitas: tipos no estado vazio
+
+Tarefa da revisão da spec [0014](../specs/0014-earnings.md) (AC-0014-14), da issue de entrega [FCF-013](https://github.com/bhenriq-souza/finances-control-frontend/issues/54). A issue da tarefa nasce depois do merge da spec.
+
+- [ ] **T-0014-07 — Novo tipo no estado vazio dos tipos de receita**
+    - What: a ação **Novo tipo** no `EmptyState` de `/receitas/tipos`, só com `canWrite`, abrindo o diálogo de criação do topo; tipos de despesa ficam fora
+    - Where: `src/features/earnings/types/`, `e2e/earning-types.spec.ts`
+    - Done when: `AC-0014-14` coberto; spec `0014` volta a `implemented`
