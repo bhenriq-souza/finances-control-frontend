@@ -189,6 +189,28 @@ describe('EarningTypesPage', () => {
         expect(screen.getByText('Nenhum tipo de receita.')).toBeVisible();
     });
 
+    // AC-0014-14: o aviso de lista vazia oferece Novo tipo só com escrita.
+    it('offers Novo tipo inside the empty state and opens the create dialog (AC-0014-14)', async () => {
+        const { searches } = await setup({ types: [] });
+        const buttons = screen.getAllByRole('button', { name: 'Novo tipo' });
+        expect(buttons).toHaveLength(2);
+        fireEvent.click(buttons[1]!);
+        expect(searches.at(-1)).toEqual({ novo: 1, editar: undefined });
+        expect(screen.getByRole('dialog', { name: 'Novo tipo de receita' })).toBeVisible();
+    });
+
+    it('shows the empty state without the button for VIEWER (AC-0014-14)', async () => {
+        await setup({ profile: 'VIEWER', types: [] });
+        expect(screen.getByText('Nenhum tipo de receita.')).toBeVisible();
+        expect(screen.queryByRole('button', { name: 'Novo tipo' })).toBeNull();
+    });
+
+    it('does not show the empty state when there are types (AC-0014-14)', async () => {
+        await setup();
+        expect(screen.queryByText('Nenhum tipo de receita.')).toBeNull();
+        expect(screen.getAllByRole('button', { name: 'Novo tipo' })).toHaveLength(1);
+    });
+
     // INV-0009-03 / AC-0014-07: sem `entries.write`, nenhum controle de escrita e `?novo` não abre.
     it('renders no write control for VIEWER and ignores ?novo and ?editar', async () => {
         await setup({ profile: 'VIEWER', search: { novo: 1 } });

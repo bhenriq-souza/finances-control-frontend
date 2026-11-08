@@ -22,15 +22,17 @@ async function openTypes(
         user = 'ativo',
         search = '',
         routes = [],
+        list = LIST,
     }: {
         user?: E2EUser;
         search?: string;
         routes?: StubRoute[];
+        list?: StubRoute;
     } = {},
 ) {
     await stubRuntime(page);
     await chooseUser(page, user);
-    const api = await stubApi(page, [LIST, ...routes]);
+    const api = await stubApi(page, [list, ...routes]);
     await stubUsersMe(page, user);
     await page.goto(`/entrar?redirect=${encodeURIComponent(`/receitas/tipos${search}`)}`);
     await signInWithEmail(page);
@@ -205,4 +207,26 @@ test('leitor sees the list without write controls and ?novo=1 opens nothing', as
     await expect(page.getByRole('button', { name: 'Novo tipo' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /Arquivar|Renomear/ })).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+const EMPTY_LIST: StubRoute = { method: 'GET', path: '/earning-types', body: { data: [] } };
+
+// AC-0014-14: lista vazia com `lancador` — Novo tipo no aviso abre o diálogo de criação.
+test('lancador sees Novo tipo in the empty state and it opens the create dialog', async ({
+    page,
+}) => {
+    await openTypes(page, { user: 'ativo', list: EMPTY_LIST });
+    await expect(page.getByText('Nenhum tipo de receita.').filter({ visible: true })).toBeVisible();
+
+    await expect(page.getByRole('button', { name: 'Novo tipo' })).toHaveCount(2);
+    await page.getByRole('button', { name: 'Novo tipo' }).last().click();
+    await expect(page).toHaveURL(/[?&]novo=1/);
+    await expect(page.getByRole('dialog', { name: 'Novo tipo de receita' })).toBeVisible();
+});
+
+// AC-0014-14: lista vazia com `leitor` — o aviso aparece sem o botão.
+test('leitor sees the empty state without Novo tipo', async ({ page }) => {
+    await openTypes(page, { user: 'leitor', list: EMPTY_LIST });
+    await expect(page.getByText('Nenhum tipo de receita.').filter({ visible: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Novo tipo' })).toHaveCount(0);
 });
