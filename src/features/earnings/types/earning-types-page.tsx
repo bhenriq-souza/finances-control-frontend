@@ -192,6 +192,14 @@ export function EarningTypesPage({ search, onSearchChange }: EarningTypesPagePro
                             icon={Tags}
                             title="Nenhum tipo de receita."
                             description="Os tipos classificam as receitas, como Salário ou Aluguel recebido."
+                            action={
+                                canWrite ? (
+                                    <Button onClick={openNew}>
+                                        <Plus aria-hidden="true" />
+                                        Novo tipo
+                                    </Button>
+                                ) : undefined
+                            }
                         />
                     }
                 />
