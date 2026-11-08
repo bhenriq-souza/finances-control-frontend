@@ -1,7 +1,7 @@
 ---
 id: '0014'
 title: Receitas e tipos de receita
-status: implemented
+status: draft
 depends_on: ['0008', '0009', '0011']
 ---
 
@@ -14,7 +14,7 @@ Levar o F005 para a tela, no mesmo padrão das despesas (spec 0012): ver as rece
 ## Scope / Non-goals
 
 - **Em escopo:** `/receitas`, `/receitas/$receitaId`, `/receitas/tipos`; o formulário de receita; os diálogos de status e de exclusão; o item **Receitas** da navegação.
-- **Fora de escopo:** receita em cartão (não existe no backend); contraparte ("quem paga") como entidade (a API só tem `description` e `notes`); séries (spec 0017); importação CSV.
+- **Fora de escopo:** receita em cartão (não existe no backend); contraparte ("quem paga") como entidade (a API só tem `description` e `notes`); séries (spec 0017); importação CSV; o botão **Novo tipo** no estado vazio dos tipos de despesa (`/despesas/tipos`, spec 0012), que fica para outro item.
 - **Depende do backend:** [spec 0014](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0014-earnings.md) e a [0017](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0017-jobs-and-recurrence.md), na tag `v1.1.0`. Escrita: `ADMIN` e `BILLER`; leitura: todos.
 - **Forma visual:** a da spec 0012, com o tom `positivo` e o sinal `+` dos valores.
 
@@ -79,6 +79,8 @@ Os campos da spec 0012, com estas diferenças:
 
 Igual a `/despesas/tipos`, sobre `/earning-types`; `invalidateAfter(..., 'earning-types')`.
 
+**Estado vazio.** Com a lista vazia, o aviso `EmptyState` ("Nenhum tipo de receita.", com o texto de apoio) leva a ação **Novo tipo** quando o perfil tem `entries.write`. A ação abre o mesmo diálogo de criação do botão do topo (`?novo=1`), com a mesma permissão (`canWrite`). Com `leitor`, o aviso aparece sem o botão. Com a lista preenchida, a tela não muda. Decisão: reaproveitar a propriedade `action` do `EmptyState` (spec 0009) em vez de um componente novo; descartado duplicar o diálogo.
+
 ### Mapa de erros
 
 | Código                                            | Onde                                     |
@@ -122,6 +124,7 @@ Igual a `/despesas/tipos`, sobre `/earning-types`; `invalidateAfter(..., 'earnin
 - **AC-0014-11:** com `lancador`, o menu de uma receita `OPEN` oferece **Receber**, **Marcar para verificar**, **Editar** e **Excluir**; **Receber** abre o diálogo sobre a lista (`?receber=<id>`), envia `{ status: 'RECEIVED', receivedOn }` e a lista continua no mesmo mês e com os mesmos filtros.
 - **AC-0014-12:** **Confirmar** no menu de uma receita `FORECAST` envia `{ status: 'OPEN' }` sem diálogo; um `409` mostra o alerta acima da lista; com `leitor`, nenhuma linha tem menu.
 - **AC-0014-13:** no `celular`, o detalhe de uma receita `OPEN` mostra **Receber** em largura total e as demais ações em **Mais ações**, sem o **Alterar** no cabeçalho; no `tablet` e no `desktop`, os botões como antes, com **Alterar** no cabeçalho.
+- **AC-0014-14:** com `/receitas/tipos` sem nenhum tipo, quem tem `entries.write` vê **Novo tipo** dentro do aviso, e o clique abre o mesmo diálogo de criação do botão do topo; com `leitor`, o aviso aparece sem o botão; com a lista preenchida, o aviso não aparece e o botão do topo segue como antes.
 
 ## Test mapping
 
@@ -132,7 +135,7 @@ Igual a `/despesas/tipos`, sobre `/earning-types`; `invalidateAfter(..., 'earnin
 | AC-0014-05, AC-0014-06, INV-0014-02, INV-0014-03 | `src/features/earnings/detail/*.test.tsx` e `e2e/earnings-detail.spec.ts`                                                                       |
 | AC-0014-07                                       | `e2e/earnings-list.spec.ts` e `e2e/earnings-detail.spec.ts` (com `leitor`)                                                                      |
 | AC-0014-11, AC-0014-12, AC-0014-13, INV-0014-05  | `src/features/earnings/list/*.test.tsx`, `src/features/earnings/detail/*.test.tsx`, `e2e/earnings-list.spec.ts` e `e2e/earnings-detail.spec.ts` |
-| AC-0014-08                                       | `e2e/earning-types.spec.ts`                                                                                                                     |
+| AC-0014-08, AC-0014-14                           | `e2e/earning-types.spec.ts` (lista vazia com `lancador` e com `leitor`) e `src/features/earnings/types/earning-types-page.test.tsx`             |
 
 ## Open questions
 
