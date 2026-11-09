@@ -53,6 +53,28 @@ describe('buildCsp', () => {
         ).not.toThrow();
     });
 
+    // Alertas do CodeQL no PR #185: o gate lê HTML com regex, então os casos em que o navegador vê um
+    // script e uma leitura ingênua não vê precisam reprovar.
+    it('ERR-0022-02: detects a script whose end tag has whitespace and attributes', () => {
+        const html = `<html><head><script>${THEME}</script><script>alert(1)</script\t\n bar></head></html>`;
+        expect(() => buildCsp(html)).toThrow(/inesperado/);
+    });
+
+    it('ERR-0022-02: detects a script after an empty comment (<!--> closes at once)', () => {
+        expect(() => buildCsp(page('<!--><script>alert(1)</script>-->'))).toThrow(/inesperado/);
+    });
+
+    it('ERR-0022-02: fails on a bogus comment that hides markup from a single-pass stripper', () => {
+        expect(() => buildCsp(page('<!-<!-- x -->- <script>alert(1)</script> -->'))).toThrow(
+            /coment|<!/,
+        );
+    });
+
+    it('ERR-0022-02: fails on an unterminated comment or inline script', () => {
+        expect(() => buildCsp(page('<!-- <script>alert(1)</script>'))).toThrow(/coment/);
+        expect(() => buildCsp(page('<script>alert(1)'))).toThrow(/sem fechamento/);
+    });
+
     it('AC-0022-02 / ERR-0022-01: fails without an inline script', () => {
         const html = '<html><head><script src="/config.js"></script></head></html>';
         expect(() => buildCsp(html)).toThrow(/tema/);

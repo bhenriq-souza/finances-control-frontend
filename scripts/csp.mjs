@@ -20,13 +20,55 @@ export class CspError extends Error {}
 
 const excerpt = (text) => text.replace(/\s+/g, ' ').trim().slice(0, 80);
 
+/**
+ * Tira os comentários sem regex de substituição. O gate é conservador: o que um navegador leria de
+ * outro jeito (comentário sem fim, aninhado ou declaração `<!` que não é o doctype) vira problema, em
+ * vez de ser removido e esconder um script (alertas do CodeQL no PR #185).
+ */
+function stripComments(html, problems) {
+    let out = '';
+    let i = 0;
+    for (;;) {
+        const start = html.indexOf('<!--', i);
+        if (start < 0) {
+            out += html.slice(i);
+            break;
+        }
+        out += html.slice(i, start);
+        const after = start + 4;
+        if (html.startsWith('>', after) || html.startsWith('->', after)) {
+            i = html.indexOf('>', after) + 1; // `<!-->` e `<!--->` fecham na hora
+            continue;
+        }
+        const end = html.indexOf('-->', after);
+        if (end < 0) {
+            problems.push(`comentário sem fim: ${excerpt(html.slice(start))}`);
+            break;
+        }
+        if (html.slice(after, end).includes('<!--')) {
+            problems.push(`comentário aninhado: ${excerpt(html.slice(start, end + 3))}`);
+        }
+        i = end + 3;
+    }
+    for (const match of out.matchAll(/<!(?!doctype\b)[^>]*>?/gi)) {
+        problems.push(`declaração <! inesperada: ${excerpt(match[0])}`);
+    }
+    return out;
+}
+
 /** Scripts inline do HTML (sem `src`) e os problemas não cobertos pela política. */
 export function analyzeHtml(html) {
-    const source = html.replace(/<!--[\s\S]*?-->/g, '');
     const hashes = [];
     const problems = [];
+    const source = stripComments(html, problems);
 
-    for (const match of source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
+    // o navegador fecha o script em `</script` seguido de espaço, `/` ou `>`, com o que vier até o `>`
+    const scripts = [...source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script(?:[\s/][^>]*)?>/gi)];
+    const opened = source.match(/<script\b/gi)?.length ?? 0;
+    if (opened !== scripts.length) {
+        problems.push(`script sem fechamento: ${opened} aberto(s), ${scripts.length} fechado(s)`);
+    }
+    for (const match of scripts) {
         const [whole, attrs, content] = match;
         if (/(^|\s)src\s*=/i.test(attrs)) continue;
         const type = /(?:^|\s)type\s*=\s*["']?([^\s"'>]+)/i.exec(attrs)?.[1];
