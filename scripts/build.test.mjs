@@ -150,28 +150,50 @@ describe('filesWithMarker', () => {
     });
 });
 
+const THEME_HTML =
+    '<html><head><script src="/config.js"></script><script>var a=1;</script></head><body></body></html>';
+
 describe('evaluateDist', () => {
     const silent = () => {};
 
     it('passes a dist within budget and without the marker, printing the size table', () => {
-        writeDist({ 'assets/index-a.js': 'console.log(1);', 'assets/index-c.css': 'body{}' });
+        writeDist({
+            'assets/index-a.js': 'console.log(1);',
+            'assets/index-c.css': 'body{}',
+            'index.html': THEME_HTML,
+        });
         const printed = [];
         expect(evaluateDist(dist, BUDGET, (line) => printed.push(line))).toEqual([]);
         expect(printed.join('\n')).toContain('assets/index-a.js');
     });
 
     it('fails with the offending file when the marker reaches the production build (AC-0002-08)', () => {
-        writeDist({ 'assets/index-a.js': `"${E2E_MARKER}"` });
+        writeDist({ 'assets/index-a.js': `"${E2E_MARKER}"`, 'index.html': THEME_HTML });
         expect(evaluateDist(dist, BUDGET, silent)).toEqual([
             `marcador ${E2E_MARKER} encontrado em dist/assets/index-a.js`,
         ]);
     });
 
     it('fails when a budget limit is lowered below the current size (AC-0002-08)', () => {
-        writeDist({ 'assets/index-a.js': incompressible(4_000) });
+        writeDist({ 'assets/index-a.js': incompressible(4_000), 'index.html': THEME_HTML });
         const failures = evaluateDist(dist, { ...BUDGET, initialJs: 1_000 }, silent);
         expect(failures).toHaveLength(1);
         expect(failures[0]).toContain('JavaScript inicial');
+    });
+
+    it('AC-0022-04: fails with an inline <style> in index.html', () => {
+        writeDist({
+            'assets/index-a.js': 'console.log(1);',
+            'index.html': THEME_HTML.replace('</head>', '<style>a{}</style></head>'),
+        });
+        const failures = evaluateDist(dist, BUDGET, silent);
+        expect(failures).toHaveLength(1);
+        expect(failures[0]).toContain('CSP: <style>');
+    });
+
+    it('AC-0022-04: fails when index.html lost the theme script', () => {
+        writeDist({ 'assets/index-a.js': 'x', 'index.html': '<html></html>' });
+        expect(evaluateDist(dist, BUDGET, silent)[0]).toContain('tema');
     });
 
     it('fails when the manifest is missing', () => {
