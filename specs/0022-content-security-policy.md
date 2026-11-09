@@ -29,6 +29,7 @@ Uma diretiva por linha lógica, separadas por `; `. `<hashes>` é a lista de `'s
 | `default-src`     | `'self'`                                                                           | base fechada                                                                                                            |
 | `script-src`      | `'self' <hashes> https://apis.google.com`                                          | bundle e `/config.js` da mesma origem; script de tema por hash; `apis.google.com` carrega o login por popup do Firebase |
 | `style-src`       | `'self'`                                                                           | o CSS é um arquivo em `/assets/`; o React aplica `style` pelo CSSOM, que a CSP não bloqueia                             |
+| `style-src-elem`  | `'self' 'nonce-<nonce>'`                                                           | o scroll-lock dos diálogos Radix injeta uma tag `style`; ela só passa com o nonce da requisição (abaixo)                |
 | `img-src`         | `'self' data: blob: https://*.googleusercontent.com`                               | favicon e ícones; foto do usuário (recorte em `blob:`/`data:`, spec 0006); foto da conta Google                         |
 | `font-src`        | `'self' data:`                                                                     | fontes do `@fontsource` empacotadas pelo Vite (as pequenas viram `data:`)                                               |
 | `connect-src`     | `'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com` | `/api` na mesma origem; login e renovação de token do Firebase Auth                                                     |
@@ -41,7 +42,18 @@ Uma diretiva por linha lógica, separadas por `; `. `<hashes>` é a lista de `'s
 - A imagem é a mesma para todo ambiente (INV-0007-01): o `authDomain` do `config.js` não entra na política, por isso `*.firebaseapp.com`.
 - As origens do Firebase e do Google são a hipótese de partida; a lista final é a que o login real em `dev` exigir (T-0022-03), nunca mais larga que o necessário. Origem acrescentada ou removida lá altera esta tabela no mesmo PR.
 - Se a validação mostrar violação de `style-src` por estilo inline de atributo, a correção permitida é `style-src-attr 'unsafe-inline'` (não afeta execução de script), registrada aqui; `unsafe-inline` em `script-src` e em `style-src-elem` nunca.
+- O `<nonce>` é o `$request_id` do nginx, novo a cada requisição (INV-0022-06). `unsafe-inline` continua proibido em `style-src-elem`.
 - O `config.js` é servido da mesma origem (`<script src="/config.js">`), coberto por `'self'`.
+
+### Nonce de estilo por requisição
+
+O diálogo modal do Radix (`FormDialog`, `ConfirmDialog`) usa o `react-remove-scroll-bar`, que injeta uma tag `<style>` com a largura da barra de rolagem (`gap`, que varia por navegador e sistema). Hash não serve; por isso:
+
+- o nginx usa `$request_id` como nonce: ele entra no cabeçalho, em `style-src-elem 'self' 'nonce-$request_id'` (o `csp.conf` guarda a variável; o nginx a expande por requisição), e, via `sub_filter` em `index.html` e no fallback da SPA, numa `<meta name="csp-nonce" content="$request_id">` antes de `</head>`;
+- antes do primeiro render (`bootstrap`), o app lê a meta e chama `setNonce` do `get-nonce` (dependência direta); o `react-style-singleton` aplica o nonce à tag injetada. Sem a meta (dev, testes unitários), nada acontece;
+- o nonce não entra no script inline: o hash do `script-src` não muda. O `index.html` do `dist/` não leva nonce; INV-0022-03 vale porque o nonce vem da requisição, não do ambiente;
+- `buildCsp(html, mode, nonce)` recebe o nonce (padrão: `$request_id`); o plugin do preview passa um valor por requisição;
+- o zod é configurado com `jitless: true` (`src/shared/zod-jitless.ts`, importado primeiro em `main.tsx`): a sonda `new Function` dele seria uma violação de `script-src` (sem `unsafe-eval`) mesmo com o erro capturado.
 
 ### Hash do script inline
 
@@ -68,7 +80,7 @@ O cabeçalho é `Content-Security-Policy-Report-Only` enquanto a constante `CSP_
 
 ### e2e
 
-Em `vite preview` (modo `e2e`) não há nginx. Um plugin do Vite aplicado só ao preview do modo `e2e` responde cada requisição com `Content-Security-Policy` **imposta** (nunca `Report-Only`), gerada por `buildCsp` sobre o `dist/index.html` do próprio build. `e2e/csp.spec.ts` navega pelas rotas principais registrando eventos `securitypolicyviolation`.
+Em `vite preview` (modo `e2e`) não há nginx. Um plugin do Vite aplicado só ao preview do modo `e2e` responde cada requisição com `Content-Security-Policy` **imposta** (nunca `Report-Only`), gerada por `buildCsp` sobre o `dist/index.html` do próprio build, com um nonce novo por requisição também na meta `csp-nonce` do HTML servido. O plugin só age quando o modo é `e2e` (o `playwright.config.ts` sobe `vite preview --mode e2e`). `e2e/csp.spec.ts` navega pelas rotas principais registrando eventos `securitypolicyviolation`.
 
 ## Invariants
 
@@ -77,6 +89,7 @@ Em `vite preview` (modo `e2e`) não há nginx. Um plugin do Vite aplicado só ao
 - **INV-0022-03:** a imagem continua a mesma para qualquer ambiente (INV-0007-01): a política não depende de `config.js` nem de variável de ambiente.
 - **INV-0022-04:** toda resposta do nginx (assets, `config.js`, `index.html`, fallback da SPA, `/healthz`, 404) leva o cabeçalho da CSP.
 - **INV-0022-05:** a aplicação não gera violação da política em nenhuma rota exercitada pelo e2e nos três tamanhos de tela.
+- **INV-0022-06:** o nonce de `style-src-elem` muda a cada requisição, e a meta `csp-nonce` do `index.html` tem o mesmo valor do cabeçalho da mesma resposta.
 
 ## Error cases
 
@@ -96,6 +109,7 @@ Em `vite preview` (modo `e2e`) não há nginx. Um plugin do Vite aplicado só ao
 - **AC-0022-05:** `e2e/csp.spec.ts` navega pelas rotas de entrada, dashboard, listas e um formulário com diálogo, com a CSP imposta no preview, e não registra nenhum evento `securitypolicyviolation` nem erro de console de CSP, nos projetos `celular`, `tablet` e `desktop`.
 - **AC-0022-06:** em `dev` (`finances.dev.homelab.local` e `finances.192.168.15.97.nip.io`), com a política em `Report-Only`, o login Google completo (popup, retorno, sessão ativa e saída), a troca de tema e o envio da foto do usuário não geram violação no console; a evidência é colada no PR e a tabela de Contracts reflete as origens realmente necessárias.
 - **AC-0022-07:** com `CSP_ENFORCE = true`, a imagem publicada em `dev` envia `Content-Security-Policy` (e não o `Report-Only`) e o login Google continua funcionando; `curl -sI` colado no PR.
+- **AC-0022-08:** `buildCsp` com nonces diferentes devolve políticas diferentes, com `style-src-elem 'self' 'nonce-<valor>'` e sem `unsafe-inline`; duas requisições ao preview do e2e recebem nonces diferentes, cada um igual ao da meta `csp-nonce` da mesma resposta; com a imagem, `curl -sI` e `curl -s` do mesmo caminho em duas requisições mostram o mesmo par cabeçalho/meta e valores distintos entre elas.
 
 ## Test mapping
 
@@ -105,6 +119,7 @@ Em `vite preview` (modo `e2e`) não há nginx. Um plugin do Vite aplicado só ao
 | AC-0022-03, INV-0022-03, INV-0022-04             | execução local da imagem colada no PR da T-0022-01 (`curl -sI` por caminho)        |
 | AC-0022-04                                       | `scripts/build.test.mjs` e prova manual no PR da T-0022-01                         |
 | AC-0022-05, INV-0022-05                          | `e2e/csp.spec.ts`                                                                  |
+| AC-0022-08, INV-0022-06                          | `scripts/csp.test.mjs`, `e2e/csp.spec.ts` (nonce) e `curl` da imagem no PR         |
 | AC-0022-06, AC-0022-07                           | evidência de `dev` (console do navegador e `curl -sI`) colada nos PRs da T-0022-03 |
 
 ## Open questions
@@ -117,3 +132,4 @@ Nenhuma.
 - **Rollout em `Report-Only` antes de impor.** O login Google só se prova de verdade em `dev`, e o e2e usa autenticação falsa: `Report-Only` revela origens esquecidas sem derrubar o login. Sem endpoint de relatórios, por ser um único ambiente de `dev` com a pessoa que valida no navegador; custo e superfície de um coletor não se justificam agora.
 - **Passagem a `enforce` por constante em código (`CSP_ENFORCE`)**, não por variável de ambiente, para preservar INV-0022-03.
 - **Sem `style-src 'unsafe-inline'`.** O CSS é arquivo, o React usa CSSOM; a exceção `style-src-attr` só entra se a validação provar necessidade.
+- **Nonce por requisição em `style-src-elem` (CSP × diálogo Radix).** Alternativas descartadas: hash da tag `style` (o `gap` com a largura da barra de rolagem muda por navegador e sistema); trocar o scroll-lock (`modal={false}` obrigaria a reimplementar o trap de foco, com risco de acessibilidade); `unsafe-inline` (proibido).

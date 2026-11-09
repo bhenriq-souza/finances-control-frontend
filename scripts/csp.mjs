@@ -98,12 +98,20 @@ export function analyzeHtml(html) {
     return { hashes, problems };
 }
 
-/** Monta a política a partir dos hashes dos scripts inline. */
-export function policy(hashes) {
+/** Variável do nginx que carrega o nonce da requisição (`$request_id`, 32 hex; spec 0022). */
+export const NGINX_NONCE = '$request_id';
+
+/**
+ * Monta a política a partir dos hashes dos scripts inline. `nonce` é o valor posto em
+ * `style-src-elem`: no nginx é a variável `$request_id` (expandida por requisição); no preview do
+ * e2e, um valor gerado por requisição.
+ */
+export function policy(hashes, nonce = NGINX_NONCE) {
     return [
         "default-src 'self'",
         `script-src ${["'self'", ...hashes, 'https://apis.google.com'].join(' ')}`,
         "style-src 'self'",
+        `style-src-elem 'self' 'nonce-${nonce}'`,
         "img-src 'self' data: blob: https://*.googleusercontent.com",
         "font-src 'self' data:",
         "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com",
@@ -117,14 +125,18 @@ export function policy(hashes) {
 
 /**
  * Cabeçalho e valor da CSP para um `index.html`. Lança `CspError` se houver inline não coberto.
- * `mode`: 'enforce' | 'report-only'; por omissão segue `CSP_ENFORCE`.
+ * `mode`: 'enforce' | 'report-only'; por omissão segue `CSP_ENFORCE`. `nonce`: ver `policy`.
  */
-export function buildCsp(html, mode = CSP_ENFORCE ? 'enforce' : 'report-only') {
+export function buildCsp(
+    html,
+    mode = CSP_ENFORCE ? 'enforce' : 'report-only',
+    nonce = NGINX_NONCE,
+) {
     const { hashes, problems } = analyzeHtml(html);
     if (problems.length > 0) throw new CspError(problems.join('\n'));
     return {
         header: mode === 'enforce' ? HEADER_ENFORCE : HEADER_REPORT_ONLY,
-        value: policy(hashes),
+        value: policy(hashes, nonce),
     };
 }
 

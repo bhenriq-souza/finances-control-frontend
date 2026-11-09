@@ -1,3 +1,4 @@
+import { setNonce } from 'get-nonce';
 import { StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
@@ -9,10 +10,20 @@ import { App } from './app';
 import { FATAL_MESSAGES, FatalError } from './fatal-error';
 
 /**
+ * Entrega ao `react-style-singleton` (Radix: scroll-lock dos diálogos) o nonce da CSP que o nginx
+ * pôs na meta `csp-nonce` (spec 0022). Sem a meta (dev, testes), não faz nada.
+ */
+function applyCspNonce(): void {
+    const nonce = document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content');
+    if (nonce) setNonce(nonce);
+}
+
+/**
  * Lê a configuração de runtime e monta a aplicação. Sem configuração válida, monta só a tela de
  * erro fatal (ERR-0003-01 e ERR-0003-02).
  */
 export function bootstrap(container: HTMLElement): Root {
+    applyCspNonce();
     const root = createRoot(container);
     try {
         getRuntimeConfig();
