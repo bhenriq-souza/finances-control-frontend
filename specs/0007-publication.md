@@ -14,7 +14,7 @@ Publicar o frontend em `http://finances.dev.homelab.local/`, na mesma origem do 
 ## Scope / Non-goals
 
 - **Em escopo:** `Dockerfile` e configuração do nginx; o `config.js` de runtime; `.github/workflows/deploy.yml`; o repositório no WIF do GCP e os secrets do CI; os manifests `finances-frontend` em `dev`; a retirada do ingress `/` do `finances-backend`; a verificação por dentro do cluster.
-- **Fora de escopo:** `prd` e promoção (Fase 4); TLS no ingress (plano B do spike, spec 0006); Content-Security-Policy, que entra depois do spike, quando as origens do Firebase estiverem conhecidas na prática; qualquer mudança no backend.
+- **Fora de escopo:** `prd` e promoção (Fase 4); TLS no ingress (plano B do spike, spec 0006); Content-Security-Policy, definida pela [spec 0022](0022-content-security-policy.md) (o spike já concluiu); qualquer mudança no backend.
 - **Depende de:** [onboarding de app](https://github.com/bhenriq-souza/homelab-gitops/blob/main/docs/app-onboarding.md) e o workflow `docker-build-push.yaml` do `homelab-gitops`; ingress `/api` com `stripPrefix` já ativo ([spec 0005 do backend](https://github.com/bhenriq-souza/finances-control-backend/blob/develop/specs/0005-http-platform.md), T-0005-04).
 
 ## Contracts
@@ -39,7 +39,7 @@ Publicar o frontend em `http://finances.dev.homelab.local/`, na mesma origem do 
 | `= /healthz`    | `200` com corpo `ok`, sem log de acesso — alvo das probes                                   |
 | `/`             | `try_files $uri /index.html` (fallback da SPA), com o mesmo `no-cache` do `index.html`      |
 
-- Cabeçalhos em toda resposta: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`.
+- Cabeçalhos em toda resposta: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY` e a `Content-Security-Policy` da [spec 0022](0022-content-security-policy.md).
 - `gzip on` para `text/css`, `application/javascript`, `application/json`, `image/svg+xml`.
 - `/api` nunca chega a este nginx: o ingress o encaminha ao backend. Este nginx não faz proxy.
 - Com `readOnlyRootFilesystem`, os diretórios temporários do nginx (`/tmp`) vêm de um `emptyDir`.

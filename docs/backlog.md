@@ -350,3 +350,20 @@ Tarefa da revisão da spec [0014](../specs/0014-earnings.md) (AC-0014-14), da is
     - What: a ação **Novo tipo** no `EmptyState` de `/receitas/tipos`, só com `canWrite`, abrindo o diálogo de criação do topo; tipos de despesa ficam fora
     - Where: `src/features/earnings/types/`, `e2e/earning-types.spec.ts`
     - Done when: `AC-0014-14` coberto; spec `0014` volta a `implemented`
+
+## Content-Security-Policy
+
+Tarefas da spec [0022](../specs/0022-content-security-policy.md) (work item 35 do tracker). As issues das tarefas nascem depois do merge da spec. Cada tarefa fecha no gate sozinha; ordem de dependência.
+
+- [ ] **T-0022-01 — Gerador da CSP, nginx, imagem e gate `build`**
+    - What: `scripts/csp.mjs` (`buildCsp` e CLI, hash do script inline, `CSP_ENFORCE = false`), `csp.conf` gerado no `Dockerfile` e incluído por `nginx/security-headers.conf`, verificação de inline não coberto no gate `build`, e a nota na spec `0002` (gate `build`)
+    - Where: `scripts/csp.mjs`, `scripts/csp.test.mjs`, `scripts/build.mjs`, `scripts/build.test.mjs`, `Dockerfile`, `nginx/security-headers.conf`, `specs/0002-quality-gates.md`
+    - Done when: `AC-0022-01` a `AC-0022-04` cobertos; `INV-0022-01` a `INV-0022-04` verificados
+- [ ] **T-0022-02 — e2e sem violações de CSP**
+    - What: plugin do Vite que impõe a CSP no `vite preview` do modo `e2e` com `buildCsp`, e `e2e/csp.spec.ts` registrando violações nas rotas principais; depende da T-0022-01
+    - Where: `vite.config.ts`, `e2e/csp.spec.ts`
+    - Done when: `AC-0022-05` coberto; `INV-0022-05` verificado
+- [ ] **T-0022-03 — Validação em `dev` e imposição**
+    - What: com a imagem da T-0022-01 em `dev`, validar o login Google real, o tema e a foto sem violação, ajustar a tabela de origens da spec, virar `CSP_ENFORCE` para `true` e provar o cabeçalho imposto; executada pelo líder, com a evidência colada no PR; depende das T-0022-01 e T-0022-02
+    - Where: `scripts/csp.mjs`, `specs/0022-content-security-policy.md`; evidência de `dev` no PR
+    - Done when: `AC-0022-06` e `AC-0022-07` verificados; spec `0022` vai a `implemented`
