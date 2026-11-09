@@ -8,6 +8,8 @@ import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
+import { buildCsp, CspError } from './csp.mjs';
+
 const ROOT = resolve(import.meta.dirname, '..');
 const DIST = resolve(ROOT, 'dist');
 
@@ -128,7 +130,21 @@ export function evaluateDist(distDir, budget = BUDGET, log = console.log) {
     for (const file of filesWithMarker(distDir)) {
         failures.push(`marcador ${E2E_MARKER} encontrado em dist/${file}`);
     }
+    failures.push(...cspViolations(distDir));
     return failures;
+}
+
+/** Inline não coberto pela CSP no `index.html` de `dist/` (spec 0022, ERR-0022-01/02). */
+export function cspViolations(distDir) {
+    const indexPath = join(distDir, 'index.html');
+    if (!existsSync(indexPath)) return [`dist/index.html ausente: não dá para verificar a CSP`];
+    try {
+        buildCsp(readFileSync(indexPath, 'utf8'));
+        return [];
+    } catch (error) {
+        if (!(error instanceof CspError)) throw error;
+        return error.message.split('\n').map((line) => `CSP: ${line}`);
+    }
 }
 
 function main() {
@@ -146,7 +162,7 @@ function main() {
         return 1;
     }
     console.log(
-        `\nbuild: PASS (inicial ≤ ${formatKb(BUDGET.initialJs)}, demais chunks ≤ ${formatKb(BUDGET.otherJs)}, CSS ≤ ${formatKb(BUDGET.cssTotal)}, sem ${E2E_MARKER})`,
+        `\nbuild: PASS (inicial ≤ ${formatKb(BUDGET.initialJs)}, demais chunks ≤ ${formatKb(BUDGET.otherJs)}, CSS ≤ ${formatKb(BUDGET.cssTotal)}, sem ${E2E_MARKER}, sem inline fora da CSP)`,
     );
     return 0;
 }

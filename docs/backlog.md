@@ -355,7 +355,7 @@ Tarefa da revisão da spec [0014](../specs/0014-earnings.md) (AC-0014-14), da is
 
 Tarefas da spec [0022](../specs/0022-content-security-policy.md) (work item 35 do tracker). As issues das tarefas nascem depois do merge da spec. Cada tarefa fecha no gate sozinha; ordem de dependência.
 
-- [ ] **T-0022-01 — Gerador da CSP, nginx, imagem e gate `build`**
+- [x] **T-0022-01 — Gerador da CSP, nginx, imagem e gate `build`**
     - What: `scripts/csp.mjs` (`buildCsp` e CLI, hash do script inline, `CSP_ENFORCE = false`), `csp.conf` gerado no `Dockerfile` e incluído por `nginx/security-headers.conf`, verificação de inline não coberto no gate `build`, e a nota na spec `0002` (gate `build`)
     - Where: `scripts/csp.mjs`, `scripts/csp.test.mjs`, `scripts/build.mjs`, `scripts/build.test.mjs`, `Dockerfile`, `nginx/security-headers.conf`, `specs/0002-quality-gates.md`
     - Done when: `AC-0022-01` a `AC-0022-04` cobertos; `INV-0022-01` a `INV-0022-04` verificados

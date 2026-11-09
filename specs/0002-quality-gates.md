@@ -86,7 +86,8 @@ O frontend não escreve à mão o que vem de outro repositório: os tipos da API
     - qualquer outro chunk de JavaScript: no máximo **100 KB** depois de gzip;
     - CSS total: no máximo **50 KB** depois de gzip.
 - **Nada de código de teste em produção:** nenhum arquivo de `dist/` contém o marcador `__E2E_FAKE_AUTH__`, que identifica a implementação falsa de autenticação usada só pelo `e2e` (spec 0006).
-- Imprime o tamanho de cada chunk e sai com 1 se algum limite for excedido ou o marcador aparecer.
+- **Inline coberto pela CSP** (spec 0022): o `dist/index.html` passa por `buildCsp` (`scripts/csp.mjs`); `<style>` inline, atributo de evento, `javascript:` em `href`, script inline sem hash previsto ou a ausência do script de tema reprovam o gate. A tabela de limiares não muda.
+- Imprime o tamanho de cada chunk e sai com 1 se algum limite for excedido, o marcador aparecer ou houver inline não coberto pela CSP.
 
 ### Gate `e2e`
 
