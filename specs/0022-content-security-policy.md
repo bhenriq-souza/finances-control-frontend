@@ -1,7 +1,7 @@
 ---
 id: '0022'
 title: Content-Security-Policy no nginx do frontend
-status: draft
+status: implemented
 depends_on: ['0004', '0006', '0007']
 ---
 
