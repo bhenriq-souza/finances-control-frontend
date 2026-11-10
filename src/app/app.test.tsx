@@ -132,3 +132,21 @@ describe('bootstrap token provider', () => {
         delete window.__FTECH_CONFIG__;
     });
 });
+
+describe('bootstrap CSP nonce (spec 0022)', () => {
+    it('AC-0022-08: hands the csp-nonce meta to get-nonce before the first render', async () => {
+        const { getNonce } = await import('get-nonce');
+        const meta = document.createElement('meta');
+        meta.name = 'csp-nonce';
+        meta.content = 'nonce-de-teste';
+        document.head.append(meta);
+        const container = document.createElement('div');
+        let root: ReturnType<typeof bootstrap> | undefined;
+        await act(async () => {
+            root = bootstrap(container);
+        });
+        expect(getNonce()).toBe('nonce-de-teste');
+        act(() => root?.unmount());
+        meta.remove();
+    });
+});

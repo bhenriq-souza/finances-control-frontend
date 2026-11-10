@@ -22,7 +22,7 @@ export default defineConfig({
         { name: 'desktop', use: { viewport: { width: 1440, height: 900 } } },
     ],
     webServer: {
-        command: `npx vite build --mode e2e && npx vite preview --port ${PORT} --strictPort`,
+        command: `npx vite build --mode e2e && npx vite preview --mode e2e --port ${PORT} --strictPort`,
         url: BASE_URL,
         // Nunca reaproveita um servidor já no ar: o e2e testa sempre o build desta cópia.
         reuseExistingServer: false,

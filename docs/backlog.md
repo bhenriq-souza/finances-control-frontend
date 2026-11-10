@@ -359,7 +359,7 @@ Tarefas da spec [0022](../specs/0022-content-security-policy.md) (work item 35 d
     - What: `scripts/csp.mjs` (`buildCsp` e CLI, hash do script inline, `CSP_ENFORCE = false`), `csp.conf` gerado no `Dockerfile` e incluído por `nginx/security-headers.conf`, verificação de inline não coberto no gate `build`, e a nota na spec `0002` (gate `build`)
     - Where: `scripts/csp.mjs`, `scripts/csp.test.mjs`, `scripts/build.mjs`, `scripts/build.test.mjs`, `Dockerfile`, `nginx/security-headers.conf`, `specs/0002-quality-gates.md`
     - Done when: `AC-0022-01` a `AC-0022-04` cobertos; `INV-0022-01` a `INV-0022-04` verificados
-- [ ] **T-0022-02 — e2e sem violações de CSP**
+- [x] **T-0022-02 — e2e sem violações de CSP**
     - What: plugin do Vite que impõe a CSP no `vite preview` do modo `e2e` com `buildCsp`, e `e2e/csp.spec.ts` registrando violações nas rotas principais; depende da T-0022-01
     - Where: `vite.config.ts`, `e2e/csp.spec.ts`
     - Done when: `AC-0022-05` coberto; `INV-0022-05` verificado

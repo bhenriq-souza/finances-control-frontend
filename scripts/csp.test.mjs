@@ -30,6 +30,18 @@ describe('buildCsp', () => {
         expect(a).not.toEqual(b);
     });
 
+    it('AC-0022-08: style-src-elem carries the given nonce, never unsafe-inline', () => {
+        const a = buildCsp(page(), 'enforce', 'abc123').value;
+        const b = buildCsp(page(), 'enforce', 'def456').value;
+        expect(a).toContain("style-src-elem 'self' 'nonce-abc123'");
+        expect(a).not.toEqual(b);
+        expect(a).not.toMatch(/unsafe-inline/);
+    });
+
+    it('AC-0022-08: by default the nonce is the nginx $request_id variable', () => {
+        expect(buildCsp(page()).value).toContain("style-src-elem 'self' 'nonce-$request_id'");
+    });
+
     it('selects the header by mode', () => {
         expect(buildCsp(page(), 'enforce').header).toBe('Content-Security-Policy');
         expect(buildCsp(page(), 'report-only').header).toBe('Content-Security-Policy-Report-Only');
