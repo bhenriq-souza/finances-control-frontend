@@ -363,7 +363,7 @@ Tarefas da spec [0022](../specs/0022-content-security-policy.md) (work item 35 d
     - What: plugin do Vite que impõe a CSP no `vite preview` do modo `e2e` com `buildCsp`, e `e2e/csp.spec.ts` registrando violações nas rotas principais; depende da T-0022-01
     - Where: `vite.config.ts`, `e2e/csp.spec.ts`
     - Done when: `AC-0022-05` coberto; `INV-0022-05` verificado
-- [ ] **T-0022-03 — Validação em `dev` e imposição**
+- [x] **T-0022-03 — Validação em `dev` e imposição**
     - What: com a imagem da T-0022-01 em `dev`, validar o login Google real, o tema e a foto sem violação, ajustar a tabela de origens da spec, virar `CSP_ENFORCE` para `true` e provar o cabeçalho imposto; executada pelo líder, com a evidência colada no PR; depende das T-0022-01 e T-0022-02
     - Where: `scripts/csp.mjs`, `specs/0022-content-security-policy.md`; evidência de `dev` no PR
     - Done when: `AC-0022-06` e `AC-0022-07` verificados; spec `0022` vai a `implemented`

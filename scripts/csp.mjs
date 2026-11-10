@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** `false`: cabeçalho `Report-Only`; `true`: política imposta. Constante em código (INV-0022-03). */
-export const CSP_ENFORCE = false;
+export const CSP_ENFORCE = true;
 
 export const HEADER_ENFORCE = 'Content-Security-Policy';
 export const HEADER_REPORT_ONLY = 'Content-Security-Policy-Report-Only';
